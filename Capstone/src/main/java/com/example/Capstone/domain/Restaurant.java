@@ -19,6 +19,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -70,4 +71,35 @@ public class Restaurant {
 
     @OneToMany(mappedBy = "restaurant", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<RestaurantCategory> categories = new ArrayList<>();
+
+    public void updateInfo(String name, String address, String regionName,
+                        BigDecimal lat, BigDecimal lng, String imageUrl) {
+        this.name       = name;
+        this.address    = address;
+        this.regionName = regionName;
+        this.lat        = lat;
+        this.lng        = lng;
+        this.imageUrl   = imageUrl;
+    }
+
+    public void hide() { this.isHidden = true; }
+    public void show() { this.isHidden = false; }
+
+    public void delete() {
+        this.isDeleted = true;
+        this.deletedAt = LocalDateTime.now();
+    }
+
+    @Builder
+    private Restaurant(String name, String address, String regionName,
+                    BigDecimal lat, BigDecimal lng, String imageUrl) {
+        this.name       = name;
+        this.address    = address;
+        this.regionName = regionName;
+        this.lat        = lat;
+        this.lng        = lng;
+        this.imageUrl   = imageUrl;
+        this.isHidden   = false;
+        this.isDeleted  = false;
+    }
 }
