@@ -3,7 +3,11 @@ spring:
     name: Capstone
 
   profiles:
-    active: db
+    active: db, key
+
+  jackson:
+    deserialization:
+      fail-on-unknown-properties: false
 
 springdoc:
   api-docs:
