@@ -1,6 +1,7 @@
 package com.example.Capstone.service;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.example.Capstone.domain.User;
 import com.example.Capstone.dto.request.AdditionalInfoRequest;
@@ -9,7 +10,6 @@ import com.example.Capstone.dto.response.UserResponse;
 import com.example.Capstone.repository.UserRepository;
 
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
 @Service
