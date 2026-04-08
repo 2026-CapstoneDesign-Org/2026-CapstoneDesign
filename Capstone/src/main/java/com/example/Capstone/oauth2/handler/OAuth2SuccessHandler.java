@@ -46,8 +46,8 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
                     providerUserId = (String) attributes.get("sub");
                 }
                 case "kakao" -> {
-                provider       = "KAKAO";
-                providerUserId = String.valueOf(attributes.get("id"));
+                    provider       = "KAKAO";
+                    providerUserId = String.valueOf(attributes.get("id"));
                 }
                 case "naver" -> {
                     Map<String, Object> response_ = (Map<String, Object>) attributes.get("response");

@@ -10,14 +10,18 @@ import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.example.Capstone.common.util.NicknameGenerator;
 import com.example.Capstone.domain.User;
 import com.example.Capstone.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
+@Transactional
 @RequiredArgsConstructor
 public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequest, OAuth2User>{
 
@@ -27,7 +31,7 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
     @Override
     @SuppressWarnings("unchecked")
     public OAuth2User loadUser(OAuth2UserRequest request) throws OAuth2AuthenticationException {
-        
+            
         OAuth2User oAuth2User = new DefaultOAuth2UserService().loadUser(request);
         String registrationId = request.getClientRegistration().getRegistrationId();
         Map<String, Object> attributes = oAuth2User.getAttributes();
@@ -64,7 +68,8 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
                             .role(User.Role.USER)
                             .build();
 
-                    return userRepository.save(newUser);
+                    User saved = userRepository.saveAndFlush(newUser);
+                    return saved;
                 });
 
         return new DefaultOAuth2User(
