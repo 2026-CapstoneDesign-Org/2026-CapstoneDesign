@@ -1,0 +1,4314 @@
+[
+  {
+    "seed_index": 1,
+    "restaurant_seed_index": 1,
+    "category_name": "김밥",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 2,
+    "restaurant_seed_index": 2,
+    "category_name": "냉면",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 3,
+    "restaurant_seed_index": 3,
+    "category_name": "국밥",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 4,
+    "restaurant_seed_index": 4,
+    "category_name": "일식당",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 5,
+    "restaurant_seed_index": 5,
+    "category_name": "양꼬치",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 6,
+    "restaurant_seed_index": 6,
+    "category_name": "소고기구이",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 7,
+    "restaurant_seed_index": 7,
+    "category_name": "육류,고기요리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 8,
+    "restaurant_seed_index": 8,
+    "category_name": "오리요리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 9,
+    "restaurant_seed_index": 9,
+    "category_name": "일식당",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 10,
+    "restaurant_seed_index": 10,
+    "category_name": "치킨,닭강정",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 11,
+    "restaurant_seed_index": 11,
+    "category_name": "한식",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 12,
+    "restaurant_seed_index": 12,
+    "category_name": "칼국수,만두",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 13,
+    "restaurant_seed_index": 13,
+    "category_name": "낙지요리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 14,
+    "restaurant_seed_index": 14,
+    "category_name": "요리주점",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 15,
+    "restaurant_seed_index": 15,
+    "category_name": "베이커리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 16,
+    "restaurant_seed_index": 16,
+    "category_name": "칼국수,만두",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 17,
+    "restaurant_seed_index": 17,
+    "category_name": "베이커리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 18,
+    "restaurant_seed_index": 18,
+    "category_name": "국밥",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 19,
+    "restaurant_seed_index": 19,
+    "category_name": "닭갈비",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 20,
+    "restaurant_seed_index": 20,
+    "category_name": "스파게티,파스타전문",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 21,
+    "restaurant_seed_index": 21,
+    "category_name": "돼지고기구이",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 22,
+    "restaurant_seed_index": 22,
+    "category_name": "육류,고기요리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 23,
+    "restaurant_seed_index": 23,
+    "category_name": "육류,고기요리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 24,
+    "restaurant_seed_index": 24,
+    "category_name": "생선구이",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 25,
+    "restaurant_seed_index": 25,
+    "category_name": "분식",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 26,
+    "restaurant_seed_index": 26,
+    "category_name": "중식당",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 27,
+    "restaurant_seed_index": 27,
+    "category_name": "요리주점",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 28,
+    "restaurant_seed_index": 28,
+    "category_name": "육류,고기요리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 29,
+    "restaurant_seed_index": 29,
+    "category_name": "일식당",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 30,
+    "restaurant_seed_index": 30,
+    "category_name": "카페",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 31,
+    "restaurant_seed_index": 31,
+    "category_name": "돼지고기구이",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 32,
+    "restaurant_seed_index": 32,
+    "category_name": "순대,순댓국",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 33,
+    "restaurant_seed_index": 33,
+    "category_name": "육류,고기요리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 34,
+    "restaurant_seed_index": 34,
+    "category_name": "중식당",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 35,
+    "restaurant_seed_index": 35,
+    "category_name": "차",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 36,
+    "restaurant_seed_index": 36,
+    "category_name": "칼국수,만두",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 37,
+    "restaurant_seed_index": 37,
+    "category_name": "야식",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 38,
+    "restaurant_seed_index": 38,
+    "category_name": "중식당",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 39,
+    "restaurant_seed_index": 39,
+    "category_name": "치킨,닭강정",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 40,
+    "restaurant_seed_index": 40,
+    "category_name": "일식당",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 41,
+    "restaurant_seed_index": 41,
+    "category_name": "치킨,닭강정",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 42,
+    "restaurant_seed_index": 42,
+    "category_name": "치킨,닭강정",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 43,
+    "restaurant_seed_index": 43,
+    "category_name": "카페,디저트",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 44,
+    "restaurant_seed_index": 44,
+    "category_name": "오리요리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 45,
+    "restaurant_seed_index": 45,
+    "category_name": "카페",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 46,
+    "restaurant_seed_index": 46,
+    "category_name": "카페,디저트",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 47,
+    "restaurant_seed_index": 47,
+    "category_name": "한식",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 48,
+    "restaurant_seed_index": 48,
+    "category_name": "요리주점",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 49,
+    "restaurant_seed_index": 49,
+    "category_name": "맥주,호프",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 50,
+    "restaurant_seed_index": 50,
+    "category_name": "육류,고기요리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 51,
+    "restaurant_seed_index": 51,
+    "category_name": "이탈리아음식",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 52,
+    "restaurant_seed_index": 52,
+    "category_name": "치킨,닭강정",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 53,
+    "restaurant_seed_index": 53,
+    "category_name": "중식당",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 54,
+    "restaurant_seed_index": 54,
+    "category_name": "분식",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 55,
+    "restaurant_seed_index": 55,
+    "category_name": "소고기구이",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 56,
+    "restaurant_seed_index": 56,
+    "category_name": "분식",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 57,
+    "restaurant_seed_index": 57,
+    "category_name": "분식",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 58,
+    "restaurant_seed_index": 58,
+    "category_name": "분식",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 59,
+    "restaurant_seed_index": 59,
+    "category_name": "김밥",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 60,
+    "restaurant_seed_index": 60,
+    "category_name": "찌개,전골",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 61,
+    "restaurant_seed_index": 61,
+    "category_name": "피자",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 62,
+    "restaurant_seed_index": 62,
+    "category_name": "한식",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 63,
+    "restaurant_seed_index": 63,
+    "category_name": "소고기구이",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 64,
+    "restaurant_seed_index": 64,
+    "category_name": "오리요리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 65,
+    "restaurant_seed_index": 65,
+    "category_name": "베이커리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 66,
+    "restaurant_seed_index": 66,
+    "category_name": "한식",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 67,
+    "restaurant_seed_index": 67,
+    "category_name": "카페,디저트",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 68,
+    "restaurant_seed_index": 68,
+    "category_name": "해장국",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 69,
+    "restaurant_seed_index": 69,
+    "category_name": "칼국수,만두",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 70,
+    "restaurant_seed_index": 70,
+    "category_name": "닭갈비",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 71,
+    "restaurant_seed_index": 71,
+    "category_name": "베이커리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 72,
+    "restaurant_seed_index": 72,
+    "category_name": "치킨,닭강정",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 73,
+    "restaurant_seed_index": 73,
+    "category_name": "찌개,전골",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 74,
+    "restaurant_seed_index": 74,
+    "category_name": "피자",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 75,
+    "restaurant_seed_index": 75,
+    "category_name": "햄버거",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 76,
+    "restaurant_seed_index": 76,
+    "category_name": "요리주점",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 77,
+    "restaurant_seed_index": 77,
+    "category_name": "피자",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 78,
+    "restaurant_seed_index": 78,
+    "category_name": "브런치카페",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 79,
+    "restaurant_seed_index": 79,
+    "category_name": "중식당",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 80,
+    "restaurant_seed_index": 80,
+    "category_name": "포장마차",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 81,
+    "restaurant_seed_index": 81,
+    "category_name": "중식당",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 82,
+    "restaurant_seed_index": 82,
+    "category_name": "양식",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 83,
+    "restaurant_seed_index": 83,
+    "category_name": "한식",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 84,
+    "restaurant_seed_index": 84,
+    "category_name": "요리주점",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 85,
+    "restaurant_seed_index": 85,
+    "category_name": "베이커리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 86,
+    "restaurant_seed_index": 86,
+    "category_name": "케이크전문",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 87,
+    "restaurant_seed_index": 87,
+    "category_name": "족발,보쌈",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 88,
+    "restaurant_seed_index": 88,
+    "category_name": "칼국수,만두",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 89,
+    "restaurant_seed_index": 89,
+    "category_name": "찌개,전골",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 90,
+    "restaurant_seed_index": 90,
+    "category_name": "돼지고기구이",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 91,
+    "restaurant_seed_index": 91,
+    "category_name": "돼지고기구이",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 92,
+    "restaurant_seed_index": 92,
+    "category_name": "맥주,호프",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 93,
+    "restaurant_seed_index": 93,
+    "category_name": "국밥",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 94,
+    "restaurant_seed_index": 94,
+    "category_name": "백숙,삼계탕",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 95,
+    "restaurant_seed_index": 95,
+    "category_name": "카페",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 96,
+    "restaurant_seed_index": 96,
+    "category_name": "일식당",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 97,
+    "restaurant_seed_index": 97,
+    "category_name": "한정식",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 98,
+    "restaurant_seed_index": 98,
+    "category_name": "피자",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 99,
+    "restaurant_seed_index": 99,
+    "category_name": "칼국수,만두",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 100,
+    "restaurant_seed_index": 100,
+    "category_name": "생선회",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 101,
+    "restaurant_seed_index": 101,
+    "category_name": "돈가스",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 102,
+    "restaurant_seed_index": 102,
+    "category_name": "일식당",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 103,
+    "restaurant_seed_index": 103,
+    "category_name": "분식",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 104,
+    "restaurant_seed_index": 104,
+    "category_name": "분식",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 105,
+    "restaurant_seed_index": 105,
+    "category_name": "생선회",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 106,
+    "restaurant_seed_index": 106,
+    "category_name": "두부요리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 107,
+    "restaurant_seed_index": 107,
+    "category_name": "분식",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 108,
+    "restaurant_seed_index": 108,
+    "category_name": "중식당",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 109,
+    "restaurant_seed_index": 109,
+    "category_name": "해장국",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 110,
+    "restaurant_seed_index": 110,
+    "category_name": "두부요리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 111,
+    "restaurant_seed_index": 111,
+    "category_name": "카페",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 112,
+    "restaurant_seed_index": 112,
+    "category_name": "한정식",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 113,
+    "restaurant_seed_index": 113,
+    "category_name": "칼국수,만두",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 114,
+    "restaurant_seed_index": 114,
+    "category_name": "카페,디저트",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 115,
+    "restaurant_seed_index": 115,
+    "category_name": "딤섬,중식만두",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 116,
+    "restaurant_seed_index": 116,
+    "category_name": "떡볶이",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 117,
+    "restaurant_seed_index": 117,
+    "category_name": "분식",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 118,
+    "restaurant_seed_index": 118,
+    "category_name": "종합분식",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 119,
+    "restaurant_seed_index": 119,
+    "category_name": "종합분식",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 120,
+    "restaurant_seed_index": 120,
+    "category_name": "베이커리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 121,
+    "restaurant_seed_index": 121,
+    "category_name": "베이커리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 122,
+    "restaurant_seed_index": 122,
+    "category_name": "해장국",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 123,
+    "restaurant_seed_index": 123,
+    "category_name": "종합분식",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 124,
+    "restaurant_seed_index": 124,
+    "category_name": "마라탕",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 125,
+    "restaurant_seed_index": 125,
+    "category_name": "한식",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 126,
+    "restaurant_seed_index": 126,
+    "category_name": "중식당",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 127,
+    "restaurant_seed_index": 127,
+    "category_name": "카페,디저트",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 128,
+    "restaurant_seed_index": 128,
+    "category_name": "요리주점",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 129,
+    "restaurant_seed_index": 129,
+    "category_name": "카페",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 130,
+    "restaurant_seed_index": 130,
+    "category_name": "터키음식",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 131,
+    "restaurant_seed_index": 131,
+    "category_name": "카페,디저트",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 132,
+    "restaurant_seed_index": 132,
+    "category_name": "햄버거",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 133,
+    "restaurant_seed_index": 133,
+    "category_name": "햄버거",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 134,
+    "restaurant_seed_index": 134,
+    "category_name": "햄버거",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 135,
+    "restaurant_seed_index": 135,
+    "category_name": "이탈리아음식",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 136,
+    "restaurant_seed_index": 136,
+    "category_name": "브런치",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 137,
+    "restaurant_seed_index": 137,
+    "category_name": "카페,디저트",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 138,
+    "restaurant_seed_index": 138,
+    "category_name": "멕시코,남미음식",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 139,
+    "restaurant_seed_index": 139,
+    "category_name": "카페,디저트",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 140,
+    "restaurant_seed_index": 140,
+    "category_name": "요리주점",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 141,
+    "restaurant_seed_index": 141,
+    "category_name": "마라탕",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 142,
+    "restaurant_seed_index": 142,
+    "category_name": "중식당",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 143,
+    "restaurant_seed_index": 143,
+    "category_name": "국밥",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 144,
+    "restaurant_seed_index": 144,
+    "category_name": "카페,디저트",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 145,
+    "restaurant_seed_index": 145,
+    "category_name": "한식",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 146,
+    "restaurant_seed_index": 146,
+    "category_name": "중식당",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 147,
+    "restaurant_seed_index": 147,
+    "category_name": "햄버거",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 148,
+    "restaurant_seed_index": 148,
+    "category_name": "햄버거",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 149,
+    "restaurant_seed_index": 149,
+    "category_name": "햄버거",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 150,
+    "restaurant_seed_index": 150,
+    "category_name": "햄버거",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 151,
+    "restaurant_seed_index": 151,
+    "category_name": "복어요리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 152,
+    "restaurant_seed_index": 152,
+    "category_name": "카페",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 153,
+    "restaurant_seed_index": 153,
+    "category_name": "카페",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 154,
+    "restaurant_seed_index": 154,
+    "category_name": "카페",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 155,
+    "restaurant_seed_index": 155,
+    "category_name": "카페",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 156,
+    "restaurant_seed_index": 156,
+    "category_name": "카페",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 157,
+    "restaurant_seed_index": 157,
+    "category_name": "카페",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 158,
+    "restaurant_seed_index": 158,
+    "category_name": "카페",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 159,
+    "restaurant_seed_index": 159,
+    "category_name": "베이커리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 160,
+    "restaurant_seed_index": 160,
+    "category_name": "치킨,닭강정",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 161,
+    "restaurant_seed_index": 161,
+    "category_name": "치킨,닭강정",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 162,
+    "restaurant_seed_index": 162,
+    "category_name": "국수",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 163,
+    "restaurant_seed_index": 163,
+    "category_name": "중식당",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 164,
+    "restaurant_seed_index": 164,
+    "category_name": "국수",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 165,
+    "restaurant_seed_index": 165,
+    "category_name": "칼국수,만두",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 166,
+    "restaurant_seed_index": 166,
+    "category_name": "한식",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 167,
+    "restaurant_seed_index": 167,
+    "category_name": "핫도그",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 168,
+    "restaurant_seed_index": 168,
+    "category_name": "육류,고기요리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 169,
+    "restaurant_seed_index": 169,
+    "category_name": "육류,고기요리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 170,
+    "restaurant_seed_index": 170,
+    "category_name": "육류,고기요리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 171,
+    "restaurant_seed_index": 171,
+    "category_name": "치킨,닭강정",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 172,
+    "restaurant_seed_index": 172,
+    "category_name": "생선회",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 173,
+    "restaurant_seed_index": 173,
+    "category_name": "육류,고기요리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 174,
+    "restaurant_seed_index": 174,
+    "category_name": "육류,고기요리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 175,
+    "restaurant_seed_index": 175,
+    "category_name": "육류,고기요리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 176,
+    "restaurant_seed_index": 176,
+    "category_name": "베이커리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 177,
+    "restaurant_seed_index": 177,
+    "category_name": "육류,고기요리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 178,
+    "restaurant_seed_index": 178,
+    "category_name": "호떡",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 179,
+    "restaurant_seed_index": 179,
+    "category_name": "요리주점",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 180,
+    "restaurant_seed_index": 180,
+    "category_name": "베이커리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 181,
+    "restaurant_seed_index": 181,
+    "category_name": "조개요리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 182,
+    "restaurant_seed_index": 182,
+    "category_name": "샤브샤브",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 183,
+    "restaurant_seed_index": 183,
+    "category_name": "한식",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 184,
+    "restaurant_seed_index": 184,
+    "category_name": "양꼬치",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 185,
+    "restaurant_seed_index": 185,
+    "category_name": "카페,디저트",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 186,
+    "restaurant_seed_index": 186,
+    "category_name": "돈가스",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 187,
+    "restaurant_seed_index": 187,
+    "category_name": "한식",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 188,
+    "restaurant_seed_index": 188,
+    "category_name": "이탈리아음식",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 189,
+    "restaurant_seed_index": 189,
+    "category_name": "우동,소바",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 190,
+    "restaurant_seed_index": 190,
+    "category_name": "소고기구이",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 191,
+    "restaurant_seed_index": 191,
+    "category_name": "스파게티,파스타전문",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 192,
+    "restaurant_seed_index": 192,
+    "category_name": "감자탕",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 193,
+    "restaurant_seed_index": 193,
+    "category_name": "한식",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 194,
+    "restaurant_seed_index": 194,
+    "category_name": "조개요리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 195,
+    "restaurant_seed_index": 195,
+    "category_name": "요리주점",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 196,
+    "restaurant_seed_index": 196,
+    "category_name": "치킨,닭강정",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 197,
+    "restaurant_seed_index": 197,
+    "category_name": "굴요리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 198,
+    "restaurant_seed_index": 198,
+    "category_name": "카페,디저트",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 199,
+    "restaurant_seed_index": 199,
+    "category_name": "국수",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 200,
+    "restaurant_seed_index": 200,
+    "category_name": "맥주,호프",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 201,
+    "restaurant_seed_index": 201,
+    "category_name": "종합분식",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 202,
+    "restaurant_seed_index": 202,
+    "category_name": "베이커리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 203,
+    "restaurant_seed_index": 203,
+    "category_name": "아이스크림",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 204,
+    "restaurant_seed_index": 204,
+    "category_name": "아이스크림",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 205,
+    "restaurant_seed_index": 205,
+    "category_name": "칼국수,만두",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 206,
+    "restaurant_seed_index": 206,
+    "category_name": "중식당",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 207,
+    "restaurant_seed_index": 207,
+    "category_name": "일식당",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 208,
+    "restaurant_seed_index": 208,
+    "category_name": "순대,순댓국",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 209,
+    "restaurant_seed_index": 209,
+    "category_name": "순대,순댓국",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 210,
+    "restaurant_seed_index": 210,
+    "category_name": "햄버거",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 211,
+    "restaurant_seed_index": 211,
+    "category_name": "카페",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 212,
+    "restaurant_seed_index": 212,
+    "category_name": "피자",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 213,
+    "restaurant_seed_index": 213,
+    "category_name": "베이커리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 214,
+    "restaurant_seed_index": 214,
+    "category_name": "요리주점",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 215,
+    "restaurant_seed_index": 215,
+    "category_name": "김밥",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 216,
+    "restaurant_seed_index": 216,
+    "category_name": "요리주점",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 217,
+    "restaurant_seed_index": 217,
+    "category_name": "돈가스",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 218,
+    "restaurant_seed_index": 218,
+    "category_name": "육류,고기요리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 219,
+    "restaurant_seed_index": 219,
+    "category_name": "한식",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 220,
+    "restaurant_seed_index": 220,
+    "category_name": "분식",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 221,
+    "restaurant_seed_index": 221,
+    "category_name": "중식당",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 222,
+    "restaurant_seed_index": 222,
+    "category_name": "브런치카페",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 223,
+    "restaurant_seed_index": 223,
+    "category_name": "소고기구이",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 224,
+    "restaurant_seed_index": 224,
+    "category_name": "카페,디저트",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 225,
+    "restaurant_seed_index": 225,
+    "category_name": "분식",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 226,
+    "restaurant_seed_index": 226,
+    "category_name": "분식",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 227,
+    "restaurant_seed_index": 227,
+    "category_name": "중식당",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 228,
+    "restaurant_seed_index": 228,
+    "category_name": "피자",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 229,
+    "restaurant_seed_index": 229,
+    "category_name": "김밥",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 230,
+    "restaurant_seed_index": 230,
+    "category_name": "육류,고기요리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 231,
+    "restaurant_seed_index": 231,
+    "category_name": "한식",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 232,
+    "restaurant_seed_index": 232,
+    "category_name": "치킨,닭강정",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 233,
+    "restaurant_seed_index": 233,
+    "category_name": "중식당",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 234,
+    "restaurant_seed_index": 234,
+    "category_name": "베이커리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 235,
+    "restaurant_seed_index": 235,
+    "category_name": "햄버거",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 236,
+    "restaurant_seed_index": 236,
+    "category_name": "요리주점",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 237,
+    "restaurant_seed_index": 237,
+    "category_name": "피자",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 238,
+    "restaurant_seed_index": 238,
+    "category_name": "베이커리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 239,
+    "restaurant_seed_index": 239,
+    "category_name": "베이커리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 240,
+    "restaurant_seed_index": 240,
+    "category_name": "베이커리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 241,
+    "restaurant_seed_index": 241,
+    "category_name": "베이커리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 242,
+    "restaurant_seed_index": 242,
+    "category_name": "베이커리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 243,
+    "restaurant_seed_index": 243,
+    "category_name": "한식",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 244,
+    "restaurant_seed_index": 244,
+    "category_name": "분식",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 245,
+    "restaurant_seed_index": 245,
+    "category_name": "칼국수,만두",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 246,
+    "restaurant_seed_index": 246,
+    "category_name": "호떡",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 247,
+    "restaurant_seed_index": 247,
+    "category_name": "백숙,삼계탕",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 248,
+    "restaurant_seed_index": 248,
+    "category_name": "이자카야",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 249,
+    "restaurant_seed_index": 249,
+    "category_name": "양식",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 250,
+    "restaurant_seed_index": 250,
+    "category_name": "한식",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 251,
+    "restaurant_seed_index": 251,
+    "category_name": "분식",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 252,
+    "restaurant_seed_index": 252,
+    "category_name": "두부요리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 253,
+    "restaurant_seed_index": 253,
+    "category_name": "곱창,막창,양",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 254,
+    "restaurant_seed_index": 254,
+    "category_name": "양꼬치",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 255,
+    "restaurant_seed_index": 255,
+    "category_name": "다방",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 256,
+    "restaurant_seed_index": 256,
+    "category_name": "샌드위치",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 257,
+    "restaurant_seed_index": 257,
+    "category_name": "샌드위치",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 258,
+    "restaurant_seed_index": 258,
+    "category_name": "다이어트,샐러드",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 259,
+    "restaurant_seed_index": 259,
+    "category_name": "다이어트,샐러드",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 260,
+    "restaurant_seed_index": 260,
+    "category_name": "다이어트,샐러드",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 261,
+    "restaurant_seed_index": 261,
+    "category_name": "이자카야",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 262,
+    "restaurant_seed_index": 262,
+    "category_name": "샤브샤브",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 263,
+    "restaurant_seed_index": 263,
+    "category_name": "샤브샤브",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 264,
+    "restaurant_seed_index": 264,
+    "category_name": "샤브샤브",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 265,
+    "restaurant_seed_index": 265,
+    "category_name": "한식",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 266,
+    "restaurant_seed_index": 266,
+    "category_name": "곰탕,설렁탕",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 267,
+    "restaurant_seed_index": 267,
+    "category_name": "육류,고기요리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 268,
+    "restaurant_seed_index": 268,
+    "category_name": "카페",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 269,
+    "restaurant_seed_index": 269,
+    "category_name": "한식뷔페",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 270,
+    "restaurant_seed_index": 270,
+    "category_name": "샌드위치",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 271,
+    "restaurant_seed_index": 271,
+    "category_name": "곰탕,설렁탕",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 272,
+    "restaurant_seed_index": 272,
+    "category_name": "한식",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 273,
+    "restaurant_seed_index": 273,
+    "category_name": "일식당",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 274,
+    "restaurant_seed_index": 274,
+    "category_name": "찌개,전골",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 275,
+    "restaurant_seed_index": 275,
+    "category_name": "육류,고기요리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 276,
+    "restaurant_seed_index": 276,
+    "category_name": "만두",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 277,
+    "restaurant_seed_index": 277,
+    "category_name": "양식",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 278,
+    "restaurant_seed_index": 278,
+    "category_name": "양꼬치",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 279,
+    "restaurant_seed_index": 279,
+    "category_name": "한식",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 280,
+    "restaurant_seed_index": 280,
+    "category_name": "백숙,삼계탕",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 281,
+    "restaurant_seed_index": 281,
+    "category_name": "카페,디저트",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 282,
+    "restaurant_seed_index": 282,
+    "category_name": "한식",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 283,
+    "restaurant_seed_index": 283,
+    "category_name": "샤브샤브",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 284,
+    "restaurant_seed_index": 284,
+    "category_name": "한정식",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 285,
+    "restaurant_seed_index": 285,
+    "category_name": "치킨,닭강정",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 286,
+    "restaurant_seed_index": 286,
+    "category_name": "육류,고기요리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 287,
+    "restaurant_seed_index": 287,
+    "category_name": "한정식",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 288,
+    "restaurant_seed_index": 288,
+    "category_name": "일식당",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 289,
+    "restaurant_seed_index": 289,
+    "category_name": "순대,순댓국",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 290,
+    "restaurant_seed_index": 290,
+    "category_name": "일식당",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 291,
+    "restaurant_seed_index": 291,
+    "category_name": "요리주점",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 292,
+    "restaurant_seed_index": 292,
+    "category_name": "일식당",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 293,
+    "restaurant_seed_index": 293,
+    "category_name": "초밥,롤",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 294,
+    "restaurant_seed_index": 294,
+    "category_name": "초밥,롤",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 295,
+    "restaurant_seed_index": 295,
+    "category_name": "카페,디저트",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 296,
+    "restaurant_seed_index": 296,
+    "category_name": "카페",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 297,
+    "restaurant_seed_index": 297,
+    "category_name": "카페",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 298,
+    "restaurant_seed_index": 298,
+    "category_name": "카페",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 299,
+    "restaurant_seed_index": 299,
+    "category_name": "카페",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 300,
+    "restaurant_seed_index": 300,
+    "category_name": "카페",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 301,
+    "restaurant_seed_index": 301,
+    "category_name": "카페,디저트",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 302,
+    "restaurant_seed_index": 302,
+    "category_name": "핫도그",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 303,
+    "restaurant_seed_index": 303,
+    "category_name": "분식",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 304,
+    "restaurant_seed_index": 304,
+    "category_name": "베이커리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 305,
+    "restaurant_seed_index": 305,
+    "category_name": "정육식당",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 306,
+    "restaurant_seed_index": 306,
+    "category_name": "카페,디저트",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 307,
+    "restaurant_seed_index": 307,
+    "category_name": "베이커리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 308,
+    "restaurant_seed_index": 308,
+    "category_name": "돈가스",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 309,
+    "restaurant_seed_index": 309,
+    "category_name": "육류,고기요리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 310,
+    "restaurant_seed_index": 310,
+    "category_name": "베이커리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 311,
+    "restaurant_seed_index": 311,
+    "category_name": "육류,고기요리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 312,
+    "restaurant_seed_index": 312,
+    "category_name": "치킨,닭강정",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 313,
+    "restaurant_seed_index": 313,
+    "category_name": "치킨,닭강정",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 314,
+    "restaurant_seed_index": 314,
+    "category_name": "베이커리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 315,
+    "restaurant_seed_index": 315,
+    "category_name": "샌드위치",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 316,
+    "restaurant_seed_index": 316,
+    "category_name": "초밥,롤",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 317,
+    "restaurant_seed_index": 317,
+    "category_name": "요리주점",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 318,
+    "restaurant_seed_index": 318,
+    "category_name": "육류,고기요리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 319,
+    "restaurant_seed_index": 319,
+    "category_name": "애견카페",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 320,
+    "restaurant_seed_index": 320,
+    "category_name": "칼국수,만두",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 321,
+    "restaurant_seed_index": 321,
+    "category_name": "카레",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 322,
+    "restaurant_seed_index": 322,
+    "category_name": "요리주점",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 323,
+    "restaurant_seed_index": 323,
+    "category_name": "치킨,닭강정",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 324,
+    "restaurant_seed_index": 324,
+    "category_name": "장어,먹장어요리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 325,
+    "restaurant_seed_index": 325,
+    "category_name": "장어,먹장어요리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 326,
+    "restaurant_seed_index": 326,
+    "category_name": "주꾸미요리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 327,
+    "restaurant_seed_index": 327,
+    "category_name": "육류,고기요리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 328,
+    "restaurant_seed_index": 328,
+    "category_name": "한식",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 329,
+    "restaurant_seed_index": 329,
+    "category_name": "카페",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 330,
+    "restaurant_seed_index": 330,
+    "category_name": "이자카야",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 331,
+    "restaurant_seed_index": 331,
+    "category_name": "오리요리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 332,
+    "restaurant_seed_index": 332,
+    "category_name": "양꼬치",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 333,
+    "restaurant_seed_index": 333,
+    "category_name": "해장국",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 334,
+    "restaurant_seed_index": 334,
+    "category_name": "양식",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 335,
+    "restaurant_seed_index": 335,
+    "category_name": "브런치카페",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 336,
+    "restaurant_seed_index": 336,
+    "category_name": "칼국수,만두",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 337,
+    "restaurant_seed_index": 337,
+    "category_name": "토스트",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 338,
+    "restaurant_seed_index": 338,
+    "category_name": "카페,디저트",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 339,
+    "restaurant_seed_index": 339,
+    "category_name": "카페",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 340,
+    "restaurant_seed_index": 340,
+    "category_name": "카페,디저트",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 341,
+    "restaurant_seed_index": 341,
+    "category_name": "김밥",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 342,
+    "restaurant_seed_index": 342,
+    "category_name": "우동,소바",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 343,
+    "restaurant_seed_index": 343,
+    "category_name": "우동,소바",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 344,
+    "restaurant_seed_index": 344,
+    "category_name": "맥주,호프",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 345,
+    "restaurant_seed_index": 345,
+    "category_name": "맥주,호프",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 346,
+    "restaurant_seed_index": 346,
+    "category_name": "순대,순댓국",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 347,
+    "restaurant_seed_index": 347,
+    "category_name": "육류,고기요리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 348,
+    "restaurant_seed_index": 348,
+    "category_name": "국밥",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 349,
+    "restaurant_seed_index": 349,
+    "category_name": "순대,순댓국",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 350,
+    "restaurant_seed_index": 350,
+    "category_name": "중식당",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 351,
+    "restaurant_seed_index": 351,
+    "category_name": "초밥,롤",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 352,
+    "restaurant_seed_index": 352,
+    "category_name": "순대,순댓국",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 353,
+    "restaurant_seed_index": 353,
+    "category_name": "순대,순댓국",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 354,
+    "restaurant_seed_index": 354,
+    "category_name": "해물,생선요리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 355,
+    "restaurant_seed_index": 355,
+    "category_name": "김밥",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 356,
+    "restaurant_seed_index": 356,
+    "category_name": "찌개,전골",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 357,
+    "restaurant_seed_index": 357,
+    "category_name": "양꼬치",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 358,
+    "restaurant_seed_index": 358,
+    "category_name": "오리요리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 359,
+    "restaurant_seed_index": 359,
+    "category_name": "오리요리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 360,
+    "restaurant_seed_index": 360,
+    "category_name": "한식",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 361,
+    "restaurant_seed_index": 361,
+    "category_name": "한식",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 362,
+    "restaurant_seed_index": 362,
+    "category_name": "베이커리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 363,
+    "restaurant_seed_index": 363,
+    "category_name": "만두",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 364,
+    "restaurant_seed_index": 364,
+    "category_name": "맥주,호프",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 365,
+    "restaurant_seed_index": 365,
+    "category_name": "양꼬치",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 366,
+    "restaurant_seed_index": 366,
+    "category_name": "중식당",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 367,
+    "restaurant_seed_index": 367,
+    "category_name": "와플",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 368,
+    "restaurant_seed_index": 368,
+    "category_name": "와플",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 369,
+    "restaurant_seed_index": 369,
+    "category_name": "햄버거",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 370,
+    "restaurant_seed_index": 370,
+    "category_name": "닭발",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 371,
+    "restaurant_seed_index": 371,
+    "category_name": "요리주점",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 372,
+    "restaurant_seed_index": 372,
+    "category_name": "한식",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 373,
+    "restaurant_seed_index": 373,
+    "category_name": "칼국수,만두",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 374,
+    "restaurant_seed_index": 374,
+    "category_name": "순대,순댓국",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 375,
+    "restaurant_seed_index": 375,
+    "category_name": "순대,순댓국",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 376,
+    "restaurant_seed_index": 376,
+    "category_name": "쌈밥",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 377,
+    "restaurant_seed_index": 377,
+    "category_name": "우동,소바",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 378,
+    "restaurant_seed_index": 378,
+    "category_name": "생선회",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 379,
+    "restaurant_seed_index": 379,
+    "category_name": "생선회",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 380,
+    "restaurant_seed_index": 380,
+    "category_name": "요리주점",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 381,
+    "restaurant_seed_index": 381,
+    "category_name": "베이커리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 382,
+    "restaurant_seed_index": 382,
+    "category_name": "중식당",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 383,
+    "restaurant_seed_index": 383,
+    "category_name": "곰탕,설렁탕",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 384,
+    "restaurant_seed_index": 384,
+    "category_name": "샤브샤브",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 385,
+    "restaurant_seed_index": 385,
+    "category_name": "요리주점",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 386,
+    "restaurant_seed_index": 386,
+    "category_name": "한식",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 387,
+    "restaurant_seed_index": 387,
+    "category_name": "한식",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 388,
+    "restaurant_seed_index": 388,
+    "category_name": "순대,순댓국",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 389,
+    "restaurant_seed_index": 389,
+    "category_name": "칼국수,만두",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 390,
+    "restaurant_seed_index": 390,
+    "category_name": "한식",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 391,
+    "restaurant_seed_index": 391,
+    "category_name": "소고기구이",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 392,
+    "restaurant_seed_index": 392,
+    "category_name": "요리주점",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 393,
+    "restaurant_seed_index": 393,
+    "category_name": "요리주점",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 394,
+    "restaurant_seed_index": 394,
+    "category_name": "육류,고기요리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 395,
+    "restaurant_seed_index": 395,
+    "category_name": "육류,고기요리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 396,
+    "restaurant_seed_index": 396,
+    "category_name": "분식",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 397,
+    "restaurant_seed_index": 397,
+    "category_name": "육류,고기요리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 398,
+    "restaurant_seed_index": 398,
+    "category_name": "향토음식",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 399,
+    "restaurant_seed_index": 399,
+    "category_name": "한식",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 400,
+    "restaurant_seed_index": 400,
+    "category_name": "곰탕,설렁탕",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 401,
+    "restaurant_seed_index": 401,
+    "category_name": "떡볶이",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 402,
+    "restaurant_seed_index": 402,
+    "category_name": "토스트",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 403,
+    "restaurant_seed_index": 403,
+    "category_name": "토스트",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 404,
+    "restaurant_seed_index": 404,
+    "category_name": "치킨,닭강정",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 405,
+    "restaurant_seed_index": 405,
+    "category_name": "이자카야",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 406,
+    "restaurant_seed_index": 406,
+    "category_name": "이자카야",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 407,
+    "restaurant_seed_index": 407,
+    "category_name": "초밥,롤",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 408,
+    "restaurant_seed_index": 408,
+    "category_name": "족발,보쌈",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 409,
+    "restaurant_seed_index": 409,
+    "category_name": "이탈리아음식",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 410,
+    "restaurant_seed_index": 410,
+    "category_name": "치킨,닭강정",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 411,
+    "restaurant_seed_index": 411,
+    "category_name": "백숙,삼계탕",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 412,
+    "restaurant_seed_index": 412,
+    "category_name": "찌개,전골",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 413,
+    "restaurant_seed_index": 413,
+    "category_name": "찌개,전골",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 414,
+    "restaurant_seed_index": 414,
+    "category_name": "양식",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 415,
+    "restaurant_seed_index": 415,
+    "category_name": "피자",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 416,
+    "restaurant_seed_index": 416,
+    "category_name": "육류,고기요리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 417,
+    "restaurant_seed_index": 417,
+    "category_name": "만두",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 418,
+    "restaurant_seed_index": 418,
+    "category_name": "육류,고기요리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 419,
+    "restaurant_seed_index": 419,
+    "category_name": "해장국",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 420,
+    "restaurant_seed_index": 420,
+    "category_name": "장어,먹장어요리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 421,
+    "restaurant_seed_index": 421,
+    "category_name": "피자",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 422,
+    "restaurant_seed_index": 422,
+    "category_name": "곱창,막창,양",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 423,
+    "restaurant_seed_index": 423,
+    "category_name": "베이커리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 424,
+    "restaurant_seed_index": 424,
+    "category_name": "양꼬치",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 425,
+    "restaurant_seed_index": 425,
+    "category_name": "족발,보쌈",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 426,
+    "restaurant_seed_index": 426,
+    "category_name": "요리주점",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 427,
+    "restaurant_seed_index": 427,
+    "category_name": "육류,고기요리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 428,
+    "restaurant_seed_index": 428,
+    "category_name": "국밥",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 429,
+    "restaurant_seed_index": 429,
+    "category_name": "국밥",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 430,
+    "restaurant_seed_index": 430,
+    "category_name": "한식",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 431,
+    "restaurant_seed_index": 431,
+    "category_name": "추어탕",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 432,
+    "restaurant_seed_index": 432,
+    "category_name": "분식",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 433,
+    "restaurant_seed_index": 433,
+    "category_name": "돼지고기구이",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 434,
+    "restaurant_seed_index": 434,
+    "category_name": "스파게티,파스타전문",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 435,
+    "restaurant_seed_index": 435,
+    "category_name": "국수",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 436,
+    "restaurant_seed_index": 436,
+    "category_name": "해장국",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 437,
+    "restaurant_seed_index": 437,
+    "category_name": "돼지고기구이",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 438,
+    "restaurant_seed_index": 438,
+    "category_name": "추어탕",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 439,
+    "restaurant_seed_index": 439,
+    "category_name": "순대,순댓국",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 440,
+    "restaurant_seed_index": 440,
+    "category_name": "한식",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 441,
+    "restaurant_seed_index": 441,
+    "category_name": "국수",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 442,
+    "restaurant_seed_index": 442,
+    "category_name": "카페,디저트",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 443,
+    "restaurant_seed_index": 443,
+    "category_name": "분식",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 444,
+    "restaurant_seed_index": 444,
+    "category_name": "떡볶이",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 445,
+    "restaurant_seed_index": 445,
+    "category_name": "중식당",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 446,
+    "restaurant_seed_index": 446,
+    "category_name": "과일,주스전문점",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 447,
+    "restaurant_seed_index": 447,
+    "category_name": "돈가스",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 448,
+    "restaurant_seed_index": 448,
+    "category_name": "육류,고기요리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 449,
+    "restaurant_seed_index": 449,
+    "category_name": "중식당",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 450,
+    "restaurant_seed_index": 450,
+    "category_name": "돈가스",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 451,
+    "restaurant_seed_index": 451,
+    "category_name": "국밥",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 452,
+    "restaurant_seed_index": 452,
+    "category_name": "중식당",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 453,
+    "restaurant_seed_index": 453,
+    "category_name": "한식",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 454,
+    "restaurant_seed_index": 454,
+    "category_name": "중식당",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 455,
+    "restaurant_seed_index": 455,
+    "category_name": "중식당",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 456,
+    "restaurant_seed_index": 456,
+    "category_name": "마라탕",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 457,
+    "restaurant_seed_index": 457,
+    "category_name": "중식당",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 458,
+    "restaurant_seed_index": 458,
+    "category_name": "생선회",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 459,
+    "restaurant_seed_index": 459,
+    "category_name": "치킨,닭강정",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 460,
+    "restaurant_seed_index": 460,
+    "category_name": "막국수",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 461,
+    "restaurant_seed_index": 461,
+    "category_name": "중식당",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 462,
+    "restaurant_seed_index": 462,
+    "category_name": "중식당",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 463,
+    "restaurant_seed_index": 463,
+    "category_name": "샤브샤브",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 464,
+    "restaurant_seed_index": 464,
+    "category_name": "분식",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 465,
+    "restaurant_seed_index": 465,
+    "category_name": "분식",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 466,
+    "restaurant_seed_index": 466,
+    "category_name": "베이커리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 467,
+    "restaurant_seed_index": 467,
+    "category_name": "맥주,호프",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 468,
+    "restaurant_seed_index": 468,
+    "category_name": "샤브샤브",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 469,
+    "restaurant_seed_index": 469,
+    "category_name": "포장마차",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 470,
+    "restaurant_seed_index": 470,
+    "category_name": "일식당",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 471,
+    "restaurant_seed_index": 471,
+    "category_name": "곱창,막창,양",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 472,
+    "restaurant_seed_index": 472,
+    "category_name": "칼국수,만두",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 473,
+    "restaurant_seed_index": 473,
+    "category_name": "닭갈비",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 474,
+    "restaurant_seed_index": 474,
+    "category_name": "베이커리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 475,
+    "restaurant_seed_index": 475,
+    "category_name": "치킨,닭강정",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 476,
+    "restaurant_seed_index": 476,
+    "category_name": "일식당",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 477,
+    "restaurant_seed_index": 477,
+    "category_name": "카페,디저트",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 478,
+    "restaurant_seed_index": 478,
+    "category_name": "카페,디저트",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 479,
+    "restaurant_seed_index": 479,
+    "category_name": "케이크전문",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 480,
+    "restaurant_seed_index": 480,
+    "category_name": "카페",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 481,
+    "restaurant_seed_index": 481,
+    "category_name": "카페,디저트",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 482,
+    "restaurant_seed_index": 482,
+    "category_name": "브런치카페",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 483,
+    "restaurant_seed_index": 483,
+    "category_name": "카페,디저트",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 484,
+    "restaurant_seed_index": 484,
+    "category_name": "카페",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 485,
+    "restaurant_seed_index": 485,
+    "category_name": "카페,디저트",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 486,
+    "restaurant_seed_index": 486,
+    "category_name": "카페,디저트",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 487,
+    "restaurant_seed_index": 487,
+    "category_name": "카페,디저트",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 488,
+    "restaurant_seed_index": 488,
+    "category_name": "카페",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 489,
+    "restaurant_seed_index": 489,
+    "category_name": "카페,디저트",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 490,
+    "restaurant_seed_index": 490,
+    "category_name": "카페,디저트",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 491,
+    "restaurant_seed_index": 491,
+    "category_name": "카페,디저트",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 492,
+    "restaurant_seed_index": 492,
+    "category_name": "카페,디저트",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 493,
+    "restaurant_seed_index": 493,
+    "category_name": "카페,디저트",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 494,
+    "restaurant_seed_index": 494,
+    "category_name": "카페,디저트",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 495,
+    "restaurant_seed_index": 495,
+    "category_name": "카페,디저트",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 496,
+    "restaurant_seed_index": 496,
+    "category_name": "카페,디저트",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 497,
+    "restaurant_seed_index": 497,
+    "category_name": "카페,디저트",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 498,
+    "restaurant_seed_index": 498,
+    "category_name": "과일,주스전문점",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 499,
+    "restaurant_seed_index": 499,
+    "category_name": "카페",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 500,
+    "restaurant_seed_index": 500,
+    "category_name": "카페",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 501,
+    "restaurant_seed_index": 501,
+    "category_name": "카페,디저트",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 502,
+    "restaurant_seed_index": 502,
+    "category_name": "카페",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 503,
+    "restaurant_seed_index": 503,
+    "category_name": "카페",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 504,
+    "restaurant_seed_index": 504,
+    "category_name": "케이크전문",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 505,
+    "restaurant_seed_index": 505,
+    "category_name": "이탈리아음식",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 506,
+    "restaurant_seed_index": 506,
+    "category_name": "맥주,호프",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 507,
+    "restaurant_seed_index": 507,
+    "category_name": "요리주점",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 508,
+    "restaurant_seed_index": 508,
+    "category_name": "일식,초밥뷔페",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 509,
+    "restaurant_seed_index": 509,
+    "category_name": "곰탕,설렁탕",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 510,
+    "restaurant_seed_index": 510,
+    "category_name": "육류,고기요리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 511,
+    "restaurant_seed_index": 511,
+    "category_name": "한식",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 512,
+    "restaurant_seed_index": 512,
+    "category_name": "일본식라면",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 513,
+    "restaurant_seed_index": 513,
+    "category_name": "닭갈비",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 514,
+    "restaurant_seed_index": 514,
+    "category_name": "마라탕",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 515,
+    "restaurant_seed_index": 515,
+    "category_name": "마라탕",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 516,
+    "restaurant_seed_index": 516,
+    "category_name": "종합분식",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 517,
+    "restaurant_seed_index": 517,
+    "category_name": "조개요리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 518,
+    "restaurant_seed_index": 518,
+    "category_name": "국수",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 519,
+    "restaurant_seed_index": 519,
+    "category_name": "토스트",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 520,
+    "restaurant_seed_index": 520,
+    "category_name": "곱창,막창,양",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 521,
+    "restaurant_seed_index": 521,
+    "category_name": "카페",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 522,
+    "restaurant_seed_index": 522,
+    "category_name": "종합분식",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 523,
+    "restaurant_seed_index": 523,
+    "category_name": "칼국수,만두",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 524,
+    "restaurant_seed_index": 524,
+    "category_name": "곱창,막창,양",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 525,
+    "restaurant_seed_index": 525,
+    "category_name": "육류,고기요리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 526,
+    "restaurant_seed_index": 526,
+    "category_name": "카페",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 527,
+    "restaurant_seed_index": 527,
+    "category_name": "카페",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 528,
+    "restaurant_seed_index": 528,
+    "category_name": "베이커리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 529,
+    "restaurant_seed_index": 529,
+    "category_name": "카페,디저트",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 530,
+    "restaurant_seed_index": 530,
+    "category_name": "카페",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 531,
+    "restaurant_seed_index": 531,
+    "category_name": "분식",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 532,
+    "restaurant_seed_index": 532,
+    "category_name": "베이커리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 533,
+    "restaurant_seed_index": 533,
+    "category_name": "베이커리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 534,
+    "restaurant_seed_index": 534,
+    "category_name": "베이커리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 535,
+    "restaurant_seed_index": 535,
+    "category_name": "베이커리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 536,
+    "restaurant_seed_index": 536,
+    "category_name": "베이커리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 537,
+    "restaurant_seed_index": 537,
+    "category_name": "베이커리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 538,
+    "restaurant_seed_index": 538,
+    "category_name": "베이커리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 539,
+    "restaurant_seed_index": 539,
+    "category_name": "베이커리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 540,
+    "restaurant_seed_index": 540,
+    "category_name": "스파게티,파스타전문",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 541,
+    "restaurant_seed_index": 541,
+    "category_name": "스파게티,파스타전문",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 542,
+    "restaurant_seed_index": 542,
+    "category_name": "피자",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 543,
+    "restaurant_seed_index": 543,
+    "category_name": "냉면",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 544,
+    "restaurant_seed_index": 544,
+    "category_name": "햄버거",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 545,
+    "restaurant_seed_index": 545,
+    "category_name": "맥주,호프",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 546,
+    "restaurant_seed_index": 546,
+    "category_name": "맥주,호프",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 547,
+    "restaurant_seed_index": 547,
+    "category_name": "맥주,호프",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 548,
+    "restaurant_seed_index": 548,
+    "category_name": "맥주,호프",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 549,
+    "restaurant_seed_index": 549,
+    "category_name": "치킨,닭강정",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 550,
+    "restaurant_seed_index": 550,
+    "category_name": "한식",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 551,
+    "restaurant_seed_index": 551,
+    "category_name": "딤섬,중식만두",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 552,
+    "restaurant_seed_index": 552,
+    "category_name": "베트남음식",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 553,
+    "restaurant_seed_index": 553,
+    "category_name": "베트남음식",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 554,
+    "restaurant_seed_index": 554,
+    "category_name": "종합분식",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 555,
+    "restaurant_seed_index": 555,
+    "category_name": "돈가스",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 556,
+    "restaurant_seed_index": 556,
+    "category_name": "카페",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 557,
+    "restaurant_seed_index": 557,
+    "category_name": "치킨,닭강정",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 558,
+    "restaurant_seed_index": 558,
+    "category_name": "칼국수,만두",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 559,
+    "restaurant_seed_index": 559,
+    "category_name": "소고기구이",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 560,
+    "restaurant_seed_index": 560,
+    "category_name": "육류,고기요리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 561,
+    "restaurant_seed_index": 561,
+    "category_name": "햄버거",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 562,
+    "restaurant_seed_index": 562,
+    "category_name": "피자",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 563,
+    "restaurant_seed_index": 563,
+    "category_name": "피자",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 564,
+    "restaurant_seed_index": 564,
+    "category_name": "피자",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 565,
+    "restaurant_seed_index": 565,
+    "category_name": "피자",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 566,
+    "restaurant_seed_index": 566,
+    "category_name": "피자",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 567,
+    "restaurant_seed_index": 567,
+    "category_name": "피자",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 568,
+    "restaurant_seed_index": 568,
+    "category_name": "다이어트,샐러드",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 569,
+    "restaurant_seed_index": 569,
+    "category_name": "중식당",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 570,
+    "restaurant_seed_index": 570,
+    "category_name": "베이커리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 571,
+    "restaurant_seed_index": 571,
+    "category_name": "한식",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 572,
+    "restaurant_seed_index": 572,
+    "category_name": "순대,순댓국",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 573,
+    "restaurant_seed_index": 573,
+    "category_name": "도시락,컵밥",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 574,
+    "restaurant_seed_index": 574,
+    "category_name": "생선회",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 575,
+    "restaurant_seed_index": 575,
+    "category_name": "곰탕,설렁탕",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 576,
+    "restaurant_seed_index": 576,
+    "category_name": "카페",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 577,
+    "restaurant_seed_index": 577,
+    "category_name": "한식",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 578,
+    "restaurant_seed_index": 578,
+    "category_name": "육류,고기요리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 579,
+    "restaurant_seed_index": 579,
+    "category_name": "해물,생선요리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 580,
+    "restaurant_seed_index": 580,
+    "category_name": "육류,고기요리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 581,
+    "restaurant_seed_index": 581,
+    "category_name": "베이커리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 582,
+    "restaurant_seed_index": 582,
+    "category_name": "케이크전문",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 583,
+    "restaurant_seed_index": 583,
+    "category_name": "초밥,롤",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 584,
+    "restaurant_seed_index": 584,
+    "category_name": "중식당",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 585,
+    "restaurant_seed_index": 585,
+    "category_name": "한식",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 586,
+    "restaurant_seed_index": 586,
+    "category_name": "카페,디저트",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 587,
+    "restaurant_seed_index": 587,
+    "category_name": "일식당",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 588,
+    "restaurant_seed_index": 588,
+    "category_name": "요리주점",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 589,
+    "restaurant_seed_index": 589,
+    "category_name": "피자",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 590,
+    "restaurant_seed_index": 590,
+    "category_name": "한식",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 591,
+    "restaurant_seed_index": 591,
+    "category_name": "생선회",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 592,
+    "restaurant_seed_index": 592,
+    "category_name": "중식당",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 593,
+    "restaurant_seed_index": 593,
+    "category_name": "닭갈비",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 594,
+    "restaurant_seed_index": 594,
+    "category_name": "중식당",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 595,
+    "restaurant_seed_index": 595,
+    "category_name": "베이커리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 596,
+    "restaurant_seed_index": 596,
+    "category_name": "돼지고기구이",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 597,
+    "restaurant_seed_index": 597,
+    "category_name": "술집",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 598,
+    "restaurant_seed_index": 598,
+    "category_name": "육류,고기요리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 599,
+    "restaurant_seed_index": 599,
+    "category_name": "생선회",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 600,
+    "restaurant_seed_index": 600,
+    "category_name": "치킨,닭강정",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 601,
+    "restaurant_seed_index": 601,
+    "category_name": "일식당",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 602,
+    "restaurant_seed_index": 602,
+    "category_name": "치킨,닭강정",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 603,
+    "restaurant_seed_index": 603,
+    "category_name": "브런치카페",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 604,
+    "restaurant_seed_index": 604,
+    "category_name": "베이커리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 605,
+    "restaurant_seed_index": 605,
+    "category_name": "베이커리",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 606,
+    "restaurant_seed_index": 606,
+    "category_name": "치킨,닭강정",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 607,
+    "restaurant_seed_index": 607,
+    "category_name": "치킨,닭강정",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 608,
+    "restaurant_seed_index": 608,
+    "category_name": "치킨,닭강정",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 609,
+    "restaurant_seed_index": 609,
+    "category_name": "치킨,닭강정",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 610,
+    "restaurant_seed_index": 610,
+    "category_name": "치킨,닭강정",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 611,
+    "restaurant_seed_index": 611,
+    "category_name": "치킨,닭강정",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 612,
+    "restaurant_seed_index": 612,
+    "category_name": "생선회",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 613,
+    "restaurant_seed_index": 613,
+    "category_name": "카페,디저트",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 614,
+    "restaurant_seed_index": 614,
+    "category_name": "햄버거",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 615,
+    "restaurant_seed_index": 615,
+    "category_name": "카페,디저트",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  },
+  {
+    "seed_index": 616,
+    "restaurant_seed_index": 616,
+    "category_name": "카페,디저트",
+    "created_at": "NOW()",
+    "updated_at": "NOW()"
+  }
+]
