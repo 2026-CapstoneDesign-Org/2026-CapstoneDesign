@@ -1,4 +1,4 @@
-package com.example.Capstone.service;
+package com.example.Capstone.runner;
 
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 
 import com.example.Capstone.dto.request.ImportRestaurantSeedRequest;
 import com.example.Capstone.dto.response.RestaurantSeedImportResponse;
+import com.example.Capstone.service.RestaurantSeedImportService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

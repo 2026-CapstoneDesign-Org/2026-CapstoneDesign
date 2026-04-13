@@ -9,6 +9,13 @@ import java.util.Set;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import com.example.Capstone.recommendation.model.list.ListRecommendationFeature;
+import com.example.Capstone.recommendation.model.list.ListRecommendationScoreComponents;
+import com.example.Capstone.recommendation.model.list.ListRecommendationUserProfile;
+import com.example.Capstone.recommendation.model.list.OwnerFeature;
+import com.example.Capstone.recommendation.model.list.ScoreVector;
+import com.example.Capstone.recommendation.scorer.ListRecommendationScorer;
+
 class ListRecommendationScorerTest {
 
     private final ListRecommendationScorer scorer = new ListRecommendationScorer();

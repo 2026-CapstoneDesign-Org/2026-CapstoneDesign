@@ -1,4 +1,4 @@
-package com.example.Capstone.service;
+package com.example.Capstone.client;
 
 import java.util.List;
 

@@ -1,8 +1,13 @@
-package com.example.Capstone.service;
+package com.example.Capstone.recommendation.scorer;
 
 import java.util.Map;
 
 import org.springframework.stereotype.Component;
+
+import com.example.Capstone.recommendation.model.list.ListRecommendationFeature;
+import com.example.Capstone.recommendation.model.list.ListRecommendationScoreComponents;
+import com.example.Capstone.recommendation.model.list.ListRecommendationUserProfile;
+import com.example.Capstone.recommendation.model.list.ScoreVector;
 
 @Component
 public class ListRecommendationScorer {

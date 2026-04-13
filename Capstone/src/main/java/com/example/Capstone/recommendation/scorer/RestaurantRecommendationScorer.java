@@ -1,4 +1,4 @@
-package com.example.Capstone.service;
+package com.example.Capstone.recommendation.scorer;
 
 import java.util.HashSet;
 import java.util.List;
@@ -6,6 +6,11 @@ import java.util.Map;
 import java.util.Set;
 
 import org.springframework.stereotype.Component;
+
+import com.example.Capstone.recommendation.model.restaurant.LikedRestaurantFeature;
+import com.example.Capstone.recommendation.model.restaurant.RecommendationScoreComponents;
+import com.example.Capstone.recommendation.model.restaurant.RestaurantFeature;
+import com.example.Capstone.recommendation.model.restaurant.UserPreferenceProfile;
 
 @Component
 public class RestaurantRecommendationScorer {
