@@ -12,21 +12,23 @@ import io.swagger.v3.oas.models.security.SecurityScheme;
 @Configuration
 public class SwaggerConfig {
 
+    public static final String BEARER_SCHEME = "Bearer Authentication";
+
     @Bean
     public OpenAPI customOpenAPI() {
         return new OpenAPI()
                 .info(new Info()
                         .title("Capstone API")
                         .version("v1.0.0")
-                        .description("Capstone API 문서"))
-                // ── 아래 추가 ──────────────────────────
-                .addSecurityItem(new SecurityRequirement().addList("Bearer Authentication"))
+                        .description("API documentation for the Capstone backend."))
+                .addSecurityItem(new SecurityRequirement().addList(BEARER_SCHEME))
                 .components(new Components()
-                        .addSecuritySchemes("Bearer Authentication",
+                        .addSecuritySchemes(
+                                BEARER_SCHEME,
                                 new SecurityScheme()
                                         .type(SecurityScheme.Type.HTTP)
                                         .scheme("bearer")
                                         .bearerFormat("JWT")
-                                        .description("JWT 토큰 입력")));
+                                        .description("Enter a JWT access token in bearer format.")));
     }
 }
