@@ -16,7 +16,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.example.Capstone.domain.ListRestaurant;
 import com.example.Capstone.domain.Restaurant;
-import com.example.Capstone.domain.RestaurantCategory;
 import com.example.Capstone.domain.User;
 import com.example.Capstone.domain.UserList;
 
@@ -29,9 +28,6 @@ class RestaurantRankingRepositoryTest {
     private RestaurantRepository restaurantRepository;
 
     @Autowired
-    private RestaurantCategoryRepository restaurantCategoryRepository;
-
-    @Autowired
     private UserRepository userRepository;
 
     @Autowired
@@ -41,7 +37,7 @@ class RestaurantRankingRepositoryTest {
     private ListRestaurantRepository listRestaurantRepository;
 
     @Test
-    @DisplayName("비공개 리스트를 포함하고 동일 사용자-동일 식당은 최고 점수 1회만 반영한다")
+    @DisplayName("鍮꾧났媛?由ъ뒪?몃? ?ы븿?섍퀬 ?숈씪 ?ъ슜???숈씪 ?앸떦? 理쒓퀬 ?먯닔 1?뚮쭔 諛섏쁺?쒕떎")
     void includesPrivateListAndUsesBestScorePerUserRestaurant() {
         String region = unique("ranking-region-best");
         String category = unique("ranking-category-best");
@@ -76,7 +72,7 @@ class RestaurantRankingRepositoryTest {
     }
 
     @Test
-    @DisplayName("region/category/hide/delete 필터를 적용하고 최종 동점은 restaurant id 오름차순으로 정렬한다")
+    @DisplayName("region/category/hide/delete ?꾪꽣瑜??곸슜?섍퀬 理쒖쥌 ?숈젏? restaurant id ?ㅻ쫫李⑥닚?쇰줈 ?뺣젹?쒕떎")
     void appliesFiltersAndResolvesFinalTieByRestaurantId() {
         String region = unique("ranking-region-filter");
         String category = unique("ranking-category-filter");
@@ -131,7 +127,7 @@ class RestaurantRankingRepositoryTest {
     }
 
     @Test
-    @DisplayName("limit만큼만 상위 랭킹을 반환한다")
+    @DisplayName("limit留뚰겮留??곸쐞 ??궧??諛섑솚?쒕떎")
     void respectsLimit() {
         String region = unique("ranking-region-limit");
         String category = unique("ranking-category-limit");
@@ -163,7 +159,7 @@ class RestaurantRankingRepositoryTest {
     }
 
     @Test
-    @DisplayName("평가 수가 많은 식당이 보정 점수에서 유리해질 수 있다")
+    @DisplayName("?됯? ?섍? 留롮? ?앸떦??蹂댁젙 ?먯닔?먯꽌 ?좊━?댁쭏 ???덈떎")
     void reflectsAdjustedScoreByEvaluationCount() {
         String region = unique("ranking-region-adj");
         String category = unique("ranking-category-ad");
@@ -212,25 +208,21 @@ class RestaurantRankingRepositoryTest {
     private Restaurant saveRestaurant(String nameSuffix, String regionName, String categoryName) {
         Restaurant restaurant = Restaurant.builder()
                 .name(unique(nameSuffix))
-                .address("주소")
+                .address("二쇱냼")
+                .categoryName(categoryName)
                 .regionName(regionName)
                 .lat(new BigDecimal("37.1000000"))
                 .lng(new BigDecimal("127.1000000"))
                 .imageUrl("image")
                 .build();
-        Restaurant saved = restaurantRepository.save(restaurant);
-        restaurantCategoryRepository.save(RestaurantCategory.builder()
-                .restaurant(saved)
-                .categoryName(categoryName)
-                .build());
-        return saved;
+        return restaurantRepository.save(restaurant);
     }
 
     private UserList saveList(User user, String regionName, boolean isPublic) {
         UserList userList = UserList.builder()
                 .user(user)
                 .title(unique("list"))
-                .description("설명")
+                .description("?ㅻ챸")
                 .regionName(regionName)
                 .build();
         userList.setPublic(isPublic);

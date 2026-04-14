@@ -30,16 +30,14 @@ public class SeedImportRunner implements ApplicationRunner {
 
         RestaurantSeedImportResponse response = restaurantSeedImportService.importSeed(new ImportRestaurantSeedRequest(
                 environment.getProperty("seed.import.restaurants-file-path"),
-                environment.getProperty("seed.import.categories-file-path"),
                 environment.getProperty("seed.import.menu-items-file-path"),
                 environment.getProperty("seed.import.tags-file-path"),
                 environment.getProperty("seed.import.restaurant-tags-file-path")
         ));
 
         log.info(
-                "seed import completed: restaurants={} categories={} menuItems={} tags={} restaurantTags={} createdRestaurants={} updatedRestaurants={}",
+                "seed import completed: restaurants={} menuItems={} tags={} restaurantTags={} createdRestaurants={} updatedRestaurants={}",
                 response.totalRestaurantCount(),
-                response.totalCategoryCount(),
                 response.totalMenuItemCount(),
                 response.totalTagCount(),
                 response.totalRestaurantTagCount(),

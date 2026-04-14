@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.example.Capstone.domain.RestaurantCategory;
+import com.example.Capstone.domain.Restaurant;
 import com.example.Capstone.dto.response.ListRecommendationItemResponse;
 import com.example.Capstone.dto.response.ListRecommendationResponse;
 import com.example.Capstone.dto.response.ListRecommendationScoreDetailResponse;
@@ -31,7 +31,7 @@ import com.example.Capstone.repository.ListRecommendationRepository.CandidateLis
 import com.example.Capstone.repository.ListRecommendationRepository.CandidateListSummaryRow;
 import com.example.Capstone.repository.ListRecommendationRepository.OwnerInteractionRow;
 import com.example.Capstone.repository.ListRecommendationRepository.UserListInteractionRow;
-import com.example.Capstone.repository.RestaurantCategoryRepository;
+import com.example.Capstone.repository.RestaurantRepository;
 import com.example.Capstone.repository.UserRepository;
 
 import jakarta.persistence.EntityNotFoundException;
@@ -53,8 +53,8 @@ public class ListRecommendationService {
     private static final double FALLBACK_REGION_SCORE = 0.65;
 
     private final UserRepository userRepository;
+    private final RestaurantRepository restaurantRepository;
     private final ListRecommendationRepository listRecommendationRepository;
-    private final RestaurantCategoryRepository restaurantCategoryRepository;
     private final ListRecommendationScorer listRecommendationScorer;
 
     public ListRecommendationResponse getListRecommendations(Long userId) {
@@ -460,11 +460,8 @@ public class ListRecommendationService {
         }
 
         Map<Long, List<String>> categoryMap = new LinkedHashMap<>();
-        for (RestaurantCategory category : restaurantCategoryRepository
-                .findAllByRestaurantIdInOrderByRestaurantIdAscCategoryNameAsc(restaurantIds)) {
-            Long restaurantId = category.getRestaurant().getId();
-            categoryMap.computeIfAbsent(restaurantId, ignored -> new ArrayList<>())
-                    .add(category.getCategoryName());
+        for (Restaurant restaurant : restaurantRepository.findAllById(restaurantIds)) {
+            categoryMap.put(restaurant.getId(), restaurant.getCategoryNames());
         }
         return categoryMap;
     }

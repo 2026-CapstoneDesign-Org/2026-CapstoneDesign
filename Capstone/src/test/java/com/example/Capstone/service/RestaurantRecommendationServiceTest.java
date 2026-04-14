@@ -29,17 +29,16 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.example.Capstone.domain.Restaurant;
-import com.example.Capstone.domain.RestaurantCategory;
 import com.example.Capstone.domain.User;
 import com.example.Capstone.dto.response.RestaurantRecommendationResponse;
 import com.example.Capstone.recommendation.model.restaurant.RecommendationScoreComponents;
 import com.example.Capstone.recommendation.model.restaurant.RestaurantFeature;
 import com.example.Capstone.recommendation.scorer.RestaurantRecommendationScorer;
-import com.example.Capstone.repository.RestaurantCategoryRepository;
 import com.example.Capstone.repository.RestaurantRecommendationRepository;
 import com.example.Capstone.repository.RestaurantRecommendationRepository.CandidateRestaurantRow;
 import com.example.Capstone.repository.RestaurantRecommendationRepository.RankingSignalRow;
 import com.example.Capstone.repository.RestaurantRecommendationRepository.UserInteractionRow;
+import com.example.Capstone.repository.RestaurantRepository;
 import com.example.Capstone.repository.UserRepository;
 
 @ExtendWith(MockitoExtension.class)
@@ -49,10 +48,10 @@ class RestaurantRecommendationServiceTest {
     private UserRepository userRepository;
 
     @Mock
-    private RestaurantRecommendationRepository restaurantRecommendationRepository;
+    private RestaurantRepository restaurantRepository;
 
     @Mock
-    private RestaurantCategoryRepository restaurantCategoryRepository;
+    private RestaurantRecommendationRepository restaurantRecommendationRepository;
 
     @Mock
     private RestaurantRecommendationScorer restaurantRecommendationScorer;
@@ -61,20 +60,20 @@ class RestaurantRecommendationServiceTest {
     private RestaurantRecommendationService restaurantRecommendationService;
 
     @Test
-    @DisplayName("동일 지역 후보가 4개 이상이면 fallback 없이 상위 4개를 반환한다")
+    @DisplayName("returns same-region top four without fallback")
     void returnsTopFourFromSameRegionWithoutFallback() {
         Long userId = 1L;
         when(userRepository.findByIdAndIsDeletedFalse(userId)).thenReturn(Optional.of(user(userId)));
         when(restaurantRecommendationRepository.findUserInteractions(userId)).thenReturn(List.of(
-                new UserInteractionRow(10L, "서울", new BigDecimal("90.0"), LocalDateTime.of(2026, 4, 12, 9, 0)),
-                new UserInteractionRow(11L, "서울", new BigDecimal("80.0"), LocalDateTime.of(2026, 4, 12, 8, 0))
+                new UserInteractionRow(10L, "region-a", new BigDecimal("90.0"), LocalDateTime.of(2026, 4, 12, 9, 0)),
+                new UserInteractionRow(11L, "region-a", new BigDecimal("80.0"), LocalDateTime.of(2026, 4, 12, 8, 0))
         ));
-        when(restaurantRecommendationRepository.findSameRegionCandidates(userId, "서울", 200, 5)).thenReturn(List.of(
-                candidate(101L, "서울"),
-                candidate(102L, "서울"),
-                candidate(103L, "서울"),
-                candidate(104L, "서울"),
-                candidate(105L, "서울")
+        when(restaurantRecommendationRepository.findSameRegionCandidates(userId, "region-a", 200, 5)).thenReturn(List.of(
+                candidate(101L, "region-a"),
+                candidate(102L, "region-a"),
+                candidate(103L, "region-a"),
+                candidate(104L, "region-a"),
+                candidate(105L, "region-a")
         ));
         when(restaurantRecommendationRepository.findRankingSignals(anyList(), eq(5))).thenReturn(List.of(
                 ranking(101L, "90.0", 20L),
@@ -95,7 +94,7 @@ class RestaurantRecommendationServiceTest {
 
         RestaurantRecommendationResponse response = restaurantRecommendationService.getRestaurantRecommendations(userId);
 
-        assertEquals("서울", response.baseRegionName());
+        assertEquals("region-a", response.baseRegionName());
         assertEquals(4, response.items().size());
         assertEquals(101L, response.items().get(0).restaurantId());
         assertEquals(104L, response.items().get(3).restaurantId());
@@ -104,20 +103,20 @@ class RestaurantRecommendationServiceTest {
     }
 
     @Test
-    @DisplayName("동일 지역 후보가 4개 미만이면 fallback 후보를 추가해 4개를 채운다")
+    @DisplayName("adds fallback candidates when same-region candidates are insufficient")
     void addsFallbackCandidatesWhenSameRegionIsInsufficient() {
         Long userId = 1L;
         when(userRepository.findByIdAndIsDeletedFalse(userId)).thenReturn(Optional.of(user(userId)));
         when(restaurantRecommendationRepository.findUserInteractions(userId)).thenReturn(List.of(
-                new UserInteractionRow(10L, "서울", new BigDecimal("90.0"), LocalDateTime.of(2026, 4, 12, 9, 0))
+                new UserInteractionRow(10L, "region-a", new BigDecimal("90.0"), LocalDateTime.of(2026, 4, 12, 9, 0))
         ));
-        when(restaurantRecommendationRepository.findSameRegionCandidates(userId, "서울", 200, 5)).thenReturn(List.of(
-                candidate(101L, "서울"),
-                candidate(102L, "서울")
+        when(restaurantRecommendationRepository.findSameRegionCandidates(userId, "region-a", 200, 5)).thenReturn(List.of(
+                candidate(101L, "region-a"),
+                candidate(102L, "region-a")
         ));
-        when(restaurantRecommendationRepository.findFallbackCandidates(userId, "서울", 100, 5)).thenReturn(List.of(
-                candidate(201L, "부산"),
-                candidate(202L, "대구")
+        when(restaurantRecommendationRepository.findFallbackCandidates(userId, "region-a", 100, 5)).thenReturn(List.of(
+                candidate(201L, "region-b"),
+                candidate(202L, "region-c")
         ));
         when(restaurantRecommendationRepository.findRankingSignals(anyList(), eq(5))).thenReturn(List.of(
                 ranking(101L, "90.0", 20L),
@@ -139,12 +138,17 @@ class RestaurantRecommendationServiceTest {
         assertEquals(4, response.items().size());
         assertFalse(response.items().get(0).fallbackRegion());
         assertTrue(response.items().get(2).fallbackRegion());
-        verify(restaurantRecommendationRepository).findFallbackCandidates(userId, "서울", 100, 5);
-        verify(restaurantRecommendationScorer).score(any(), argThat(feature -> feature.restaurantId().equals(201L)), anyDouble(), eq(0.55));
+        verify(restaurantRecommendationRepository).findFallbackCandidates(userId, "region-a", 100, 5);
+        verify(restaurantRecommendationScorer).score(
+                any(),
+                argThat(feature -> feature.restaurantId().equals(201L)),
+                anyDouble(),
+                eq(0.55)
+        );
     }
 
     @Test
-    @DisplayName("사용자 상호작용 데이터가 없으면 빈 추천 결과를 반환한다")
+    @DisplayName("returns empty response when no interactions exist")
     void returnsEmptyResponseWhenNoInteractionsExist() {
         Long userId = 1L;
         when(userRepository.findByIdAndIsDeletedFalse(userId)).thenReturn(Optional.of(user(userId)));
@@ -157,26 +161,26 @@ class RestaurantRecommendationServiceTest {
     }
 
     private void mockCategoryLookup() {
-        List<RestaurantCategory> categories = List.of(
-                category(10L, "한식"),
-                category(11L, "카페"),
-                category(101L, "한식"),
-                category(102L, "한식"),
-                category(103L, "한식"),
-                category(104L, "한식"),
-                category(105L, "한식"),
-                category(201L, "한식"),
-                category(202L, "한식")
+        List<Restaurant> restaurants = List.of(
+                restaurant(10L, "category-a"),
+                restaurant(11L, "category-b"),
+                restaurant(101L, "category-a"),
+                restaurant(102L, "category-a"),
+                restaurant(103L, "category-a"),
+                restaurant(104L, "category-a"),
+                restaurant(105L, "category-a"),
+                restaurant(201L, "category-a"),
+                restaurant(202L, "category-a")
         );
 
-        when(restaurantCategoryRepository.findAllByRestaurantIdInOrderByRestaurantIdAscCategoryNameAsc(anyList()))
+        when(restaurantRepository.findAllById(anyList()))
                 .thenAnswer(invocation -> {
                     @SuppressWarnings("unchecked")
                     List<Long> ids = (List<Long>) invocation.getArgument(0);
-                    List<RestaurantCategory> filtered = new ArrayList<>();
-                    for (RestaurantCategory category : categories) {
-                        if (ids.contains(category.getRestaurant().getId())) {
-                            filtered.add(category);
+                    List<Restaurant> filtered = new ArrayList<>();
+                    for (Restaurant restaurant : restaurants) {
+                        if (ids.contains(restaurant.getId())) {
+                            filtered.add(restaurant);
                         }
                     }
                     return filtered;
@@ -200,7 +204,7 @@ class RestaurantRecommendationServiceTest {
     }
 
     private CandidateRestaurantRow candidate(Long restaurantId, String regionName) {
-        return new CandidateRestaurantRow(restaurantId, "식당-" + restaurantId, "주소", regionName, "image-" + restaurantId);
+        return new CandidateRestaurantRow(restaurantId, "restaurant-" + restaurantId, "address", regionName, "image-" + restaurantId);
     }
 
     private RankingSignalRow ranking(Long restaurantId, String adjustedScore, Long evaluationCount) {
@@ -212,23 +216,18 @@ class RestaurantRecommendationServiceTest {
         );
     }
 
-    private RestaurantCategory category(Long restaurantId, String categoryName) {
+    private Restaurant restaurant(Long restaurantId, String categoryName) {
         Restaurant restaurant = Restaurant.builder()
-                .name("식당")
-                .address("주소")
-                .regionName("서울")
+                .name("restaurant")
+                .address("address")
+                .categoryName(categoryName)
+                .regionName("region-a")
                 .imageUrl("image")
                 .lat(new BigDecimal("37.0"))
                 .lng(new BigDecimal("127.0"))
                 .build();
         ReflectionTestUtils.setField(restaurant, "id", restaurantId);
-
-        RestaurantCategory category = RestaurantCategory.builder()
-                .restaurant(restaurant)
-                .categoryName(categoryName)
-                .build();
-        ReflectionTestUtils.setField(category, "id", restaurantId * 100);
-        return category;
+        return restaurant;
     }
 
     private User user(Long userId) {

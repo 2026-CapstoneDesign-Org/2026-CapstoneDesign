@@ -305,7 +305,7 @@ public class RestaurantRecommendationRepositoryImpl implements RestaurantRecomme
                 select
                     r.id as restaurant_id,
                     r.name as restaurant_name,
-                    r.address,
+                    coalesce(r.road_address, r.address) as address,
                     r.region_name,
                     r.image_url,
                     (

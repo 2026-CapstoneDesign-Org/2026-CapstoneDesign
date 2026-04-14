@@ -13,7 +13,7 @@ import com.example.Capstone.recommendation.model.restaurant.RestaurantFeature;
 import com.example.Capstone.recommendation.model.restaurant.UserPreferenceProfile;
 
 @Component
-public class RestaurantRecommendationScorer {
+public class  RestaurantRecommendationScorer {
 
     static final double USER_PREFERENCE_WEIGHT = 0.45;
     static final double CATEGORY_FIT_WEIGHT = 0.20;

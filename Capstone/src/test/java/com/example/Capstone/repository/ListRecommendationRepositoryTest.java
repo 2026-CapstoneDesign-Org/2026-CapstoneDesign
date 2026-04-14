@@ -16,7 +16,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.example.Capstone.domain.ListRestaurant;
 import com.example.Capstone.domain.Restaurant;
-import com.example.Capstone.domain.RestaurantCategory;
 import com.example.Capstone.domain.User;
 import com.example.Capstone.domain.UserList;
 
@@ -32,9 +31,6 @@ class ListRecommendationRepositoryTest {
     private RestaurantRepository restaurantRepository;
 
     @Autowired
-    private RestaurantCategoryRepository restaurantCategoryRepository;
-
-    @Autowired
     private UserRepository userRepository;
 
     @Autowired
@@ -44,7 +40,7 @@ class ListRecommendationRepositoryTest {
     private ListRestaurantRepository listRestaurantRepository;
 
     @Test
-    @DisplayName("same-region 후보는 public/visible/타인 리스트만 포함하고 fallback은 다른 지역 공개 리스트만 반환한다")
+    @DisplayName("same-region ?꾨낫??public/visible/???由ъ뒪?몃쭔 ?ы븿?섍퀬 fallback? ?ㅻⅨ 吏??怨듦컻 由ъ뒪?몃쭔 諛섑솚?쒕떎")
     void filtersCandidateListsByVisibilityAndRegion() {
         String region = unique("list-rec-region");
         String fallbackRegion = unique("list-rec-other");
@@ -102,7 +98,7 @@ class ListRecommendationRepositoryTest {
     }
 
     @Test
-    @DisplayName("owner interaction 조회는 overlap이 최소 기준 이상인 소유자만 반환한다")
+    @DisplayName("owner interaction 議고쉶??overlap??理쒖냼 湲곗? ?댁긽???뚯쑀?먮쭔 諛섑솚?쒕떎")
     void returnsOnlyOwnersMeetingMinimumOverlap() {
         String region = unique("owner-overlap-region");
         String category = unique("owner-overlap-cat");
@@ -174,25 +170,21 @@ class ListRecommendationRepositoryTest {
     private Restaurant saveRestaurant(String nameSuffix, String regionName, String categoryName) {
         Restaurant restaurant = Restaurant.builder()
                 .name(unique(nameSuffix))
-                .address("주소")
+                .address("二쇱냼")
+                .categoryName(categoryName)
                 .regionName(regionName)
                 .lat(new BigDecimal("37.1000000"))
                 .lng(new BigDecimal("127.1000000"))
                 .imageUrl("image")
                 .build();
-        Restaurant saved = restaurantRepository.save(restaurant);
-        restaurantCategoryRepository.save(RestaurantCategory.builder()
-                .restaurant(saved)
-                .categoryName(categoryName)
-                .build());
-        return saved;
+        return restaurantRepository.save(restaurant);
     }
 
     private UserList saveList(User user, String regionName, boolean isPublic) {
         UserList userList = UserList.builder()
                 .user(user)
                 .title(unique("list"))
-                .description("설명")
+                .description("?ㅻ챸")
                 .regionName(regionName)
                 .build();
         userList.setPublic(isPublic);

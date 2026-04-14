@@ -5,23 +5,18 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-
-import com.fasterxml.jackson.databind.JsonNode;
-
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EntityListeners;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import com.example.Capstone.domain.base.BaseTimeEntity;
+import com.example.Capstone.domain.converter.StringListJsonConverter;
+
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -31,8 +26,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "restaurants")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@EntityListeners(AuditingEntityListener.class)
-public class Restaurant {
+public class Restaurant extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -43,6 +37,12 @@ public class Restaurant {
 
     @Column(nullable = false, length = 255)
     private String address;
+
+    @Column(length = 255)
+    private String roadAddress;
+
+    @Column(length = 100)
+    private String categoryName;
 
     @Column(nullable = false, length = 50)
     private String regionName;
@@ -56,8 +56,11 @@ public class Restaurant {
     @Column(length = 50)
     private String regionCountyName;
 
-    @JdbcTypeCode(SqlTypes.JSON)
-    @Column(columnDefinition = "jsonb")
+    @Column(length = 50)
+    private String regionTownName;
+
+    @Convert(converter = StringListJsonConverter.class)
+    @Column(columnDefinition = "text")
     private List<String> regionFilterNames = new ArrayList<>();
 
     @Column(precision = 10, scale = 7)
@@ -72,10 +75,6 @@ public class Restaurant {
     @Column(length = 100, unique = true)
     private String pcmapPlaceId;
 
-    @JdbcTypeCode(SqlTypes.JSON)
-    @Column(columnDefinition = "jsonb")
-    private JsonNode menuJson;
-
     @Column
     private LocalDateTime menuUpdatedAt;
 
@@ -85,19 +84,8 @@ public class Restaurant {
     @Column(nullable = false)
     private Boolean isDeleted = false;
 
-    @CreatedDate
-    @Column(nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
-    @LastModifiedDate
-    @Column(nullable = false)
-    private LocalDateTime updatedAt;
-
     @Column
     private LocalDateTime deletedAt;
-
-    @OneToMany(mappedBy = "restaurant", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<RestaurantCategory> categories = new ArrayList<>();
 
     @OneToMany(mappedBy = "restaurant", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<RestaurantMenuItem> menuItems = new ArrayList<>();
@@ -121,26 +109,52 @@ public class Restaurant {
         this.imageUrl = imageUrl;
     }
 
+    public void updateSeedAddress(String address, String roadAddress) {
+        this.address = address;
+        this.roadAddress = roadAddress;
+    }
+
+    public void updateCategoryName(String categoryName) {
+        this.categoryName = categoryName == null || categoryName.isBlank()
+                ? null
+                : categoryName.trim();
+    }
+
     public void updateSeedRegionInfo(
             String regionName,
             String regionCityName,
             String regionDistrictName,
             String regionCountyName,
+            String regionTownName,
             List<String> regionFilterNames
     ) {
         this.regionName = regionName;
         this.regionCityName = regionCityName;
         this.regionDistrictName = regionDistrictName;
         this.regionCountyName = regionCountyName;
+        this.regionTownName = regionTownName;
         this.regionFilterNames = regionFilterNames == null
                 ? new ArrayList<>()
                 : new ArrayList<>(regionFilterNames);
     }
 
-    public void updateSeedMetadata(String pcmapPlaceId, JsonNode menuJson, LocalDateTime menuUpdatedAt) {
+    public void updateSeedMetadata(String pcmapPlaceId, LocalDateTime menuUpdatedAt) {
         this.pcmapPlaceId = pcmapPlaceId;
-        this.menuJson = menuJson;
         this.menuUpdatedAt = menuUpdatedAt;
+    }
+
+    public List<String> getCategoryNames() {
+        if (categoryName == null || categoryName.isBlank()) {
+            return List.of();
+        }
+        return List.of(categoryName);
+    }
+
+    public String getDisplayAddress() {
+        if (roadAddress != null && !roadAddress.isBlank()) {
+            return roadAddress;
+        }
+        return address;
     }
 
     public void hide() {
@@ -160,24 +174,29 @@ public class Restaurant {
     private Restaurant(
             String name,
             String address,
+            String roadAddress,
+            String categoryName,
             String regionName,
             String regionCityName,
             String regionDistrictName,
             String regionCountyName,
+            String regionTownName,
             List<String> regionFilterNames,
             BigDecimal lat,
             BigDecimal lng,
             String imageUrl,
             String pcmapPlaceId,
-            JsonNode menuJson,
             LocalDateTime menuUpdatedAt
     ) {
         this.name = name;
         this.address = address;
+        this.roadAddress = roadAddress;
+        this.categoryName = categoryName;
         this.regionName = regionName;
         this.regionCityName = regionCityName;
         this.regionDistrictName = regionDistrictName;
         this.regionCountyName = regionCountyName;
+        this.regionTownName = regionTownName;
         this.regionFilterNames = regionFilterNames == null
                 ? new ArrayList<>()
                 : new ArrayList<>(regionFilterNames);
@@ -185,7 +204,6 @@ public class Restaurant {
         this.lng = lng;
         this.imageUrl = imageUrl;
         this.pcmapPlaceId = pcmapPlaceId;
-        this.menuJson = menuJson;
         this.menuUpdatedAt = menuUpdatedAt;
         this.isHidden = false;
         this.isDeleted = false;

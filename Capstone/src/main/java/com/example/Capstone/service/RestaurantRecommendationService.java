@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.example.Capstone.domain.RestaurantCategory;
+import com.example.Capstone.domain.Restaurant;
 import com.example.Capstone.dto.response.RestaurantRecommendationItemResponse;
 import com.example.Capstone.dto.response.RestaurantRecommendationResponse;
 import com.example.Capstone.recommendation.model.restaurant.LikedRestaurantFeature;
@@ -24,12 +24,12 @@ import com.example.Capstone.recommendation.model.restaurant.RecommendationScoreC
 import com.example.Capstone.recommendation.model.restaurant.RestaurantFeature;
 import com.example.Capstone.recommendation.model.restaurant.UserPreferenceProfile;
 import com.example.Capstone.recommendation.scorer.RestaurantRecommendationScorer;
-import com.example.Capstone.repository.RestaurantCategoryRepository;
 import com.example.Capstone.repository.RestaurantRecommendationRepository;
 import com.example.Capstone.repository.RestaurantRecommendationRepository.CandidateRestaurantRow;
 import com.example.Capstone.repository.RestaurantRecommendationRepository.NeighborInteractionRow;
 import com.example.Capstone.repository.RestaurantRecommendationRepository.RankingSignalRow;
 import com.example.Capstone.repository.RestaurantRecommendationRepository.UserInteractionRow;
+import com.example.Capstone.repository.RestaurantRepository;
 import com.example.Capstone.repository.UserRepository;
 
 import jakarta.persistence.EntityNotFoundException;
@@ -52,8 +52,8 @@ public class RestaurantRecommendationService {
     private static final double FALLBACK_REGION_SCORE = 0.55;
 
     private final UserRepository userRepository;
+    private final RestaurantRepository restaurantRepository;
     private final RestaurantRecommendationRepository restaurantRecommendationRepository;
-    private final RestaurantCategoryRepository restaurantCategoryRepository;
     private final RestaurantRecommendationScorer restaurantRecommendationScorer;
 
     public RestaurantRecommendationResponse getRestaurantRecommendations(Long userId) {
@@ -387,11 +387,8 @@ public class RestaurantRecommendationService {
         }
 
         Map<Long, List<String>> categoryMap = new LinkedHashMap<>();
-        for (RestaurantCategory category : restaurantCategoryRepository
-                .findAllByRestaurantIdInOrderByRestaurantIdAscCategoryNameAsc(restaurantIds)) {
-            Long restaurantId = category.getRestaurant().getId();
-            categoryMap.computeIfAbsent(restaurantId, ignored -> new ArrayList<>())
-                    .add(category.getCategoryName());
+        for (Restaurant restaurant : restaurantRepository.findAllById(restaurantIds)) {
+            categoryMap.put(restaurant.getId(), restaurant.getCategoryNames());
         }
         return categoryMap;
     }

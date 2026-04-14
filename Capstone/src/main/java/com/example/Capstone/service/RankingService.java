@@ -9,11 +9,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.example.Capstone.domain.RestaurantCategory;
+import com.example.Capstone.domain.Restaurant;
 import com.example.Capstone.dto.response.RestaurantRankingItemResponse;
 import com.example.Capstone.dto.response.RestaurantRankingResponse;
 import com.example.Capstone.exception.BusinessException;
-import com.example.Capstone.repository.RestaurantCategoryRepository;
 import com.example.Capstone.repository.RestaurantRankingRow;
 import com.example.Capstone.repository.RestaurantRepository;
 
@@ -29,7 +28,6 @@ public class RankingService {
     private static final int SMOOTHING_CONSTANT = 5;
 
     private final RestaurantRepository restaurantRepository;
-    private final RestaurantCategoryRepository restaurantCategoryRepository;
 
     public RestaurantRankingResponse getRestaurantRankings(String regionName, String category, Integer limit) {
         String normalizedRegionName = normalize(regionName);
@@ -84,11 +82,8 @@ public class RankingService {
                 .toList();
 
         Map<Long, List<String>> categoryMap = new HashMap<>();
-        for (RestaurantCategory category : restaurantCategoryRepository
-                .findAllByRestaurantIdInOrderByRestaurantIdAscCategoryNameAsc(restaurantIds)) {
-            Long restaurantId = category.getRestaurant().getId();
-            categoryMap.computeIfAbsent(restaurantId, ignored -> new java.util.ArrayList<>())
-                    .add(category.getCategoryName());
+        for (Restaurant restaurant : restaurantRepository.findAllById(restaurantIds)) {
+            categoryMap.put(restaurant.getId(), restaurant.getCategoryNames());
         }
         return categoryMap;
     }

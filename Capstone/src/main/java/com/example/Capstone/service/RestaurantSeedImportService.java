@@ -1,14 +1,13 @@
 package com.example.Capstone.service;
 
-import java.io.IOException;
 import java.math.BigDecimal;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -19,21 +18,18 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.Capstone.domain.Restaurant;
-import com.example.Capstone.domain.RestaurantCategory;
 import com.example.Capstone.domain.RestaurantMenuItem;
 import com.example.Capstone.domain.RestaurantTag;
 import com.example.Capstone.domain.Tag;
 import com.example.Capstone.dto.request.ImportRestaurantSeedRequest;
 import com.example.Capstone.dto.response.RestaurantSeedImportResponse;
-import com.example.Capstone.repository.RestaurantCategoryRepository;
 import com.example.Capstone.repository.RestaurantMenuItemRepository;
 import com.example.Capstone.repository.RestaurantRepository;
 import com.example.Capstone.repository.RestaurantTagRepository;
 import com.example.Capstone.repository.TagRepository;
+import com.example.Capstone.service.seed.RestaurantSeedFileLoader;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -46,68 +42,52 @@ public class RestaurantSeedImportService {
     private static final BigDecimal MAX_REASONABLE_MENU_PRICE = new BigDecimal("10000000");
 
     private static final Path DEFAULT_RESTAURANTS_FILE_PATH = Path.of("seed-data", "restaurants-seed-preview.json");
-    private static final Path DEFAULT_CATEGORIES_FILE_PATH = Path.of("seed-data", "restaurant-categories-seed-preview.json");
     private static final Path DEFAULT_MENU_ITEMS_FILE_PATH = Path.of("seed-data", "restaurant-menu-items-seed-preview.json");
     private static final Path DEFAULT_TAGS_FILE_PATH = Path.of("seed-data", "tags-seed-preview.json");
     private static final Path DEFAULT_RESTAURANT_TAGS_FILE_PATH = Path.of("seed-data", "restaurant-tags-seed-preview.json");
 
     private final RestaurantRepository restaurantRepository;
-    private final RestaurantCategoryRepository restaurantCategoryRepository;
     private final RestaurantMenuItemRepository restaurantMenuItemRepository;
     private final TagRepository tagRepository;
     private final RestaurantTagRepository restaurantTagRepository;
-    private final ObjectMapper objectMapper;
+    private final RestaurantSeedFileLoader restaurantSeedFileLoader;
 
     @Transactional
     public RestaurantSeedImportResponse importSeed(ImportRestaurantSeedRequest request) {
-        Path restaurantsPath = resolvePath(
+        Path restaurantsPath = restaurantSeedFileLoader.resolvePath(
                 request == null ? null : request.restaurantsFilePath(),
                 DEFAULT_RESTAURANTS_FILE_PATH
         );
-        Path categoriesPath = resolvePath(
-                request == null ? null : request.categoriesFilePath(),
-                DEFAULT_CATEGORIES_FILE_PATH
-        );
-        Path menuItemsPath = resolvePath(
+        Path menuItemsPath = restaurantSeedFileLoader.resolvePath(
                 request == null ? null : request.menuItemsFilePath(),
                 DEFAULT_MENU_ITEMS_FILE_PATH
         );
-        Path tagsPath = resolvePath(
+        Path tagsPath = restaurantSeedFileLoader.resolvePath(
                 request == null ? null : request.tagsFilePath(),
                 DEFAULT_TAGS_FILE_PATH
         );
-        Path restaurantTagsPath = resolvePath(
+        Path restaurantTagsPath = restaurantSeedFileLoader.resolvePath(
                 request == null ? null : request.restaurantTagsFilePath(),
                 DEFAULT_RESTAURANT_TAGS_FILE_PATH
         );
 
-        List<RestaurantSeedRow> restaurantRows = readSeedRows(
+        List<RestaurantSeedRow> restaurantRows = restaurantSeedFileLoader.readRows(
                 restaurantsPath,
                 new TypeReference<List<RestaurantSeedRow>>() {}
         );
-        List<RestaurantCategorySeedRow> categoryRows = readSeedRows(
-                categoriesPath,
-                new TypeReference<List<RestaurantCategorySeedRow>>() {}
-        );
-        List<RestaurantMenuItemSeedRow> menuItemRows = readSeedRows(
+        List<RestaurantMenuItemSeedRow> menuItemRows = restaurantSeedFileLoader.readRows(
                 menuItemsPath,
                 new TypeReference<List<RestaurantMenuItemSeedRow>>() {}
         );
-        List<TagSeedRow> tagRows = readSeedRows(
+        List<TagSeedRow> tagRows = restaurantSeedFileLoader.readRows(
                 tagsPath,
                 new TypeReference<List<TagSeedRow>>() {}
         );
-        List<RestaurantTagSeedRow> restaurantTagRows = readSeedRows(
+        List<RestaurantTagSeedRow> restaurantTagRows = restaurantSeedFileLoader.readRows(
                 restaurantTagsPath,
                 new TypeReference<List<RestaurantTagSeedRow>>() {}
         );
 
-        Map<Long, List<RestaurantCategorySeedRow>> categoriesBySeedIndex = categoryRows.stream()
-                .collect(Collectors.groupingBy(
-                        RestaurantCategorySeedRow::restaurantSeedIndex,
-                        LinkedHashMap::new,
-                        Collectors.toList()
-                ));
         Map<Long, List<RestaurantMenuItemSeedRow>> menuItemsBySeedIndex = menuItemRows.stream()
                 .collect(Collectors.groupingBy(
                         RestaurantMenuItemSeedRow::restaurantSeedIndex,
@@ -132,10 +112,10 @@ public class RestaurantSeedImportService {
             if (existingRestaurant.isPresent()) {
                 restaurant = existingRestaurant.get();
                 updateRestaurant(restaurant, row);
-                updatedRestaurantCount++;
+                updatedRestaurantCount += 1;
             } else {
                 restaurant = restaurantRepository.save(createRestaurant(row));
-                createdRestaurantCount++;
+                createdRestaurantCount += 1;
             }
 
             restaurantsBySeedIndex.put(row.seedIndex(), restaurant);
@@ -150,44 +130,36 @@ public class RestaurantSeedImportService {
             Optional<Tag> existingTag = tagRepository.findByTagKey(row.tagKey());
             if (existingTag.isPresent()) {
                 Tag tag = existingTag.get();
-                tag.updateInfo(row.tagName(), row.tagType(), normalizedParentTagKey, row.isActive());
+                tag.updateInfo(row.tagName(), normalizedParentTagKey, row.isActive());
                 tagsByKey.put(tag.getTagKey(), tag);
-                updatedTagCount++;
+                updatedTagCount += 1;
             } else {
                 Tag tag = tagRepository.save(Tag.builder()
                         .tagKey(row.tagKey())
                         .tagName(row.tagName())
-                        .tagType(row.tagType())
                         .parentTagKey(normalizedParentTagKey)
                         .isActive(row.isActive())
                         .build());
                 tagsByKey.put(tag.getTagKey(), tag);
-                createdTagCount++;
+                createdTagCount += 1;
             }
         }
 
         synchronizeTags(tagsByKey.keySet());
 
-        int replacedCategoryCount = 0;
         int replacedMenuItemCount = 0;
         int replacedRestaurantTagCount = 0;
 
         for (RestaurantSeedRow row : restaurantRows) {
             Restaurant restaurant = restaurantsBySeedIndex.get(row.seedIndex());
             if (restaurant == null) {
-                throw new EntityNotFoundException("seed index에 해당하는 식당을 찾을 수 없습니다: " + row.seedIndex());
+                throw new EntityNotFoundException("seed index???대떦?섎뒗 ?앸떦??李얠쓣 ???놁뒿?덈떎: " + row.seedIndex());
             }
-
-            replacedCategoryCount += replaceCategories(
-                    restaurant,
-                    categoriesBySeedIndex.getOrDefault(row.seedIndex(), List.of())
-            );
 
             replacedMenuItemCount += replaceMenuItems(
                     restaurant,
                     menuItemsBySeedIndex.getOrDefault(row.seedIndex(), List.of())
             );
-
             replacedRestaurantTagCount += replaceRestaurantTags(
                     restaurant,
                     restaurantTagsBySeedIndex.getOrDefault(row.seedIndex(), List.of()),
@@ -195,18 +167,14 @@ public class RestaurantSeedImportService {
             );
         }
 
-        int menuMappedRestaurantCount = (int) restaurantRows.stream()
-                .filter(row -> row.menuJson() != null && !row.menuJson().isNull())
-                .count();
+        int menuMappedRestaurantCount = menuItemsBySeedIndex.size();
 
         return new RestaurantSeedImportResponse(
                 restaurantsPath.toString(),
-                categoriesPath.toString(),
                 menuItemsPath.toString(),
                 tagsPath.toString(),
                 restaurantTagsPath.toString(),
                 restaurantRows.size(),
-                categoryRows.size(),
                 menuItemRows.size(),
                 tagRows.size(),
                 restaurantTagRows.size(),
@@ -215,7 +183,6 @@ public class RestaurantSeedImportService {
                 updatedRestaurantCount,
                 createdTagCount,
                 updatedTagCount,
-                replacedCategoryCount,
                 replacedMenuItemCount,
                 replacedRestaurantTagCount
         );
@@ -225,16 +192,18 @@ public class RestaurantSeedImportService {
         return Restaurant.builder()
                 .name(row.name())
                 .address(row.address())
+                .roadAddress(normalizeText(row.roadAddress()))
+                .categoryName(normalizeCategoryName(row.categoryName()))
                 .regionName(row.regionName())
-                .regionCityName(normalizeRegionCityName(row))
-                .regionDistrictName(normalizeRegionDistrictName(row))
-                .regionCountyName(normalizeRegionCountyName(row))
+                .regionCityName(normalizeText(row.regionCityName()))
+                .regionDistrictName(normalizeText(row.regionDistrictName()))
+                .regionCountyName(normalizeText(row.regionCountyName()))
+                .regionTownName(normalizeText(row.regionTownName()))
                 .regionFilterNames(normalizeRegionFilterNames(row))
                 .lat(row.lat())
                 .lng(row.lng())
                 .imageUrl(row.imageUrl())
                 .pcmapPlaceId(row.pcmapPlaceId())
-                .menuJson(row.menuJson())
                 .menuUpdatedAt(resolveMenuUpdatedAt(row.menuUpdatedAt()))
                 .build();
     }
@@ -248,16 +217,21 @@ public class RestaurantSeedImportService {
                 row.lng(),
                 row.imageUrl()
         );
+        restaurant.updateSeedAddress(
+                normalizeText(row.address()),
+                normalizeText(row.roadAddress())
+        );
+        restaurant.updateCategoryName(normalizeCategoryName(row.categoryName()));
         restaurant.updateSeedRegionInfo(
                 row.regionName(),
-                normalizeRegionCityName(row),
-                normalizeRegionDistrictName(row),
-                normalizeRegionCountyName(row),
+                normalizeText(row.regionCityName()),
+                normalizeText(row.regionDistrictName()),
+                normalizeText(row.regionCountyName()),
+                normalizeText(row.regionTownName()),
                 normalizeRegionFilterNames(row)
         );
         restaurant.updateSeedMetadata(
                 row.pcmapPlaceId(),
-                row.menuJson(),
                 resolveMenuUpdatedAt(row.menuUpdatedAt())
         );
     }
@@ -273,24 +247,6 @@ public class RestaurantSeedImportService {
         return restaurantRepository.findByNameAndAddress(row.name(), row.address());
     }
 
-    private int replaceCategories(Restaurant restaurant, List<RestaurantCategorySeedRow> rows) {
-        restaurantCategoryRepository.deleteAllByRestaurantId(restaurant.getId());
-        restaurantCategoryRepository.flush();
-
-        List<RestaurantCategory> categories = rows.stream()
-                .map(RestaurantCategorySeedRow::categoryName)
-                .filter(categoryName -> categoryName != null && !categoryName.isBlank())
-                .distinct()
-                .map(categoryName -> RestaurantCategory.builder()
-                        .restaurant(restaurant)
-                        .categoryName(categoryName)
-                        .build())
-                .toList();
-
-        restaurantCategoryRepository.saveAll(categories);
-        return categories.size();
-    }
-
     private int replaceMenuItems(Restaurant restaurant, List<RestaurantMenuItemSeedRow> rows) {
         restaurantMenuItemRepository.deleteAllByRestaurantId(restaurant.getId());
         restaurantMenuItemRepository.flush();
@@ -302,7 +258,6 @@ public class RestaurantSeedImportService {
                 ))
                 .map(row -> RestaurantMenuItem.builder()
                         .restaurant(restaurant)
-                        .sourceMenuId(row.sourceMenuId())
                         .displayOrder(row.displayOrder())
                         .menuName(row.menuName())
                         .normalizedMenuName(row.normalizedMenuName())
@@ -331,17 +286,13 @@ public class RestaurantSeedImportService {
             Tag tag = tagsByKey.get(row.tagKey());
             if (tag == null) {
                 tag = tagRepository.findByTagKey(row.tagKey())
-                        .orElseThrow(() -> new IllegalStateException("태그를 찾을 수 없습니다: " + row.tagKey()));
+                        .orElseThrow(() -> new IllegalStateException("?쒓렇瑜?李얠쓣 ???놁뒿?덈떎: " + row.tagKey()));
                 tagsByKey.put(tag.getTagKey(), tag);
             }
 
             restaurantTags.add(RestaurantTag.builder()
                     .restaurant(restaurant)
                     .tag(tag)
-                    .sourceType(row.sourceType())
-                    .sourceText(row.sourceText())
-                    .weight(row.weight() == null ? BigDecimal.ZERO : row.weight())
-                    .confidence(row.confidence() == null ? BigDecimal.ZERO : row.confidence())
                     .matchedMenuCount(row.matchedMenuCount() == null ? 0 : row.matchedMenuCount())
                     .isPrimary(row.isPrimary())
                     .build());
@@ -363,7 +314,6 @@ public class RestaurantSeedImportService {
             if (restaurantTagRepository.existsByTagId(tag.getId())) {
                 tag.updateInfo(
                         tag.getTagName(),
-                        tag.getTagType(),
                         normalizeParentTagKey(tag.getParentTagKey()),
                         false
                 );
@@ -394,70 +344,53 @@ public class RestaurantSeedImportService {
         if (priceValue == null) {
             return null;
         }
-
         if (priceValue.signum() < 0) {
             return null;
         }
-
         if (priceValue.compareTo(MAX_REASONABLE_MENU_PRICE) > 0) {
             return null;
         }
-
         return priceValue;
     }
 
-    private String normalizeRegionCityName(RestaurantSeedRow row) {
-        if (row.regionCountyName() != null && !row.regionCountyName().isBlank()) {
+    private String normalizeText(String value) {
+        if (value == null || value.isBlank()) {
             return null;
         }
-
-        return row.regionCityName();
+        return value.trim();
     }
 
-    private String normalizeRegionDistrictName(RestaurantSeedRow row) {
-        if (row.regionCountyName() != null && !row.regionCountyName().isBlank()) {
+    private String normalizeCategoryName(String value) {
+        if (value == null || value.isBlank()) {
             return null;
         }
-
-        return row.regionDistrictName();
-    }
-
-    private String normalizeRegionCountyName(RestaurantSeedRow row) {
-        return (row.regionCountyName() == null || row.regionCountyName().isBlank())
-                ? null
-                : row.regionCountyName();
+        return value.trim();
     }
 
     private List<String> normalizeRegionFilterNames(RestaurantSeedRow row) {
-        if (row.regionCountyName() != null && !row.regionCountyName().isBlank()) {
-            return List.of(row.regionCountyName());
+        LinkedHashSet<String> values = new LinkedHashSet<>();
+        if (row.regionFilterNames() != null) {
+            row.regionFilterNames().stream()
+                    .map(this::normalizeText)
+                    .filter(value -> value != null && !value.isBlank())
+                    .forEach(values::add);
         }
 
-        return (row.regionFilterNames() == null || row.regionFilterNames().isEmpty())
-                ? List.of()
-                : row.regionFilterNames().stream()
-                        .filter(value -> value != null && !value.isBlank())
-                        .distinct()
-                        .toList();
+        if (values.isEmpty()) {
+            addIfPresent(values, row.regionCityName());
+            addIfPresent(values, row.regionDistrictName());
+            addIfPresent(values, row.regionCountyName());
+            addIfPresent(values, row.regionTownName());
+            addIfPresent(values, row.regionName());
+        }
+
+        return new ArrayList<>(values);
     }
 
-    private Path resolvePath(String filePath, Path defaultPath) {
-        if (filePath == null || filePath.isBlank()) {
-            return defaultPath;
-        }
-
-        return Path.of(filePath);
-    }
-
-    private <T> List<T> readSeedRows(Path path, TypeReference<List<T>> typeReference) {
-        if (!Files.exists(path)) {
-            throw new IllegalArgumentException("seed 파일을 찾을 수 없습니다: " + path.toAbsolutePath());
-        }
-
-        try {
-            return objectMapper.readValue(path.toFile(), typeReference);
-        } catch (IOException exception) {
-            throw new IllegalStateException("seed 파일을 읽을 수 없습니다: " + path.toAbsolutePath(), exception);
+    private void addIfPresent(Set<String> values, String value) {
+        String normalized = normalizeText(value);
+        if (normalized != null) {
+            values.add(normalized);
         }
     }
 
@@ -466,11 +399,16 @@ public class RestaurantSeedImportService {
             return null;
         }
 
+        String normalized = value.trim();
+        if ("NOW()".equalsIgnoreCase(normalized) || "CURRENT_TIMESTAMP".equalsIgnoreCase(normalized)) {
+            return LocalDateTime.now();
+        }
+
         try {
-            return OffsetDateTime.parse(value).toLocalDateTime();
+            return OffsetDateTime.parse(normalized).toLocalDateTime();
         } catch (DateTimeParseException ignored) {
             try {
-                return LocalDateTime.parse(value);
+                return LocalDateTime.parse(normalized);
             } catch (DateTimeParseException secondIgnored) {
                 return null;
             }
@@ -480,54 +418,49 @@ public class RestaurantSeedImportService {
     public record RestaurantSeedRow(
             @JsonProperty("seed_index") long seedIndex,
             @JsonProperty("address") String address,
+            @JsonProperty("road_address") String roadAddress,
             @JsonProperty("image_url") String imageUrl,
             @JsonProperty("lat") BigDecimal lat,
             @JsonProperty("lng") BigDecimal lng,
             @JsonProperty("name") String name,
+            @JsonProperty("category_name") String categoryName,
             @JsonProperty("region_name") String regionName,
             @JsonProperty("region_city_name") String regionCityName,
             @JsonProperty("region_district_name") String regionDistrictName,
             @JsonProperty("region_county_name") String regionCountyName,
+            @JsonProperty("region_town_name") String regionTownName,
             @JsonProperty("region_filter_names") List<String> regionFilterNames,
             @JsonProperty("pcmap_place_id") String pcmapPlaceId,
-            @JsonProperty("menu_json") JsonNode menuJson,
             @JsonProperty("menu_updated_at") String menuUpdatedAt
-    ) {}
-
-    public record RestaurantCategorySeedRow(
-            @JsonProperty("restaurant_seed_index") long restaurantSeedIndex,
-            @JsonProperty("category_name") String categoryName
-    ) {}
+    ) {
+    }
 
     public record RestaurantMenuItemSeedRow(
             @JsonProperty("restaurant_seed_index") long restaurantSeedIndex,
             @JsonProperty("display_order") Integer displayOrder,
-            @JsonProperty("source_menu_id") String sourceMenuId,
             @JsonProperty("menu_name") String menuName,
             @JsonProperty("normalized_menu_name") String normalizedMenuName,
             @JsonProperty("menu_tag_key") String menuTagKey,
             @JsonProperty("price_text") String priceText,
             @JsonProperty("price_value") BigDecimal priceValue,
             @JsonProperty("description") String description
-    ) {}
+    ) {
+    }
 
     public record TagSeedRow(
             @JsonProperty("seed_index") long seedIndex,
             @JsonProperty("tag_key") String tagKey,
             @JsonProperty("tag_name") String tagName,
-            @JsonProperty("tag_type") String tagType,
             @JsonProperty("parent_tag_key") String parentTagKey,
             @JsonProperty("is_active") Boolean isActive
-    ) {}
+    ) {
+    }
 
     public record RestaurantTagSeedRow(
             @JsonProperty("restaurant_seed_index") long restaurantSeedIndex,
             @JsonProperty("tag_key") String tagKey,
-            @JsonProperty("source_type") String sourceType,
-            @JsonProperty("source_text") String sourceText,
-            @JsonProperty("weight") BigDecimal weight,
-            @JsonProperty("confidence") BigDecimal confidence,
             @JsonProperty("matched_menu_count") Integer matchedMenuCount,
             @JsonProperty("is_primary") Boolean isPrimary
-    ) {}
+    ) {
+    }
 }

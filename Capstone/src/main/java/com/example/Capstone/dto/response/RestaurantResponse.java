@@ -4,7 +4,6 @@ import java.math.BigDecimal;
 import java.util.List;
 
 import com.example.Capstone.domain.Restaurant;
-import com.example.Capstone.domain.RestaurantCategory;
 
 public record RestaurantResponse(
         Long id,
@@ -20,14 +19,12 @@ public record RestaurantResponse(
         return new RestaurantResponse(
                 restaurant.getId(),
                 restaurant.getName(),
-                restaurant.getAddress(),
+                restaurant.getDisplayAddress(),
                 restaurant.getRegionName(),
                 restaurant.getLat(),
                 restaurant.getLng(),
                 restaurant.getImageUrl(),
-                restaurant.getCategories().stream()
-                        .map(RestaurantCategory::getCategoryName)
-                        .toList()
+                restaurant.getCategoryNames()
         );
     }
 }

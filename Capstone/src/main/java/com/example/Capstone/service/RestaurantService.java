@@ -20,17 +20,17 @@ public class RestaurantService {
     private final RestaurantRepository restaurantRepository;
 
     public List<RestaurantResponse> searchRestaurants(String keyword) {
-        return restaurantRepository
-                .findByNameContainingAndIsDeletedFalseAndIsHiddenFalse(keyword)
-                .stream()
+        return restaurantRepository.findByNameContainingAndIsDeletedFalseAndIsHiddenFalse(keyword).stream()
                 .map(RestaurantResponse::from)
                 .toList();
     }
 
     public RestaurantResponse getRestaurant(Long id) {
-        Restaurant restaurant = restaurantRepository
-                .findByIdAndIsDeletedFalseAndIsHiddenFalse(id)
+        return RestaurantResponse.from(findVisibleRestaurant(id));
+    }
+
+    private Restaurant findVisibleRestaurant(Long id) {
+        return restaurantRepository.findByIdAndIsDeletedFalseAndIsHiddenFalse(id)
                 .orElseThrow(() -> new EntityNotFoundException("식당을 찾을 수 없습니다."));
-        return RestaurantResponse.from(restaurant);
     }
 }

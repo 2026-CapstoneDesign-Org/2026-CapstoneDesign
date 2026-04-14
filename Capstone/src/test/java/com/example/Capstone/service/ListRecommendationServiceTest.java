@@ -29,7 +29,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.example.Capstone.domain.Restaurant;
-import com.example.Capstone.domain.RestaurantCategory;
 import com.example.Capstone.domain.User;
 import com.example.Capstone.dto.response.ListRecommendationResponse;
 import com.example.Capstone.recommendation.model.list.ListRecommendationFeature;
@@ -39,7 +38,7 @@ import com.example.Capstone.repository.ListRecommendationRepository;
 import com.example.Capstone.repository.ListRecommendationRepository.CandidateListRestaurantRow;
 import com.example.Capstone.repository.ListRecommendationRepository.CandidateListSummaryRow;
 import com.example.Capstone.repository.ListRecommendationRepository.UserListInteractionRow;
-import com.example.Capstone.repository.RestaurantCategoryRepository;
+import com.example.Capstone.repository.RestaurantRepository;
 import com.example.Capstone.repository.UserRepository;
 
 @ExtendWith(MockitoExtension.class)
@@ -49,10 +48,10 @@ class ListRecommendationServiceTest {
     private UserRepository userRepository;
 
     @Mock
-    private ListRecommendationRepository listRecommendationRepository;
+    private RestaurantRepository restaurantRepository;
 
     @Mock
-    private RestaurantCategoryRepository restaurantCategoryRepository;
+    private ListRecommendationRepository listRecommendationRepository;
 
     @Mock
     private ListRecommendationScorer listRecommendationScorer;
@@ -61,20 +60,20 @@ class ListRecommendationServiceTest {
     private ListRecommendationService listRecommendationService;
 
     @Test
-    @DisplayName("같은 지역 후보가 충분하면 fallback 없이 상위 20개 리스트를 반환한다")
+    @DisplayName("returns top twenty same-region lists without fallback")
     void returnsTopTwentyFromSameRegionWithoutFallback() {
         Long userId = 1L;
         when(userRepository.findByIdAndIsDeletedFalse(userId)).thenReturn(Optional.of(user(userId)));
         when(listRecommendationRepository.findUserListInteractions(userId)).thenReturn(List.of(
-                interaction(1L, 10L, "서울", "9.0", "8.0", "7.0", "84.0", LocalDateTime.of(2026, 4, 12, 10, 0))
+                interaction(1L, 10L, "region-a", "9.0", "8.0", "7.0", "84.0", LocalDateTime.of(2026, 4, 12, 10, 0))
         ));
 
         List<CandidateListSummaryRow> sameRegionSummaries = new ArrayList<>();
         for (long index = 0; index < 21; index++) {
-            sameRegionSummaries.add(summary(101L + index, 201L + index, "서울"));
+            sameRegionSummaries.add(summary(101L + index, 201L + index, "region-a"));
         }
 
-        when(listRecommendationRepository.findSameRegionCandidateLists(userId, "서울", 200, 5, 5))
+        when(listRecommendationRepository.findSameRegionCandidateLists(userId, "region-a", 200, 5, 5))
                 .thenReturn(sameRegionSummaries);
         mockCandidateRestaurants(sameRegionSummaries, List.of());
         mockCategoryLookup(sameRegionSummaries, List.of());
@@ -84,7 +83,7 @@ class ListRecommendationServiceTest {
 
         ListRecommendationResponse response = listRecommendationService.getListRecommendations(userId);
 
-        assertEquals("서울", response.baseRegionName());
+        assertEquals("region-a", response.baseRegionName());
         assertEquals(20, response.items().size());
         assertEquals(101L, response.items().get(0).listId());
         assertEquals(120L, response.items().get(19).listId());
@@ -94,27 +93,27 @@ class ListRecommendationServiceTest {
     }
 
     @Test
-    @DisplayName("같은 지역 후보가 부족하면 fallback 후보를 뒤에 붙여 20개를 채운다")
+    @DisplayName("fills remaining slots with fallback lists")
     void fillsRemainingSlotsWithFallbackCandidates() {
         Long userId = 1L;
         when(userRepository.findByIdAndIsDeletedFalse(userId)).thenReturn(Optional.of(user(userId)));
         when(listRecommendationRepository.findUserListInteractions(userId)).thenReturn(List.of(
-                interaction(1L, 10L, "서울", "9.0", "8.0", "7.0", "84.0", LocalDateTime.of(2026, 4, 12, 10, 0))
+                interaction(1L, 10L, "region-a", "9.0", "8.0", "7.0", "84.0", LocalDateTime.of(2026, 4, 12, 10, 0))
         ));
 
         List<CandidateListSummaryRow> sameRegionSummaries = List.of(
-                summary(101L, 201L, "서울"),
-                summary(102L, 202L, "서울"),
-                summary(103L, 203L, "서울")
+                summary(101L, 201L, "region-a"),
+                summary(102L, 202L, "region-a"),
+                summary(103L, 203L, "region-a")
         );
         List<CandidateListSummaryRow> fallbackSummaries = new ArrayList<>();
         for (long index = 0; index < 20; index++) {
-            fallbackSummaries.add(summary(301L + index, 401L + index, "부산"));
+            fallbackSummaries.add(summary(301L + index, 401L + index, "region-b"));
         }
 
-        when(listRecommendationRepository.findSameRegionCandidateLists(userId, "서울", 200, 5, 5))
+        when(listRecommendationRepository.findSameRegionCandidateLists(userId, "region-a", 200, 5, 5))
                 .thenReturn(sameRegionSummaries);
-        when(listRecommendationRepository.findFallbackCandidateLists(userId, "서울", 120, 5, 5))
+        when(listRecommendationRepository.findFallbackCandidateLists(userId, "region-a", 120, 5, 5))
                 .thenReturn(fallbackSummaries);
         mockCandidateRestaurants(sameRegionSummaries, fallbackSummaries);
         mockCategoryLookup(sameRegionSummaries, fallbackSummaries);
@@ -136,11 +135,11 @@ class ListRecommendationServiceTest {
         assertEquals(103L, response.items().get(2).listId());
         assertFalse(response.items().get(0).fallbackRegion());
         assertTrue(response.items().get(3).fallbackRegion());
-        verify(listRecommendationRepository).findFallbackCandidateLists(userId, "서울", 120, 5, 5);
+        verify(listRecommendationRepository).findFallbackCandidateLists(userId, "region-a", 120, 5, 5);
     }
 
     @Test
-    @DisplayName("사용자 리스트 데이터가 없으면 빈 추천 결과를 반환한다")
+    @DisplayName("returns empty response when user profile is empty")
     void returnsEmptyResponseWhenUserProfileIsEmpty() {
         Long userId = 1L;
         when(userRepository.findByIdAndIsDeletedFalse(userId)).thenReturn(Optional.of(user(userId)));
@@ -175,24 +174,24 @@ class ListRecommendationServiceTest {
             List<CandidateListSummaryRow> sameRegionSummaries,
             List<CandidateListSummaryRow> fallbackSummaries
     ) {
-        List<RestaurantCategory> categories = new ArrayList<>();
-        categories.add(category(10L, "한식"));
+        List<Restaurant> restaurants = new ArrayList<>();
+        restaurants.add(restaurant(10L, "category-a"));
 
         for (long restaurantId = 1000L; restaurantId < 1000L + sameRegionSummaries.size() * 5; restaurantId++) {
-            categories.add(category(restaurantId, "한식"));
+            restaurants.add(restaurant(restaurantId, "category-a"));
         }
         for (long restaurantId = 2000L; restaurantId < 2000L + fallbackSummaries.size() * 5; restaurantId++) {
-            categories.add(category(restaurantId, "한식"));
+            restaurants.add(restaurant(restaurantId, "category-a"));
         }
 
-        when(restaurantCategoryRepository.findAllByRestaurantIdInOrderByRestaurantIdAscCategoryNameAsc(anyList()))
+        when(restaurantRepository.findAllById(anyList()))
                 .thenAnswer(invocation -> {
                     @SuppressWarnings("unchecked")
                     List<Long> ids = (List<Long>) invocation.getArgument(0);
-                    List<RestaurantCategory> filtered = new ArrayList<>();
-                    for (RestaurantCategory category : categories) {
-                        if (ids.contains(category.getRestaurant().getId())) {
-                            filtered.add(category);
+                    List<Restaurant> filtered = new ArrayList<>();
+                    for (Restaurant restaurant : restaurants) {
+                        if (ids.contains(restaurant.getId())) {
+                            filtered.add(restaurant);
                         }
                     }
                     return filtered;
@@ -230,7 +229,7 @@ class ListRecommendationServiceTest {
                 rows.add(new CandidateListRestaurantRow(
                         summary.listId(),
                         restaurantId++,
-                        "식당-" + restaurantId,
+                        "restaurant-" + restaurantId,
                         new BigDecimal("9.0"),
                         new BigDecimal("8.0"),
                         new BigDecimal("7.0"),
@@ -275,8 +274,8 @@ class ListRecommendationServiceTest {
     private CandidateListSummaryRow summary(Long listId, Long ownerId, String regionName) {
         return new CandidateListSummaryRow(
                 listId,
-                "리스트-" + listId,
-                "설명",
+                "list-" + listId,
+                "description",
                 regionName,
                 ownerId,
                 "owner-" + ownerId,
@@ -288,23 +287,18 @@ class ListRecommendationServiceTest {
         );
     }
 
-    private RestaurantCategory category(Long restaurantId, String categoryName) {
+    private Restaurant restaurant(Long restaurantId, String categoryName) {
         Restaurant restaurant = Restaurant.builder()
-                .name("식당")
-                .address("주소")
-                .regionName("서울")
+                .name("restaurant")
+                .address("address")
+                .categoryName(categoryName)
+                .regionName("region-a")
                 .imageUrl("image")
                 .lat(new BigDecimal("37.0"))
                 .lng(new BigDecimal("127.0"))
                 .build();
         ReflectionTestUtils.setField(restaurant, "id", restaurantId);
-
-        RestaurantCategory category = RestaurantCategory.builder()
-                .restaurant(restaurant)
-                .categoryName(categoryName)
-                .build();
-        ReflectionTestUtils.setField(category, "id", restaurantId * 100);
-        return category;
+        return restaurant;
     }
 
     private User user(Long userId) {

@@ -75,15 +75,7 @@ public class RestaurantRankingRepositoryImpl implements RestaurantRankingReposit
         }
 
         if (StringUtils.hasText(category)) {
-            sql.append("""
-
-                      and exists (
-                          select 1
-                          from restaurant_categories rc
-                          where rc.restaurant_id = r.id
-                            and rc.category_name = :category
-                      )
-                    """);
+            sql.append("\n  and r.category_name = :category");
         }
 
         sql.append("""
