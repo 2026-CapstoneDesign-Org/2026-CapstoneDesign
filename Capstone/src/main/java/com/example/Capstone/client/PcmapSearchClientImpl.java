@@ -236,16 +236,11 @@ public class PcmapSearchClientImpl implements PcmapSearchClient {
             return null;
         }
 
-        String address = text(node, "roadAddress");
-        if (address == null) {
-            address = text(node, "address", "fullAddress", "commonAddress");
-        }
-
         return new PcmapRestaurantCandidate(
                 placeId,
                 name,
                 text(node, "category", "categoryName"),
-                address,
+                text(node, "address", "commonAddress", "fullAddress"),
                 text(node, "roadAddress"),
                 text(node, "fullAddress"),
                 text(node, "imageUrl"),
