@@ -9,7 +9,7 @@ public interface PcmapSearchClient {
     record PcmapRestaurantCandidate(
             String placeId,
             String name,
-            String category,
+            String categoryName,
             String address,
             String roadAddress,
             String fullAddress,

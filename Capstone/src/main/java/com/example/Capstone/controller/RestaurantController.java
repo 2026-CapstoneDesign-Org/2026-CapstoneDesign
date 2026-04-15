@@ -9,32 +9,75 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.Capstone.config.SwaggerConfig;
 import com.example.Capstone.dto.response.RestaurantResponse;
 import com.example.Capstone.service.RestaurantService;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/restaurants")
 @RequiredArgsConstructor
-@Tag(name = "Restaurant", description = "식당 API")
+@Tag(name = "Restaurant", description = "Restaurant lookup APIs.")
+@SecurityRequirement(name = SwaggerConfig.BEARER_SCHEME)
 public class RestaurantController {
 
     private final RestaurantService restaurantService;
 
-    @Operation(summary = "식당 검색")
+    @Operation(
+            summary = "Search restaurants by name",
+            description = "Returns visible restaurants whose names contain the provided keyword."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Restaurants retrieved.",
+                    content = @Content(
+                            mediaType = "application/json",
+                            array = @ArraySchema(schema = @Schema(implementation = RestaurantResponse.class))
+                    )
+            ),
+            @ApiResponse(responseCode = "400", description = "Invalid keyword."),
+            @ApiResponse(responseCode = "401", description = "Authentication required.")
+    })
     @GetMapping
     public ResponseEntity<List<RestaurantResponse>> searchRestaurants(
-            @RequestParam String keyword) {
+            @Parameter(description = "Restaurant name keyword.", example = "돈까스")
+            @RequestParam String keyword
+    ) {
         return ResponseEntity.ok(restaurantService.searchRestaurants(keyword));
     }
 
-    @Operation(summary = "식당 상세 조회")
+    @Operation(
+            summary = "Get restaurant detail",
+            description = "Returns a visible restaurant by identifier."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Restaurant retrieved.",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = RestaurantResponse.class)
+                    )
+            ),
+            @ApiResponse(responseCode = "401", description = "Authentication required."),
+            @ApiResponse(responseCode = "404", description = "Restaurant not found.")
+    })
     @GetMapping("/{id}")
     public ResponseEntity<RestaurantResponse> getRestaurant(
-            @PathVariable Long id) {
+            @Parameter(description = "Restaurant identifier.", example = "1")
+            @PathVariable Long id
+    ) {
         return ResponseEntity.ok(restaurantService.getRestaurant(id));
     }
 }
