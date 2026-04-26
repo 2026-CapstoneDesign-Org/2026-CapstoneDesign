@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.Capstone.dto.request.AddExternalRestaurantRequest;
 import com.example.Capstone.dto.request.AddRestaurantRequest;
 import com.example.Capstone.dto.request.CreateListRequest;
 import com.example.Capstone.dto.request.UpdateListRequest;
@@ -101,6 +102,16 @@ public class UserListController {
             @PathVariable Long id,
             @RequestBody @Valid AddRestaurantRequest request) {
         userListService.addRestaurant(userId, id, request);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
+
+    @Operation(summary = "외부 검색 결과 식당을 리스트에 추가")
+    @PostMapping("/{id}/restaurants/external-fallback")
+    public ResponseEntity<Void> addExternalFallbackRestaurant(
+            @AuthenticationPrincipal Long userId,
+            @PathVariable Long id,
+            @RequestBody @Valid AddExternalRestaurantRequest request) {
+        userListService.addExternalFallbackRestaurant(userId, id, request);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 

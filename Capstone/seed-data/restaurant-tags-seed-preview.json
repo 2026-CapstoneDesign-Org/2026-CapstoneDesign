@@ -638,7 +638,7 @@
   {
     "restaurant_seed_index": 47,
     "tag_key": "menu:칼국수",
-    "matched_menu_count": 2,
+    "matched_menu_count": 1,
     "is_primary": true
   },
   {
@@ -1430,7 +1430,7 @@
   {
     "restaurant_seed_index": 108,
     "tag_key": "menu:짬뽕",
-    "matched_menu_count": 7,
+    "matched_menu_count": 6,
     "is_primary": true
   },
   {
@@ -1712,7 +1712,7 @@
   {
     "restaurant_seed_index": 143,
     "tag_key": "menu:국밥",
-    "matched_menu_count": 11,
+    "matched_menu_count": 10,
     "is_primary": true
   },
   {
@@ -2390,7 +2390,7 @@
   {
     "restaurant_seed_index": 206,
     "tag_key": "menu:짬뽕",
-    "matched_menu_count": 24,
+    "matched_menu_count": 19,
     "is_primary": true
   },
   {
@@ -2618,7 +2618,7 @@
   {
     "restaurant_seed_index": 229,
     "tag_key": "menu:김밥",
-    "matched_menu_count": 12,
+    "matched_menu_count": 14,
     "is_primary": false
   },
   {
@@ -2630,7 +2630,7 @@
   {
     "restaurant_seed_index": 229,
     "tag_key": "menu:칼국수",
-    "matched_menu_count": 17,
+    "matched_menu_count": 15,
     "is_primary": true
   },
   {
@@ -2913,12 +2913,6 @@
     "restaurant_seed_index": 263,
     "tag_key": "menu:하이볼",
     "matched_menu_count": 11,
-    "is_primary": true
-  },
-  {
-    "restaurant_seed_index": 265,
-    "tag_key": "menu:국수",
-    "matched_menu_count": 1,
     "is_primary": true
   },
   {
@@ -4136,13 +4130,13 @@
   {
     "restaurant_seed_index": 389,
     "tag_key": "menu:장칼국수",
-    "matched_menu_count": 4,
+    "matched_menu_count": 2,
     "is_primary": false
   },
   {
     "restaurant_seed_index": 389,
     "tag_key": "menu:칼국수",
-    "matched_menu_count": 20,
+    "matched_menu_count": 21,
     "is_primary": true
   },
   {
@@ -4730,7 +4724,7 @@
   {
     "restaurant_seed_index": 432,
     "tag_key": "menu:초밥",
-    "matched_menu_count": 12,
+    "matched_menu_count": 8,
     "is_primary": true
   },
   {
@@ -6290,7 +6284,7 @@
   {
     "restaurant_seed_index": 606,
     "tag_key": "menu:치킨",
-    "matched_menu_count": 21,
+    "matched_menu_count": 20,
     "is_primary": true
   },
   {
@@ -6320,7 +6314,7 @@
   {
     "restaurant_seed_index": 607,
     "tag_key": "menu:치킨",
-    "matched_menu_count": 21,
+    "matched_menu_count": 20,
     "is_primary": true
   },
   {
@@ -6350,7 +6344,7 @@
   {
     "restaurant_seed_index": 608,
     "tag_key": "menu:치킨",
-    "matched_menu_count": 21,
+    "matched_menu_count": 20,
     "is_primary": true
   },
   {
@@ -6380,7 +6374,7 @@
   {
     "restaurant_seed_index": 609,
     "tag_key": "menu:치킨",
-    "matched_menu_count": 21,
+    "matched_menu_count": 20,
     "is_primary": true
   },
   {

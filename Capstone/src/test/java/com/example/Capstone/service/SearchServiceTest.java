@@ -82,8 +82,6 @@ class SearchServiceTest {
                 .thenReturn(List.of(restaurant));
         when(userRepository.searchVisibleUsers(eq("온더보더"), any(Pageable.class)))
                 .thenReturn(List.of());
-        when(pcmapSearchClient.searchRestaurants(eq("온더보더"), any(Integer.class)))
-                .thenReturn(List.of());
 
         SearchResponse response = searchService.search("온더보더");
 
@@ -93,6 +91,7 @@ class SearchServiceTest {
         assertEquals(1, response.restaurantCount());
         assertEquals("온더보더", response.restaurants().get(0).restaurantName());
         assertFalse(response.interpretation().fallbackUsed());
+        verify(pcmapSearchClient, never()).searchRestaurants(eq("온더보더"), any(Integer.class));
     }
 
     @Test
@@ -239,8 +238,8 @@ class SearchServiceTest {
     }
 
     @Test
-    @DisplayName("fallback appends external candidates when internal results are insufficient")
-    void searchUsesFallbackWhenInternalRestaurantCandidatesAreInsufficient() {
+    @DisplayName("fallback is not used when an internal restaurant exists")
+    void searchDoesNotUseFallbackWhenInternalRestaurantExists() {
         Restaurant internalRestaurant = restaurant(51L, "강남 곱창집", "서울 강남", "서울 강남구", "곱창", "곱창", "곱창", "역삼동");
 
         when(restaurantRepository.searchVisibleRestaurantsByRegionSignal(eq("곱창"), any(Pageable.class)))
@@ -249,28 +248,46 @@ class SearchServiceTest {
                 .thenReturn(List.of(internalRestaurant));
         when(userRepository.searchVisibleUsers(eq("곱창"), any(Pageable.class)))
                 .thenReturn(List.of());
-        when(pcmapSearchClient.searchRestaurants(eq("곱창"), any(Integer.class)))
+
+        SearchResponse response = searchService.search("곱창");
+
+        assertEquals("RESTAURANT", response.primaryType());
+        assertFalse(response.interpretation().fallbackUsed());
+        assertEquals(1, response.restaurants().size());
+        assertEquals("INTERNAL", response.restaurants().get(0).source());
+        verify(pcmapSearchClient, never()).searchRestaurants(eq("곱창"), any(Integer.class));
+    }
+
+    @Test
+    @DisplayName("fallback appends external candidates when the restaurant is absent from DB")
+    void searchUsesFallbackWhenInternalRestaurantCandidatesAreEmpty() {
+        when(restaurantRepository.searchVisibleRestaurantsByRegionSignal(eq("missing-place"), any(Pageable.class)))
+                .thenReturn(List.of());
+        when(restaurantRepository.searchVisibleRestaurantsBySearchKeyword(eq("missing-place"), any(Pageable.class)))
+                .thenReturn(List.of());
+        when(userRepository.searchVisibleUsers(eq("missing-place"), any(Pageable.class)))
+                .thenReturn(List.of());
+        when(pcmapSearchClient.searchRestaurants(eq("missing-place"), any(Integer.class)))
                 .thenReturn(List.of(new PcmapRestaurantCandidate(
                         "external-1",
-                        "강남 곱창 외부",
-                        "곱창",
-                        "서울 강남구",
-                        "서울 강남구",
-                        "서울 강남구",
+                        "Missing Place",
+                        "Food",
+                        "Seoul Gangnam",
+                        "Seoul Gangnam",
+                        "Seoul Gangnam",
                         "external-image",
                         "127.0",
                         "37.0"
                 )));
 
-        SearchResponse response = searchService.search("곱창");
+        SearchResponse response = searchService.search("missing-place");
 
         assertEquals("RESTAURANT", response.primaryType());
         assertTrue(response.interpretation().fallbackUsed());
-        assertEquals(2, response.restaurants().size());
-        assertEquals("INTERNAL", response.restaurants().get(0).source());
-        assertEquals("EXTERNAL_FALLBACK", response.restaurants().get(1).source());
-        assertEquals(new BigDecimal("37.0"), response.restaurants().get(1).lat());
-        assertEquals(new BigDecimal("127.0"), response.restaurants().get(1).lng());
+        assertEquals(1, response.restaurants().size());
+        assertEquals("EXTERNAL_FALLBACK", response.restaurants().get(0).source());
+        assertEquals(new BigDecimal("37.0"), response.restaurants().get(0).lat());
+        assertEquals(new BigDecimal("127.0"), response.restaurants().get(0).lng());
     }
 
     private User user(Long id, String nickname) {
