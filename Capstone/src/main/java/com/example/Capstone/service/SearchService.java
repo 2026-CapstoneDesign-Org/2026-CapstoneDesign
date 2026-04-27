@@ -46,7 +46,6 @@ public class SearchService {
     private static final int REGION_RESULT_LIMIT = 10;
     private static final int INTERNAL_CANDIDATE_FETCH_LIMIT = 30;
     private static final int EXTERNAL_FALLBACK_LIMIT = 5;
-    private static final int FALLBACK_MIN_INTERNAL_COUNT = 5;
 
     private final RestaurantRepository restaurantRepository;
     private final UserRepository userRepository;
@@ -152,7 +151,7 @@ public class SearchService {
     }
 
     private boolean shouldUseFallback(SearchInterpretation interpretation, int internalCount) {
-        return internalCount < FALLBACK_MIN_INTERNAL_COUNT
+        return internalCount == 0
                 && interpretation.restaurantKeyword() != null
                 && !interpretation.genericBrowseQuery();
     }

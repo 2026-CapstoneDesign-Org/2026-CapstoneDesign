@@ -1,16 +1,21 @@
 package com.example.Capstone.service;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.math.BigDecimal;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.Capstone.client.PcmapSearchClient;
+import com.example.Capstone.client.PcmapSearchClient.PcmapRestaurantCandidate;
 import com.example.Capstone.domain.ListRestaurant;
 import com.example.Capstone.domain.Restaurant;
 import com.example.Capstone.domain.User;
 import com.example.Capstone.domain.UserList;
+import com.example.Capstone.dto.request.AddExternalRestaurantRequest;
 import com.example.Capstone.dto.request.AddRestaurantRequest;
 import com.example.Capstone.dto.request.CreateListRequest;
 import com.example.Capstone.dto.request.UpdateListRequest;
@@ -37,6 +42,7 @@ public class UserListService {
     private final UserRepository userRepository;
     private final RestaurantRepository restaurantRepository;
     private final ListRestaurantRepository listRestaurantRepository;
+    private final PcmapSearchClient pcmapSearchClient;
 
 	// 리스트 생성
 	@Transactional
@@ -149,6 +155,34 @@ public class UserListService {
         listRestaurantRepository.save(listRestaurant);
     }
 
+    @Transactional
+    public void addExternalFallbackRestaurant(Long userId, Long listId, AddExternalRestaurantRequest request) {
+        UserList userList = getOwnedList(userId, listId);
+        PcmapRestaurantCandidate candidate = resolveExternalCandidate(request);
+        validateExternalRegionMatch(userList.getRegionName(), candidate);
+
+        Restaurant restaurant = restaurantRepository.findByPcmapPlaceId(candidate.placeId())
+                .map(existing -> {
+                    validateVisibleRestaurant(existing);
+                    validateRegionMatch(userList.getRegionName(), existing.getRegionName());
+                    return existing;
+                })
+                .orElseGet(() -> restaurantRepository.save(createRestaurantFromExternalCandidate(
+                        candidate,
+                        userList.getRegionName()
+                )));
+
+        validateDuplicateRestaurant(userList.getId(), restaurant.getId());
+
+        listRestaurantRepository.save(ListRestaurant.builder()
+                .userList(userList)
+                .restaurant(restaurant)
+                .tasteScore(request.tasteScore())
+                .valueScore(request.valueScore())
+                .moodScore(request.moodScore())
+                .build());
+    }
+
 	// 평가 수정
     @Transactional
     public void updateScore(Long userId, Long listId, Long restaurantId, UpdateScoreRequest request) {
@@ -244,6 +278,119 @@ public class UserListService {
     private void validateMinimumRestaurantCountForRemoval(Long listId) {
         if (listRestaurantRepository.countByUserListId(listId) <= MIN_RESTAURANT_COUNT) {
             throw new BusinessException("리스트는 최소 5개의 식당을 유지해야 합니다.", HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    private PcmapRestaurantCandidate resolveExternalCandidate(AddExternalRestaurantRequest request) {
+        return pcmapSearchClient.searchRestaurants(request.searchQuery(), 20).stream()
+                .filter(candidate -> request.externalPlaceId().equals(candidate.placeId()))
+                .findFirst()
+                .orElseThrow(() -> new BusinessException(
+                        "검색 결과에서 선택한 외부 식당을 다시 확인할 수 없습니다.",
+                        HttpStatus.BAD_REQUEST
+                ));
+    }
+
+    private Restaurant createRestaurantFromExternalCandidate(
+            PcmapRestaurantCandidate candidate,
+            String listRegionName
+    ) {
+        String address = resolveExternalAddress(candidate);
+        if (address == null || address.isBlank()) {
+            throw new BusinessException("외부 식당 주소가 없어 리스트에 추가할 수 없습니다.", HttpStatus.BAD_REQUEST);
+        }
+
+        return Restaurant.builder()
+                .name(candidate.name())
+                .address(address)
+                .roadAddress(normalizeText(candidate.roadAddress()))
+                .categoryName(normalizeText(candidate.categoryName()))
+                .regionName(listRegionName)
+                .regionFilterNames(buildExternalRegionFilterNames(candidate, listRegionName))
+                .lat(toBigDecimal(candidate.y()))
+                .lng(toBigDecimal(candidate.x()))
+                .imageUrl(normalizeText(candidate.imageUrl()))
+                .pcmapPlaceId(candidate.placeId())
+                .build();
+    }
+
+    private void validateVisibleRestaurant(Restaurant restaurant) {
+        if (Boolean.TRUE.equals(restaurant.getIsDeleted()) || Boolean.TRUE.equals(restaurant.getIsHidden())) {
+            throw new BusinessException("선택한 식당은 현재 리스트에 추가할 수 없습니다.", HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    private void validateExternalRegionMatch(String listRegionName, PcmapRestaurantCandidate candidate) {
+        String joinedAddress = String.join(" ",
+                normalizeText(candidate.address()) == null ? "" : normalizeText(candidate.address()),
+                normalizeText(candidate.roadAddress()) == null ? "" : normalizeText(candidate.roadAddress()),
+                normalizeText(candidate.fullAddress()) == null ? "" : normalizeText(candidate.fullAddress())
+        );
+
+        if (!containsAllRegionTokens(joinedAddress, listRegionName)) {
+            throw new BusinessException("리스트 지역과 외부 식당 지역이 일치해야 합니다.", HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    private boolean containsAllRegionTokens(String addressText, String regionName) {
+        String normalizedAddressText = normalizeText(addressText);
+        String normalizedRegionName = normalizeText(regionName);
+        if (normalizedAddressText == null || normalizedRegionName == null) {
+            return false;
+        }
+
+        for (String token : normalizedRegionName.split("\\s+")) {
+            if (!normalizedAddressText.contains(token)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private List<String> buildExternalRegionFilterNames(PcmapRestaurantCandidate candidate, String listRegionName) {
+        LinkedHashSet<String> names = new LinkedHashSet<>();
+        names.add(listRegionName);
+        addIfNotBlank(names, candidate.address());
+        addIfNotBlank(names, candidate.roadAddress());
+        addIfNotBlank(names, candidate.fullAddress());
+        return new ArrayList<>(names);
+    }
+
+    private String resolveExternalAddress(PcmapRestaurantCandidate candidate) {
+        String roadAddress = normalizeText(candidate.roadAddress());
+        if (roadAddress != null) {
+            return roadAddress;
+        }
+        String address = normalizeText(candidate.address());
+        if (address != null) {
+            return address;
+        }
+        return normalizeText(candidate.fullAddress());
+    }
+
+    private BigDecimal toBigDecimal(String value) {
+        String normalized = normalizeText(value);
+        if (normalized == null) {
+            return null;
+        }
+        try {
+            return new BigDecimal(normalized);
+        } catch (NumberFormatException exception) {
+            return null;
+        }
+    }
+
+    private String normalizeText(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        return value.trim();
+    }
+
+    private void addIfNotBlank(LinkedHashSet<String> values, String value) {
+        String normalized = normalizeText(value);
+        if (normalized != null) {
+            values.add(normalized);
         }
     }
 }
