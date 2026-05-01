@@ -1,6 +1,6 @@
 # current-gaps.md
 
-기준 날짜 및 시간: 2026-04-13 18:48:26 (Asia/Seoul)
+기준 날짜 및 시간: 2026-05-01 (Asia/Seoul)
 
 ## 1. 목적
 이 문서는 아직 확정되지 않았거나, 코드와 문서가 어긋나는 정책 항목만 남긴다.
@@ -36,10 +36,15 @@
 - 실제 로그인 진입점은 `/oauth2/authorization/{provider}`다.
 - `/auth/oauth/{provider}`는 현재 `200 OK` placeholder 성격이다.
 
-### 2-8. `PcmapSearchClient` 사용처 부재
-- `PcmapSearchClient`와 `PcmapSearchClientImpl`는 현재 `client/` 패키지로 분리되어 있다.
-- 하지만 현재 코드 기준으로 실제 주입 소비처는 없다.
-- 외부 검색 fallback 기능을 연결할지, 미사용 어댑터로 유지할지 결정이 필요하다.
+### 2-8. 외부 fallback으로 생성된 식당의 후속 정제 정책
+- `POST /lists/{id}/restaurants/external-fallback`는 Pcmap 후보가 기존 DB에 없으면 `Restaurant` row를 생성한다.
+- 현재 생성 시점에는 메뉴 / 태그 상세 데이터가 함께 생성되지 않는다.
+- 이 식당을 seed preview, 관리자 검수, 별도 enrichment 흐름 중 어디로 편입할지 정책 결정이 필요하다.
+
+### 2-9. Pcmap HTML fallback 운영 안정성
+- `PcmapSearchClientImpl`은 NAVER Pcmap HTML의 Apollo state 구조를 파싱한다.
+- 외부 HTML 구조 변경이나 요청 제한이 발생하면 현재 코드는 빈 결과를 반환한다.
+- 장애 감지, 알림, 대체 provider, retry 여부는 아직 운영 정책으로 확정되지 않았다.
 
 ## 3. 현재 gap에서 제외한 항목
 - 리스트 최소 5개 규칙
@@ -49,3 +54,6 @@
 - 리스트 추천 API 존재
 - recommendation scorer / model 패키지 분리
 - seed import runner 패키지 분리
+- `PcmapSearchClient` 사용처 부재
+- 검색 fallback 기준: 현재 코드는 내부 식당 결과가 0개일 때만 외부 fallback을 사용한다
+- 별도 `RestaurantCategory` 엔티티 / `restaurant_categories` 테이블 의존: 현재 코드 기준 제거됨

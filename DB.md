@@ -1,6 +1,6 @@
 # DB.md
 
-기준 날짜 및 시간: 2026-04-13 18:48:26 (Asia/Seoul)
+기준 날짜 및 시간: 2026-05-01 (Asia/Seoul)
 
 ## 1. 목적
 이 문서는 현재 프로젝트의 저장 구조 문서 허브다.  
@@ -22,7 +22,6 @@
 - `UserList`
 - `ListRestaurant`
 - `Restaurant`
-- `RestaurantCategory`
 - `RestaurantMenuItem`
 - `Tag`
 - `RestaurantTag`
@@ -32,11 +31,12 @@
 - `User` 1:N `UserList`
 - `UserList` 1:N `ListRestaurant`
 - `Restaurant` 1:N `ListRestaurant`
-- `Restaurant` 1:N `RestaurantCategory`
 - `Restaurant` 1:N `RestaurantMenuItem`
 - `Restaurant` 1:N `RestaurantTag`
 - `Tag` 1:N `RestaurantTag`
 - `User` N:M `User` via `UserFollow`
+
+현재 코드 기준 식당 카테고리는 별도 `RestaurantCategory` 엔티티가 아니라 `Restaurant.categoryName` 단일 필드로 저장한다.
 
 ## 5. 어떻게 읽으면 되는가
 ### 사용자 / 팔로우 구조
@@ -48,7 +48,7 @@
 ### 리스트 / 점수 / 추천 입력 구조
 `docs/db/lists.md`
 
-### 식당 / 카테고리 / 메뉴 / 태그 구조
+### 식당 / 메뉴 / 태그 구조
 `docs/db/restaurants.md`
 
 ### refresh token 저장 구조

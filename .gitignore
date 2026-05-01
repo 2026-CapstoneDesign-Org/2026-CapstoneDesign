@@ -8,6 +8,8 @@ application*.yaml
 
 Capstone/data/
 Capstone/src/test/resources/
+!Capstone/src/test/resources/
+!Capstone/src/test/resources/application.yml
 *.db
 *.sqlite
 *.sqlite3

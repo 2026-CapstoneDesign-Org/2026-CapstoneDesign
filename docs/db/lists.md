@@ -1,6 +1,6 @@
 # lists.md
 
-기준 날짜 및 시간: 2026-04-13 18:48:26 (Asia/Seoul)
+기준 날짜 및 시간: 2026-05-01 (Asia/Seoul)
 
 ## 1. 범위
 이 문서는 `UserList`, `ListRestaurant` 저장 구조를 다룬다.
@@ -9,6 +9,7 @@
 - `Capstone/src/main/java/com/example/Capstone/domain/UserList.java`
 - `Capstone/src/main/java/com/example/Capstone/domain/ListRestaurant.java`
 - `Capstone/src/main/java/com/example/Capstone/service/UserListService.java`
+- `Capstone/src/main/java/com/example/Capstone/dto/request/AddExternalRestaurantRequest.java`
 
 ## 2. 현재 코드 기준
 ### 2-1. `user_lists`
@@ -56,11 +57,14 @@
 - 리스트와 식당 지역 exact match
 - 제거 후 5개 미만 금지
 - 사용자당 대표 리스트 1개 유지
+- 내부 식당 추가 시 기존 visible 식당만 허용
+- 외부 fallback 식당 추가 시 Pcmap 후보를 재조회해 검증한 뒤 기존 식당 재사용 또는 신규 식당 생성
 
 ## 4. 로직 문서와 함께 봐야 하는 지점
 - 리스트 정책: `docs/logic/list-policy.md`
 - 점수 정책: `docs/logic/score-policy.md`
 - 공개/비공개 해석: `docs/logic/visibility-policy.md`
+- 외부 검색 fallback: `docs/logic/search-policy.md`
 
 ## 5. 추가 확인 필요
 - 리스트 상세 조회의 owner/public 계약

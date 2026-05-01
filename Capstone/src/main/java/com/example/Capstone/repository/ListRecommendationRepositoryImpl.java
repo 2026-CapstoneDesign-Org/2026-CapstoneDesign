@@ -303,13 +303,13 @@ public class ListRecommendationRepositoryImpl implements ListRecommendationRepos
                     cls.average_auto_score,
                     (
                         (
-                            cast(cls.restaurant_count as numeric)
-                            / cast(cls.restaurant_count + :m as numeric)
+                            cast(cls.restaurant_count as double precision)
+                            / cast(cls.restaurant_count + :m as double precision)
                         ) * cls.average_auto_score
                         +
                         (
-                            cast(:m as numeric)
-                            / cast(cls.restaurant_count + :m as numeric)
+                            cast(:m as double precision)
+                            / cast(cls.restaurant_count + :m as double precision)
                         ) * ss.global_mean
                     ) as adjusted_quality_score,
                     cls.updated_at

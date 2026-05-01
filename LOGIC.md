@@ -1,6 +1,6 @@
 # LOGIC.md
 
-기준 날짜 및 시간: 2026-04-13 18:48:26 (Asia/Seoul)
+기준 날짜 및 시간: 2026-05-01 (Asia/Seoul)
 
 ## 1. 목적
 이 문서는 현재 프로젝트의 동작 흐름과 정책 문서를 연결하는 로직 허브다.
@@ -8,6 +8,7 @@
 ## 2. 현재 로직 문서 목록
 - [docs/logic/auth-flow.md](docs/logic/auth-flow.md)
 - [docs/logic/follow-policy.md](docs/logic/follow-policy.md)
+- [docs/logic/search-policy.md](docs/logic/search-policy.md)
 - [docs/logic/list-policy.md](docs/logic/list-policy.md)
 - [docs/logic/score-policy.md](docs/logic/score-policy.md)
 - [docs/logic/visibility-policy.md](docs/logic/visibility-policy.md)
@@ -24,6 +25,9 @@
 
 ### 팔로우 정책
 `docs/logic/follow-policy.md`
+
+### 통합 검색 / 외부 fallback
+`docs/logic/search-policy.md`
 
 ### 리스트 생성 / 수정 / 점수 / 대표 / 공개 정책
 `docs/logic/list-policy.md`
@@ -50,6 +54,10 @@
 ### external client / app runner
 `Capstone/src/main/java/com/example/Capstone/client/*`
 `Capstone/src/main/java/com/example/Capstone/runner/*`
+
+### search support / seed support
+`Capstone/src/main/java/com/example/Capstone/service/search/support/*`
+`Capstone/src/main/java/com/example/Capstone/service/seed/*`
 
 ### seed import 운영 규칙
 `docs/logic/seed-import.md`

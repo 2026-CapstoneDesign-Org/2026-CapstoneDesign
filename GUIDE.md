@@ -1,6 +1,6 @@
 # GUIDE.md
 
-기준 날짜 및 시간: 2026-04-13 18:48:26 (Asia/Seoul)
+기준 날짜 및 시간: 2026-05-01 (Asia/Seoul)
 
 ## 1. 목적
 이 문서는 저장소를 처음 보는 사람이 현재 구조, 문서 역할, 읽기 순서를 빠르게 파악하도록 돕는 문서 허브다.
@@ -29,6 +29,14 @@
   - 외부 API / HTML 연동 어댑터
 - `runner/`
   - `ApplicationRunner` 같은 기동 훅
+- `oauth2/`
+  - OAuth2 사용자 로딩과 로그인 성공 후 JWT 발급 연결
+- `service/search/support/`
+  - 통합 검색 쿼리 해석, 식당 매칭, 검색 응답 매핑 보조 컴포넌트
+- `service/seed/`
+  - seed preview 파일 경로 해석과 로딩 보조 컴포넌트
+- `service/admin/`
+  - 관리자 식당 명령과 hide 처리 보조 서비스
 - `repository/`, `domain/`, `dto/`, `config/`, `common/`, `exception/`
 
 ## 3. 문서 구조
@@ -67,6 +75,12 @@
 ### 인증 / 팔로우 / 시드 적재 흐름을 볼 때
 1. `docs/logic/auth-flow.md`
 2. `docs/logic/follow-policy.md`
+3. `docs/logic/seed-import.md`
+4. `docs/current-gaps.md`
+
+### 통합 검색 / 외부 fallback 흐름을 볼 때
+1. `docs/logic/search-policy.md`
+2. `docs/logic/list-policy.md`
 3. `docs/logic/seed-import.md`
 4. `docs/current-gaps.md`
 

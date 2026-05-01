@@ -216,13 +216,13 @@ public class RestaurantRecommendationRepositoryImpl implements RestaurantRecomme
                     r.id as restaurant_id,
                     (
                         (
-                            cast(coalesce(rs.evaluation_count, 0) as numeric)
-                            / cast(coalesce(rs.evaluation_count, 0) + :m as numeric)
+                            cast(coalesce(rs.evaluation_count, 0) as double precision)
+                            / cast(coalesce(rs.evaluation_count, 0) + :m as double precision)
                         ) * coalesce(rs.average_auto_score, 0)
                         +
                         (
-                            cast(:m as numeric)
-                            / cast(coalesce(rs.evaluation_count, 0) + :m as numeric)
+                            cast(:m as double precision)
+                            / cast(coalesce(rs.evaluation_count, 0) + :m as double precision)
                         ) * ss.global_mean
                     ) as adjusted_score,
                     coalesce(rs.average_auto_score, 0) as average_auto_score,
@@ -310,13 +310,13 @@ public class RestaurantRecommendationRepositoryImpl implements RestaurantRecomme
                     r.image_url,
                     (
                         (
-                            cast(coalesce(rs.evaluation_count, 0) as numeric)
-                            / cast(coalesce(rs.evaluation_count, 0) + :m as numeric)
+                            cast(coalesce(rs.evaluation_count, 0) as double precision)
+                            / cast(coalesce(rs.evaluation_count, 0) + :m as double precision)
                         ) * coalesce(rs.average_auto_score, 0)
                         +
                         (
-                            cast(:m as numeric)
-                            / cast(coalesce(rs.evaluation_count, 0) + :m as numeric)
+                            cast(:m as double precision)
+                            / cast(coalesce(rs.evaluation_count, 0) + :m as double precision)
                         ) * ss.global_mean
                     ) as adjusted_score,
                     coalesce(rs.evaluation_count, 0) as evaluation_count

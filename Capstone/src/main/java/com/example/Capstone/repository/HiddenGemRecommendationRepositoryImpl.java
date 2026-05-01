@@ -4,55 +4,24 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.springframework.util.StringUtils;
+import org.springframework.stereotype.Repository;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.Query;
 
-public class RestaurantRankingRepositoryImpl implements RestaurantRankingRepository {
+@Repository
+public class HiddenGemRecommendationRepositoryImpl implements HiddenGemRecommendationRepository {
 
     @PersistenceContext
     private EntityManager entityManager;
 
     @Override
-    public List<RestaurantRankingRow> findRestaurantRankings(
-            String regionName,
-            String category,
-            int limit,
+    public List<HiddenGemRestaurantRow> findHiddenGemCandidates(
+            String regionTownName,
             int smoothingConstant
     ) {
-        Query query = entityManager.createNativeQuery(buildRankingSql(regionName, category));
-
-        if (StringUtils.hasText(regionName)) {
-            query.setParameter("regionName", regionName);
-        }
-        if (StringUtils.hasText(category)) {
-            query.setParameter("category", category);
-        }
-        query.setParameter("m", smoothingConstant);
-        query.setMaxResults(limit);
-
-        @SuppressWarnings("unchecked")
-        List<Object[]> rows = query.getResultList();
-
-        List<RestaurantRankingRow> result = new ArrayList<>();
-        for (Object[] row : rows) {
-            result.add(new RestaurantRankingRow(
-                    toLong(row[0]),
-                    (String) row[1],
-                    (String) row[2],
-                    (String) row[3],
-                    toBigDecimal(row[4]),
-                    toLong(row[5]),
-                    toBigDecimal(row[6])
-            ));
-        }
-        return result;
-    }
-
-    private String buildRankingSql(String regionName, String category) {
-        StringBuilder sql = new StringBuilder("""
+        Query query = entityManager.createNativeQuery("""
                 with eligible_entries as (
                     select
                         u.id as user_id,
@@ -68,18 +37,7 @@ public class RestaurantRankingRepositoryImpl implements RestaurantRankingReposit
                       and u.is_hidden = false
                       and r.is_deleted = false
                       and r.is_hidden = false
-                """);
-
-        if (StringUtils.hasText(regionName)) {
-            sql.append("\n  and r.region_name = :regionName");
-        }
-
-        if (StringUtils.hasText(category)) {
-            sql.append("\n  and r.category_name = :category");
-        }
-
-        sql.append("""
-
+                      and r.region_town_name = :regionTownName
                 ),
                 user_restaurant_best as (
                     select
@@ -91,7 +49,7 @@ public class RestaurantRankingRepositoryImpl implements RestaurantRankingReposit
                 ),
                 scope_stats as (
                     select
-                        avg(user_best_auto_score) as global_mean
+                        coalesce(avg(user_best_auto_score), 0) as global_mean
                     from user_restaurant_best
                 ),
                 restaurant_stats as (
@@ -105,8 +63,9 @@ public class RestaurantRankingRepositoryImpl implements RestaurantRankingReposit
                 select
                     rs.restaurant_id,
                     r.name as restaurant_name,
+                    coalesce(nullif(r.road_address, ''), r.address) as address,
                     r.region_name,
-                    r.image_url,
+                    r.region_town_name,
                     rs.average_auto_score,
                     rs.evaluation_count,
                     (
@@ -125,12 +84,29 @@ public class RestaurantRankingRepositoryImpl implements RestaurantRankingReposit
                 join restaurants r on r.id = rs.restaurant_id
                 order by
                     adjusted_score desc,
-                    rs.evaluation_count desc,
                     rs.average_auto_score desc,
                     rs.restaurant_id asc
                 """);
+        query.setParameter("regionTownName", regionTownName);
+        query.setParameter("m", smoothingConstant);
 
-        return sql.toString();
+        @SuppressWarnings("unchecked")
+        List<Object[]> rows = query.getResultList();
+
+        List<HiddenGemRestaurantRow> result = new ArrayList<>();
+        for (Object[] row : rows) {
+            result.add(new HiddenGemRestaurantRow(
+                    toLong(row[0]),
+                    (String) row[1],
+                    (String) row[2],
+                    (String) row[3],
+                    (String) row[4],
+                    toBigDecimal(row[5]),
+                    toLong(row[6]),
+                    toBigDecimal(row[7])
+            ));
+        }
+        return result;
     }
 
     private Long toLong(Object value) {

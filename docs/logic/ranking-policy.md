@@ -1,6 +1,6 @@
 # ranking-policy.md
 
-기준 날짜 및 시간: 2026-04-13 18:48:26 (Asia/Seoul)
+기준 날짜 및 시간: 2026-05-01 (Asia/Seoul)
 
 ## 1. 범위
 이 문서는 전국/지역 식당 랭킹 API, 랭킹 입력 데이터 필터, 보정 점수 계산, 응답 구성을 다룬다.
@@ -11,7 +11,6 @@
 - `RestaurantRepository`
 - `RestaurantRankingRepository`
 - `RestaurantRankingRepositoryImpl`
-- `RestaurantCategoryRepository`
 
 ## 2. 현재 코드 기준
 ### 엔드포인트
@@ -32,7 +31,6 @@
 - `user_lists`
 - `users`
 - `restaurants`
-- `restaurant_categories`는 category filter에 사용
 
 현재 계산 제외 조건:
 - `UserList.isDeleted = true`
@@ -45,6 +43,10 @@
 현재 계산 포함 조건:
 - `UserList.isPublic = false`도 포함
 
+category filter:
+- 현재 코드 기준 별도 `restaurant_categories` 테이블을 사용하지 않는다.
+- `category` 요청 파라미터는 `restaurants.category_name` exact match로 필터링한다.
+
 ### 동일 사용자 / 동일 식당 1회 반영
 - `user_id + restaurant_id` 기준으로 `max(auto_score)`만 남긴다.
 - `evaluationCount`는 row 수가 아니라 축약 후 사용자 수다.
@@ -52,6 +54,7 @@
 ### 보정 점수
 - 베이지안 평균 형태의 보정 점수를 사용한다.
 - 보정 상수는 `5`
+- SQL 비율 계산은 DB별 arbitrary precision 나눗셈 차이를 피하기 위해 `double precision`으로 수행한다.
 
 ### 정렬 기준
 1. `adjustedScore` 내림차순

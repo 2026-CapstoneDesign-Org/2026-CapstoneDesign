@@ -1,6 +1,6 @@
 # list-recommendation-policy.md
 
-기준 날짜 및 시간: 2026-04-13 18:48:26 (Asia/Seoul)
+기준 날짜 및 시간: 2026-05-01 (Asia/Seoul)
 
 ## 1. 범위
 이 문서는 현재 구현된 리스트 추천 API의 입력 데이터, 후보 필터, 점수 계산, fallback 정책, 응답 구조를 정리한다.
@@ -16,6 +16,7 @@
 구조 메모:
 - `ListRecommendationScorer`는 점수 계산 전용 컴포넌트다.
 - `ListRecommendationModels`는 추천 계산 중간값을 담는 내부 모델이며, 외부 응답 DTO가 아니다.
+- 카테고리 신호는 현재 `restaurants.category_name` 단일 값을 `Restaurant.getCategoryNames()`로 읽어 만든다.
 
 ## 2. 기능 범위
 - 추천 대상은 다른 사용자의 공개 리스트다.
@@ -83,6 +84,7 @@ preferenceMatchScore =
 - 0 유사도 후보는 `collaborativeScore` 50%만 반영
 - `preferenceMatchScore == 0`이면 최종 점수에서 `0.10` 감점
 - fallback `regionScore = 0.65`
+- 후보 리스트 품질 보정 신호의 SQL 비율 계산은 `double precision`으로 수행한다.
 
 ## 5. 응답 구조
 루트:

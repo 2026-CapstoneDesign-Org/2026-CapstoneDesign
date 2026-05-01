@@ -1,6 +1,6 @@
 # 2026-CapstoneDesign
 
-기준 날짜 및 시간: 2026-04-13 18:48:26 (Asia/Seoul)
+기준 날짜 및 시간: 2026-05-01 (Asia/Seoul)
 
 2026 Capstone Design 백엔드 저장소입니다.  
 사용자 개인 리스트와 리스트 안의 식당 평가 데이터를 중심으로 식당 검색, 리스트 관리, 랭킹, 추천 기능을 제공하는 Spring Boot 기반 프로젝트입니다.
@@ -19,12 +19,14 @@
 - 팔로우 / 언팔로우 / 팔로워·팔로잉 조회
 - 리스트 생성, 수정, 삭제, 대표 리스트 지정, 공개/비공개 전환
 - 리스트에 식당 추가, 점수 수정, 식당 제거
+- 통합 검색, 내부 식당 부재 시 NAVER Pcmap 외부 fallback 검색
 - 식당 검색, 식당 상세 조회
 - 관리자 식당 등록, 수정, 카테고리 갱신, hide
 - 식당 랭킹 API
 - 식당 추천 API
 - 리스트 추천 API
-- seed preview JSON 기반 식당 / 카테고리 / 메뉴 / 태그 import
+- 외부 검색 결과 식당을 리스트에 추가하는 fallback 등록 흐름
+- seed preview JSON 기반 식당 / 메뉴 / 태그 import
 
 ## 기술 스택
 - Java 17
@@ -89,6 +91,10 @@ docker compose up -d
 - `recommendation/model/` : 추천 계산용 내부 모델, 외부 API DTO 아님
 - `client/` : 외부 API / HTML 연동 어댑터
 - `runner/` : 애플리케이션 기동 훅
+- `oauth2/` : OAuth2 사용자 로딩과 성공 핸들러
+- `service/search/support/` : 통합 검색 해석, 매칭, 응답 매핑 보조 컴포넌트
+- `service/seed/` : seed preview 파일 로딩 보조 컴포넌트
+- `service/admin/` : 관리자 명령 / hide 처리 보조 서비스
 - `repository/`, `domain/`, `dto/`, `config/`, `common/`, `exception/`
 
 ## 문서 안내
@@ -99,5 +105,5 @@ docker compose up -d
 - 남은 이슈: [docs/current-gaps.md](docs/current-gaps.md)
 
 ## 참고
-- 일부 통합 테스트는 로컬 PostgreSQL 전제를 가집니다.
+- 테스트는 `src/test/resources/application.yml`의 H2 인메모리 DB 설정으로 로컬 비밀 설정 파일 없이 실행할 수 있습니다.
 - 문서와 구현 차이가 있으면 코드를 기준으로 문서를 갱신합니다.
