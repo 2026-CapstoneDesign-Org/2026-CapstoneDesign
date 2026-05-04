@@ -10,4 +10,5 @@ public interface ListLikeRepository extends JpaRepository<ListLike, Long> {
     boolean existsByUserIdAndUserListId(Long userId, Long listId);
     void deleteByUserIdAndUserListId(Long userId, Long listId);
     long countByUserListId(Long listId);
+    long countByUserListUserId(Long userId);
 }

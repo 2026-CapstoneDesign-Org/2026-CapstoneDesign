@@ -1,5 +1,6 @@
 package com.example.Capstone.service;
 
+import com.example.Capstone.common.enums.ScoreEvent;
 import com.example.Capstone.domain.User;
 import com.example.Capstone.domain.UserFollow;
 import com.example.Capstone.dto.response.FollowCountResponse;
@@ -22,14 +23,13 @@ public class FollowService {
 
     private final UserFollowRepository userFollowRepository;
     private final UserRepository userRepository;
+    private final ReliabilityScoreService reliabilityScoreService;
 
     @Transactional
     public void follow(Long followerId, Long followingId) {
-
         if (followerId.equals(followingId)) {
             throw new BusinessException("자기 자신을 팔로우할 수 없습니다.", HttpStatus.BAD_REQUEST);
         }
-
         if (userFollowRepository.existsByFollowerIdAndFollowingId(followerId, followingId)) {
             throw new BusinessException("이미 팔로우 중입니다.", HttpStatus.BAD_REQUEST);
         }
@@ -43,6 +43,8 @@ public class FollowService {
                 .follower(follower)
                 .following(following)
                 .build());
+
+        reliabilityScoreService.increase(followingId, ScoreEvent.FOLLOWED);
     }
 
     @Transactional
