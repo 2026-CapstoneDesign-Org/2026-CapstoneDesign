@@ -24,4 +24,18 @@ public class NicknameGenerator {
         int number       = random.nextInt(9000) + 1000;
         return adjective + noun + number;
     }
+
+    // 랜덤 닉네임 여부 판별
+    public boolean isRandomNickname(String nickname) {
+        if (nickname == null) return false;
+        for (String adj : ADJECTIVES) {
+            for (String noun : NOUNS) {
+                // 형용사 + 명사 + 4자리 숫자 패턴 확인
+                if (nickname.matches(adj + noun + "\\d{4}")) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
 }

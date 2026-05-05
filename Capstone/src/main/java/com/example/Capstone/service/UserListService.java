@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.example.Capstone.client.PcmapSearchClient;
 import com.example.Capstone.client.PcmapSearchClient.PcmapRestaurantCandidate;
+import com.example.Capstone.common.enums.ScoreEvent;
 import com.example.Capstone.domain.ListRestaurant;
 import com.example.Capstone.domain.Restaurant;
 import com.example.Capstone.domain.User;
@@ -43,6 +44,7 @@ public class UserListService {
     private final RestaurantRepository restaurantRepository;
     private final ListRestaurantRepository listRestaurantRepository;
     private final PcmapSearchClient pcmapSearchClient;
+    private final ReliabilityScoreService reliabilityScoreService;
 
 	// 리스트 생성
 	@Transactional
@@ -122,10 +124,20 @@ public class UserListService {
 	// 대표 리스트 지정
 	@Transactional
     public void setRepresentative(Long userId, Long listId) {
+        // 기존에 대표 리스트가 있었는지 확인
+    boolean hadRepresentative = userListRepository
+            .existsByUserIdAndIsRepresentativeTrueAndIsDeletedFalse(userId);
+
         userListRepository.findAllByUserIdAndIsDeletedFalse(userId)
                 .forEach(list -> list.setRepresentative(false));
         UserList userList = getOwnedList(userId, listId);
         userList.setRepresentative(true);
+        userList.setPublic(true);
+
+        // 최초 1회만 점수 제공
+        if (!hadRepresentative) {
+            reliabilityScoreService.increase(userId, ScoreEvent.REPRESENTATIVE_SET);
+        }
     }
 
 	// 리스트 삭제

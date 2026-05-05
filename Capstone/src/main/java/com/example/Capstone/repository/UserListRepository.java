@@ -12,4 +12,5 @@ import com.example.Capstone.domain.UserList;
 public interface UserListRepository extends JpaRepository<UserList, Long> {
     List<UserList> findAllByUserIdAndIsDeletedFalse(Long userId);
     Optional<UserList> findByIdAndIsDeletedFalse(Long id);
+    boolean existsByUserIdAndIsRepresentativeTrueAndIsDeletedFalse(Long userId);
 }
