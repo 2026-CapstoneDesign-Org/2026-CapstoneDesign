@@ -1,6 +1,4 @@
-# restaurants.md
-
-기준 날짜 및 시간: 2026-05-01 (Asia/Seoul)
+# 식당 DB 기준
 
 ## 1. 범위
 이 문서는 `Restaurant`, `RestaurantMenuItem`, `Tag`, `RestaurantTag` 저장 구조를 다룬다.
@@ -29,6 +27,9 @@
 - `lng`
 - `image_url`
 - `pcmap_place_id`
+- `phone_number`
+- `primary_category_name`
+- `business_hours_raw`
 - `menu_updated_at`
 - `is_hidden`
 - `is_deleted`
@@ -38,6 +39,9 @@
 
 현재 코드 해석:
 - `categoryName`은 식당의 단일 카테고리 문자열이다.
+- `primaryCategoryName`은 상세/검색에서 쓰는 상위 카테고리 문자열이다.
+- `phoneNumber`는 상세 홈 전화번호다.
+- `businessHoursRaw`는 요일별 영업시간 표시를 재구성하기 위한 raw JSON 문자열이다.
 - 현재 코드에는 별도 `RestaurantCategory` 엔티티가 없다.
 - `roadAddress`가 있으면 응답 표시 주소는 `roadAddress`를 우선 사용한다.
 - `regionFilterNames`는 JSON text로 저장되는 지역 검색 보조 이름 목록이다.
@@ -102,12 +106,32 @@
 - 메뉴와 식당-태그는 식당별 delete 후 replace 방식으로 다시 적재한다.
 - 운영 규칙은 `docs/logic/seed-import.md`에서 다룬다.
 
-## 6. 외부 fallback 생성과의 관계
+## 6. 상세 화면 컬럼 기준
+
+상세 홈/메뉴 화면에서 직접 사용하는 식당 컬럼:
+
+- `road_address`: 상세 홈 주소 표시 우선값
+- `image_url`: 리뷰/추가 사진이 없는 현재 단계의 대표 사진
+- `phone_number`: 상세 홈 전화번호
+- `primary_category_name`: 네이버 공식 Local Search API 또는 seed category 기준 상위 카테고리
+- `business_hours_raw`: 요일별 영업시간 raw JSON 문자열
+
+`business_hours_raw`에는 요일, 시작/종료, 브레이크타임, 라스트오더, 휴무 설명만 저장한다.
+`영업 중`, `영업 전`, `휴무` 같은 현재 상태값은 저장하지 않는다.
+
+제거된 컬럼:
+
+- `opening_hours`
+- `business_hours_summary`
+
+표시 요약은 저장 컬럼으로 두지 않고, API 응답 변환 또는 클라이언트 렌더링에서 처리한다.
+
+## 7. 외부 fallback 생성과의 관계
 - `POST /lists/{id}/restaurants/external-fallback`는 Pcmap 후보가 기존 DB에 없으면 `Restaurant` row를 생성한다.
 - 이때 `name`, 주소, 도로명 주소, 카테고리, 좌표, 이미지, `pcmapPlaceId`를 후보에서 가져오고 `regionName`은 대상 리스트 지역으로 저장한다.
 - 외부 fallback으로 생성된 식당은 현재 메뉴 / 태그 상세 데이터가 함께 생성되지 않는다.
 
-## 7. 추가 확인 필요
+## 8. 추가 확인 필요
 - 메뉴 / 태그를 일반 API 응답으로 노출할지
 - 카테고리 alias 정규화를 둘지
 - 식당 식별자 강화가 필요한지
