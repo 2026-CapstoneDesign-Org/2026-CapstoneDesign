@@ -66,6 +66,10 @@ public class Restaurant extends BaseTimeEntity {
     @Column(columnDefinition = "text")
     private List<String> regionFilterNames = new ArrayList<>();
 
+    @Convert(converter = StringListJsonConverter.class)
+    @Column(columnDefinition = "text")
+    private List<String> conveniences = new ArrayList<>();
+
     @Column(precision = 10, scale = 7)
     private BigDecimal lat;
 
@@ -101,6 +105,9 @@ public class Restaurant extends BaseTimeEntity {
 
     @OneToMany(mappedBy = "restaurant", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<RestaurantTag> restaurantTags = new ArrayList<>();
+
+    @OneToMany(mappedBy = "restaurant", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<RestaurantPhoto> photos = new ArrayList<>();
 
     public void updateInfo(
             String name,
@@ -165,6 +172,12 @@ public class Restaurant extends BaseTimeEntity {
                 : new ArrayList<>(regionFilterNames);
     }
 
+    public void updateConveniences(List<String> conveniences) {
+        this.conveniences = conveniences == null
+                ? new ArrayList<>()
+                : new ArrayList<>(conveniences);
+    }
+
     public void updateSeedMetadata(String pcmapPlaceId, LocalDateTime menuUpdatedAt) {
         this.pcmapPlaceId = pcmapPlaceId;
         this.menuUpdatedAt = menuUpdatedAt;
@@ -175,6 +188,12 @@ public class Restaurant extends BaseTimeEntity {
             return List.of();
         }
         return List.of(categoryName);
+    }
+
+    public boolean isParkingAvailable() {
+        return conveniences != null
+                && conveniences.stream()
+                .anyMatch(convenience -> convenience != null && convenience.trim().equals("주차"));
     }
 
     public String getDisplayAddress() {
@@ -210,6 +229,7 @@ public class Restaurant extends BaseTimeEntity {
             String regionCountyName,
             String regionTownName,
             List<String> regionFilterNames,
+            List<String> conveniences,
             BigDecimal lat,
             BigDecimal lng,
             String imageUrl,
@@ -231,6 +251,9 @@ public class Restaurant extends BaseTimeEntity {
         this.regionFilterNames = regionFilterNames == null
                 ? new ArrayList<>()
                 : new ArrayList<>(regionFilterNames);
+        this.conveniences = conveniences == null
+                ? new ArrayList<>()
+                : new ArrayList<>(conveniences);
         this.lat = lat;
         this.lng = lng;
         this.imageUrl = imageUrl;

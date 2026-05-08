@@ -22,6 +22,7 @@ import com.example.Capstone.dto.response.RestaurantBusinessHoursDisplayResponse;
 import com.example.Capstone.dto.response.RestaurantCurrentBusinessStatusResponse;
 import com.example.Capstone.dto.response.RestaurantDetailResponse;
 import com.example.Capstone.dto.response.RestaurantMenuItemResponse;
+import com.example.Capstone.dto.response.ParkingLotResponse;
 import com.example.Capstone.dto.response.RestaurantPhotoResponse;
 import com.example.Capstone.dto.response.RestaurantTagResponse;
 import com.example.Capstone.exception.GlobalExceptionHandler;
@@ -106,6 +107,8 @@ class RestaurantControllerTest {
                         "Chinese",
                         "Chinese",
                         List.of("Chinese"),
+                        List.of("\uC8FC\uCC28", "\uD3EC\uC7A5"),
+                        true,
                         List.of(new RestaurantTagResponse(
                                 10L,
                                 "menu:\uD0D5\uC218\uC721",
@@ -121,6 +124,27 @@ class RestaurantControllerTest {
                                 "Black bean noodles",
                                 "7,500",
                                 new BigDecimal("7500")
+                        )),
+                        List.of(new ParkingLotResponse(
+                                200L,
+                                "Sample Parking",
+                                "PUBLIC",
+                                "OFF_STREET",
+                                "Parking road address",
+                                "Parking lot address",
+                                30,
+                                null,
+                                "09:00-18:00",
+                                "09:00-18:00",
+                                "09:00-18:00",
+                                new BigDecimal("37.2321262"),
+                                new BigDecimal("127.1869096"),
+                                30,
+                                1000,
+                                10,
+                                500,
+                                "031-000-0000",
+                                14
                         ))
                 ));
 
@@ -136,8 +160,12 @@ class RestaurantControllerTest {
                 .andExpect(jsonPath("$.currentBusinessStatus.isOpen").value(true))
                 .andExpect(jsonPath("$.primaryCategoryName").value("Chinese"))
                 .andExpect(jsonPath("$.photos[0].imageUrl").value("https://example.com/restaurant.jpg"))
+                .andExpect(jsonPath("$.conveniences[0]").value("\uC8FC\uCC28"))
+                .andExpect(jsonPath("$.parkingAvailable").value(true))
                 .andExpect(jsonPath("$.additionalInfoTags[0].tagName").value("\uD0D5\uC218\uC721"))
                 .andExpect(jsonPath("$.menus[0].menuName").value("Jajangmyeon"))
-                .andExpect(jsonPath("$.menus[0].priceText").value("7,500"));
+                .andExpect(jsonPath("$.menus[0].priceText").value("7,500"))
+                .andExpect(jsonPath("$.nearbyParkingLots[0].parkingLotName").value("Sample Parking"))
+                .andExpect(jsonPath("$.nearbyParkingLots[0].distanceMeters").value(14));
     }
 }

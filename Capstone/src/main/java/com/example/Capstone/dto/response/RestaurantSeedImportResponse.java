@@ -33,6 +33,8 @@ public record RestaurantSeedImportResponse(
         @Schema(description = "Replaced menu item row count")
         int replacedMenuItemCount,
         @Schema(description = "Replaced restaurant-tag row count")
-        int replacedRestaurantTagCount
+        int replacedRestaurantTagCount,
+        @Schema(description = "Replaced restaurant photo row count")
+        int replacedRestaurantPhotoCount
 ) {
 }
