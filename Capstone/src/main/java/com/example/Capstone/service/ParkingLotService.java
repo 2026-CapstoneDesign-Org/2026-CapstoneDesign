@@ -121,7 +121,21 @@ public class ParkingLotService {
             throw new IllegalArgumentException("restaurant coordinate is required.");
         }
 
-        int normalizedLimit = normalizeLimit(limit);
+        return buildParkingLotsByDistance(restaurant, normalizeLimit(limit), parkingLotDivision);
+    }
+
+    public List<ParkingLotResponse> getParkingLotsForRestaurantDetail(Restaurant restaurant, int limit) {
+        if (restaurant == null || restaurant.getLat() == null || restaurant.getLng() == null) {
+            return List.of();
+        }
+        return buildParkingLotsByDistance(restaurant, normalizeLimit(limit), null);
+    }
+
+    private List<ParkingLotResponse> buildParkingLotsByDistance(
+            Restaurant restaurant,
+            int normalizedLimit,
+            String parkingLotDivision
+    ) {
         List<ParkingLot> parkingLots = resolveParkingLots(parkingLotDivision);
 
         return parkingLots.stream()

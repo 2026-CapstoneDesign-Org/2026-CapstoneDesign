@@ -21,11 +21,13 @@ import com.example.Capstone.client.NaverLocalSearchClient;
 import com.example.Capstone.client.NaverLocalSearchClient.NaverLocalRestaurantCandidate;
 import com.example.Capstone.domain.Restaurant;
 import com.example.Capstone.domain.RestaurantMenuItem;
+import com.example.Capstone.domain.RestaurantPhoto;
 import com.example.Capstone.domain.RestaurantTag;
 import com.example.Capstone.domain.Tag;
 import com.example.Capstone.dto.request.ImportRestaurantSeedRequest;
 import com.example.Capstone.dto.response.RestaurantSeedImportResponse;
 import com.example.Capstone.repository.RestaurantMenuItemRepository;
+import com.example.Capstone.repository.RestaurantPhotoRepository;
 import com.example.Capstone.repository.RestaurantRepository;
 import com.example.Capstone.repository.RestaurantTagRepository;
 import com.example.Capstone.repository.TagRepository;
@@ -44,6 +46,8 @@ import lombok.RequiredArgsConstructor;
 public class RestaurantSeedImportService {
 
     private static final BigDecimal MAX_REASONABLE_MENU_PRICE = new BigDecimal("10000000");
+    private static final int MAX_RESTAURANT_PHOTO_COUNT = 10;
+    private static final String SEED_PHOTO_SOURCE = "SEED_PHOTO";
 
     private static final Path DEFAULT_RESTAURANTS_FILE_PATH = Path.of("seed-data", "restaurants-seed-preview.json");
     private static final Path DEFAULT_MENU_ITEMS_FILE_PATH = Path.of("seed-data", "restaurant-menu-items-seed-preview.json");
@@ -52,6 +56,7 @@ public class RestaurantSeedImportService {
 
     private final RestaurantRepository restaurantRepository;
     private final RestaurantMenuItemRepository restaurantMenuItemRepository;
+    private final RestaurantPhotoRepository restaurantPhotoRepository;
     private final TagRepository tagRepository;
     private final RestaurantTagRepository restaurantTagRepository;
     private final RestaurantSeedFileLoader restaurantSeedFileLoader;
@@ -156,6 +161,7 @@ public class RestaurantSeedImportService {
 
         int replacedMenuItemCount = 0;
         int replacedRestaurantTagCount = 0;
+        int replacedRestaurantPhotoCount = 0;
 
         for (RestaurantSeedRow row : restaurantRows) {
             Restaurant restaurant = restaurantsBySeedIndex.get(row.seedIndex());
@@ -166,6 +172,10 @@ public class RestaurantSeedImportService {
             replacedMenuItemCount += replaceMenuItems(
                     restaurant,
                     menuItemsBySeedIndex.getOrDefault(row.seedIndex(), List.of())
+            );
+            replacedRestaurantPhotoCount += replaceRestaurantPhotos(
+                    restaurant,
+                    resolvePhotoUrls(row)
             );
             replacedRestaurantTagCount += replaceRestaurantTags(
                     restaurant,
@@ -191,7 +201,8 @@ public class RestaurantSeedImportService {
                 createdTagCount,
                 updatedTagCount,
                 replacedMenuItemCount,
-                replacedRestaurantTagCount
+                replacedRestaurantTagCount,
+                replacedRestaurantPhotoCount
         );
     }
 
@@ -208,6 +219,7 @@ public class RestaurantSeedImportService {
                 .regionCountyName(normalizeText(row.regionCountyName()))
                 .regionTownName(normalizeText(row.regionTownName()))
                 .regionFilterNames(normalizeRegionFilterNames(row))
+                .conveniences(normalizeStringList(row.conveniences()))
                 .lat(row.lat())
                 .lng(row.lng())
                 .imageUrl(row.imageUrl())
@@ -245,6 +257,7 @@ public class RestaurantSeedImportService {
                 normalizeText(row.regionTownName()),
                 normalizeRegionFilterNames(row)
         );
+        restaurant.updateConveniences(normalizeStringList(row.conveniences()));
         restaurant.updateSeedMetadata(
                 row.pcmapPlaceId(),
                 resolveMenuUpdatedAt(row.menuUpdatedAt())
@@ -329,6 +342,24 @@ public class RestaurantSeedImportService {
 
         restaurantMenuItemRepository.saveAll(menuItems);
         return menuItems.size();
+    }
+
+    private int replaceRestaurantPhotos(Restaurant restaurant, List<String> photoUrls) {
+        restaurantPhotoRepository.deleteAllByRestaurantId(restaurant.getId());
+        restaurantPhotoRepository.flush();
+
+        List<RestaurantPhoto> photos = new ArrayList<>();
+        for (int index = 0; index < Math.min(photoUrls.size(), MAX_RESTAURANT_PHOTO_COUNT); index += 1) {
+            photos.add(RestaurantPhoto.builder()
+                    .restaurant(restaurant)
+                    .imageUrl(photoUrls.get(index))
+                    .source(SEED_PHOTO_SOURCE)
+                    .displayOrder(index)
+                    .build());
+        }
+
+        restaurantPhotoRepository.saveAll(photos);
+        return photos.size();
     }
 
     private int replaceRestaurantTags(
@@ -446,6 +477,31 @@ public class RestaurantSeedImportService {
         return new ArrayList<>(values);
     }
 
+    private List<String> resolvePhotoUrls(RestaurantSeedRow row) {
+        LinkedHashSet<String> values = new LinkedHashSet<>();
+        addIfPresent(values, row.imageUrl());
+        if (row.photoUrls() != null) {
+            row.photoUrls().stream()
+                    .map(this::normalizeText)
+                    .filter(value -> value != null && !value.isBlank())
+                    .forEach(values::add);
+        }
+        return values.stream()
+                .limit(MAX_RESTAURANT_PHOTO_COUNT)
+                .toList();
+    }
+
+    private List<String> normalizeStringList(List<String> values) {
+        if (values == null) {
+            return List.of();
+        }
+        return values.stream()
+                .map(this::normalizeText)
+                .filter(value -> value != null && !value.isBlank())
+                .distinct()
+                .toList();
+    }
+
     private void addIfPresent(Set<String> values, String value) {
         String normalized = normalizeText(value);
         if (normalized != null) {
@@ -491,6 +547,8 @@ public class RestaurantSeedImportService {
             @JsonProperty("region_county_name") String regionCountyName,
             @JsonProperty("region_town_name") String regionTownName,
             @JsonProperty("region_filter_names") List<String> regionFilterNames,
+            @JsonProperty("conveniences") List<String> conveniences,
+            @JsonProperty("photo_urls") List<String> photoUrls,
             @JsonProperty("phone_number") String phoneNumber,
             @JsonProperty("business_hours_raw") String businessHoursRaw,
             @JsonProperty("opening_hours") String openingHours,
