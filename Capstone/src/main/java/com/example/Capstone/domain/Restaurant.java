@@ -44,6 +44,9 @@ public class Restaurant extends BaseTimeEntity {
     @Column(length = 100)
     private String categoryName;
 
+    @Column(length = 50)
+    private String primaryCategoryName;
+
     @Column(nullable = false, length = 50)
     private String regionName;
 
@@ -71,6 +74,12 @@ public class Restaurant extends BaseTimeEntity {
 
     @Column(length = 500)
     private String imageUrl;
+
+    @Column(length = 50)
+    private String phoneNumber;
+
+    @Column(columnDefinition = "text")
+    private String businessHoursRaw;
 
     @Column(length = 100, unique = true)
     private String pcmapPlaceId;
@@ -118,6 +127,24 @@ public class Restaurant extends BaseTimeEntity {
         this.categoryName = categoryName == null || categoryName.isBlank()
                 ? null
                 : categoryName.trim();
+    }
+
+    public void updatePrimaryCategoryName(String primaryCategoryName) {
+        this.primaryCategoryName = primaryCategoryName == null || primaryCategoryName.isBlank()
+                ? null
+                : primaryCategoryName.trim();
+    }
+
+    public void updateContactAndBusinessHours(
+            String phoneNumber,
+            String businessHoursRaw
+    ) {
+        this.phoneNumber = phoneNumber == null || phoneNumber.isBlank()
+                ? null
+                : phoneNumber.trim();
+        this.businessHoursRaw = businessHoursRaw == null || businessHoursRaw.isBlank()
+                ? null
+                : businessHoursRaw.trim();
     }
 
     public void updateSeedRegionInfo(
@@ -176,6 +203,7 @@ public class Restaurant extends BaseTimeEntity {
             String address,
             String roadAddress,
             String categoryName,
+            String primaryCategoryName,
             String regionName,
             String regionCityName,
             String regionDistrictName,
@@ -185,6 +213,8 @@ public class Restaurant extends BaseTimeEntity {
             BigDecimal lat,
             BigDecimal lng,
             String imageUrl,
+            String phoneNumber,
+            String businessHoursRaw,
             String pcmapPlaceId,
             LocalDateTime menuUpdatedAt
     ) {
@@ -192,6 +222,7 @@ public class Restaurant extends BaseTimeEntity {
         this.address = address;
         this.roadAddress = roadAddress;
         this.categoryName = categoryName;
+        this.primaryCategoryName = primaryCategoryName;
         this.regionName = regionName;
         this.regionCityName = regionCityName;
         this.regionDistrictName = regionDistrictName;
@@ -203,6 +234,8 @@ public class Restaurant extends BaseTimeEntity {
         this.lat = lat;
         this.lng = lng;
         this.imageUrl = imageUrl;
+        this.phoneNumber = phoneNumber;
+        this.businessHoursRaw = businessHoursRaw;
         this.pcmapPlaceId = pcmapPlaceId;
         this.menuUpdatedAt = menuUpdatedAt;
         this.isHidden = false;

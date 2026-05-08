@@ -9,6 +9,7 @@ import com.example.Capstone.dto.request.UpdateCategoryRequest;
 import com.example.Capstone.dto.request.UpdateRestaurantRequest;
 import com.example.Capstone.dto.response.RestaurantResponse;
 import com.example.Capstone.repository.RestaurantRepository;
+import com.example.Capstone.service.support.RestaurantCategoryResolver;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -63,6 +64,7 @@ public class AdminRestaurantCommandService {
                 .orElseThrow(() -> new IllegalArgumentException("移댄뀒怨좊━媛 鍮꾩뼱 ?덉쓣 ???놁뒿?덈떎."));
 
         restaurant.updateCategoryName(categoryName);
+        restaurant.updatePrimaryCategoryName(RestaurantCategoryResolver.resolvePrimaryCategory(categoryName));
     }
 
     @Transactional

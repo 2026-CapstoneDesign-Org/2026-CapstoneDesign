@@ -15,6 +15,7 @@ Capstone/src/test/resources/
 *.sqlite3
 *.sql
 !Capstone/seed-data/restaurant-schema-migration-20260413.sql
+!Capstone/seed-data/restaurant-detail-fields-migration-20260505.sql
 *.dump
 *.bak
 

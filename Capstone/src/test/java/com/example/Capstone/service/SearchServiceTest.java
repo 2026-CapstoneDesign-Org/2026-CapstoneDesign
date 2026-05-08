@@ -95,6 +95,29 @@ class SearchServiceTest {
     }
 
     @Test
+    @DisplayName("plain nickname query is not polluted by external restaurant fallback")
+    void searchTreatsPlainNicknameAsUserIntentWithoutFallbackPollution() {
+        User user = user(9L, "tester");
+
+        when(restaurantRepository.searchVisibleRestaurantsByRegionSignal(eq("tester"), any(Pageable.class)))
+                .thenReturn(List.of());
+        when(restaurantRepository.searchVisibleRestaurantsBySearchKeyword(eq("tester"), any(Pageable.class)))
+                .thenReturn(List.of());
+        when(userRepository.searchVisibleUsers(eq("tester"), any(Pageable.class)))
+                .thenReturn(List.of(user));
+
+        SearchResponse response = searchService.search("tester");
+
+        assertEquals("USER", response.primaryType());
+        assertEquals(0, response.restaurantCount());
+        assertEquals(1, response.userCount());
+        assertEquals(0, response.regionCount());
+        assertEquals("tester", response.users().get(0).nickname());
+        assertFalse(response.interpretation().fallbackUsed());
+        verify(pcmapSearchClient, never()).searchRestaurants(any(), any(Integer.class));
+    }
+
+    @Test
     @DisplayName("region only query is interpreted as region search")
     void searchTreatsRegionOnlyAsRegionIntent() {
         Restaurant restaurant = restaurant(3L, "성수 감자탕", "서울 성수", "서울 성수동", "한식", "감자탕", "감자탕", "성수동");

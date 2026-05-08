@@ -12,6 +12,7 @@ import com.example.Capstone.dto.response.SearchInterpretationResponse;
 import com.example.Capstone.dto.response.SearchRegionItemResponse;
 import com.example.Capstone.dto.response.SearchRestaurantItemResponse;
 import com.example.Capstone.dto.response.SearchUserItemResponse;
+import com.example.Capstone.service.support.RestaurantCategoryResolver;
 
 public final class SearchResultMapper {
 
@@ -43,6 +44,7 @@ public final class SearchResultMapper {
                 restaurant.getLat(),
                 restaurant.getLng(),
                 restaurant.getImageUrl(),
+                restaurant.getPrimaryCategoryName(),
                 restaurant.getCategoryNames(),
                 matchedBy
         );
@@ -65,6 +67,7 @@ public final class SearchResultMapper {
                 parseCoordinate(candidate.y()),
                 parseCoordinate(candidate.x()),
                 candidate.imageUrl(),
+                RestaurantCategoryResolver.resolvePrimaryCategory(candidate.categoryName()),
                 candidate.categoryName() == null || candidate.categoryName().isBlank()
                         ? List.of()
                         : List.of(candidate.categoryName()),

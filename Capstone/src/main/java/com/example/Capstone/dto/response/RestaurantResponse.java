@@ -13,6 +13,7 @@ public record RestaurantResponse(
         BigDecimal lat,
         BigDecimal lng,
         String imageUrl,
+        String primaryCategoryName,
         List<String> categories
 ) {
     public static RestaurantResponse from(Restaurant restaurant) {
@@ -24,6 +25,7 @@ public record RestaurantResponse(
                 restaurant.getLat(),
                 restaurant.getLng(),
                 restaurant.getImageUrl(),
+                restaurant.getPrimaryCategoryName(),
                 restaurant.getCategoryNames()
         );
     }

@@ -39,6 +39,7 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long>, R
                  or lower(coalesce(r.regionCountyName, '')) like lower(concat('%', :keyword, '%'))
                  or lower(coalesce(r.regionTownName, '')) like lower(concat('%', :keyword, '%'))
                  or lower(coalesce(r.categoryName, '')) like lower(concat('%', :keyword, '%'))
+                 or lower(coalesce(r.primaryCategoryName, '')) like lower(concat('%', :keyword, '%'))
                  or lower(coalesce(mi.menuName, '')) like lower(concat('%', :keyword, '%'))
                  or lower(coalesce(mi.normalizedMenuName, '')) like lower(concat('%', :keyword, '%'))
                  or lower(coalesce(t.tagName, '')) like lower(concat('%', :keyword, '%'))

@@ -59,13 +59,17 @@ public class SearchService {
 
         SearchInterpretation interpretation = new SearchQueryInterpreter(restaurantRepository).interpret(normalizedQuery);
         List<Restaurant> internalCandidates = loadInternalRestaurantCandidates(interpretation);
-        List<SearchRestaurantItemResponse> restaurantItems = searchRestaurantItems(interpretation, internalCandidates);
+        List<SearchUserItemResponse> userItems = searchUserItems(interpretation);
+        List<SearchRestaurantItemResponse> restaurantItems = searchRestaurantItems(
+                interpretation,
+                internalCandidates,
+                userItems.isEmpty()
+        );
 
         boolean fallbackUsed = restaurantItems.stream()
                 .anyMatch(item -> SOURCE_EXTERNAL_FALLBACK.equals(item.source()));
 
         SearchInterpretation finalizedInterpretation = interpretation.withFallbackUsed(fallbackUsed);
-        List<SearchUserItemResponse> userItems = searchUserItems(finalizedInterpretation);
         List<SearchRegionItemResponse> regionItems = searchRegionItems(finalizedInterpretation);
 
         return new SearchResponse(
@@ -83,7 +87,8 @@ public class SearchService {
 
     private List<SearchRestaurantItemResponse> searchRestaurantItems(
             SearchInterpretation interpretation,
-            List<Restaurant> internalCandidates
+            List<Restaurant> internalCandidates,
+            boolean userItemsEmpty
     ) {
         if (interpretation.explicitUserQuery()) {
             return List.of();
@@ -96,7 +101,7 @@ public class SearchService {
                 .limit(RESTAURANT_RESULT_LIMIT)
                 .toList();
 
-        if (!shouldUseFallback(interpretation, internalItems.size())) {
+        if (!shouldUseFallback(interpretation, internalItems.size(), userItemsEmpty)) {
             return internalItems;
         }
 
@@ -150,8 +155,9 @@ public class SearchService {
         return SearchResultMapper.toInternalRestaurantItem(restaurant, matchedBy, SOURCE_INTERNAL);
     }
 
-    private boolean shouldUseFallback(SearchInterpretation interpretation, int internalCount) {
+    private boolean shouldUseFallback(SearchInterpretation interpretation, int internalCount, boolean userItemsEmpty) {
         return internalCount == 0
+                && userItemsEmpty
                 && interpretation.restaurantKeyword() != null
                 && !interpretation.genericBrowseQuery();
     }

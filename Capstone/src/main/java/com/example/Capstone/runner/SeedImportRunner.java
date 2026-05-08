@@ -32,7 +32,8 @@ public class SeedImportRunner implements ApplicationRunner {
                 environment.getProperty("seed.import.restaurants-file-path"),
                 environment.getProperty("seed.import.menu-items-file-path"),
                 environment.getProperty("seed.import.tags-file-path"),
-                environment.getProperty("seed.import.restaurant-tags-file-path")
+                environment.getProperty("seed.import.restaurant-tags-file-path"),
+                environment.getProperty("seed.import.enrich-with-naver-local", Boolean.class, false)
         ));
 
         log.info(

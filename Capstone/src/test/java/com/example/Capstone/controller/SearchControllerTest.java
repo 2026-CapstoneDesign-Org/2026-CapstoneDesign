@@ -60,6 +60,7 @@ class SearchControllerTest {
                                 null,
                                 null,
                                 "image",
+                                "한식",
                                 List.of("한식"),
                                 "NAME_CONTAINS"
                         )),
@@ -78,6 +79,7 @@ class SearchControllerTest {
                 .andExpect(jsonPath("$.interpretation.restaurantKeyword").value("냉면"))
                 .andExpect(jsonPath("$.restaurants[0].restaurantId").value(1))
                 .andExpect(jsonPath("$.restaurants[0].source").value("INTERNAL"))
+                .andExpect(jsonPath("$.restaurants[0].primaryCategoryName").value("한식"))
                 .andExpect(jsonPath("$.users[0].nickname").value("성수매니아"))
                 .andExpect(jsonPath("$.regions[0].regionName").value("성수"))
                 .andExpect(jsonPath("$.regions[0].regionKeyword").value("성수"));

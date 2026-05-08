@@ -4,11 +4,14 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.math.BigDecimal;
+import java.util.Optional;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.Capstone.client.NaverLocalSearchClient;
+import com.example.Capstone.client.NaverLocalSearchClient.NaverLocalRestaurantCandidate;
 import com.example.Capstone.client.PcmapSearchClient;
 import com.example.Capstone.client.PcmapSearchClient.PcmapRestaurantCandidate;
 import com.example.Capstone.common.enums.ScoreEvent;
@@ -28,6 +31,7 @@ import com.example.Capstone.repository.ListRestaurantRepository;
 import com.example.Capstone.repository.RestaurantRepository;
 import com.example.Capstone.repository.UserListRepository;
 import com.example.Capstone.repository.UserRepository;
+import com.example.Capstone.service.support.RestaurantCategoryResolver;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -45,6 +49,7 @@ public class UserListService {
     private final ListRestaurantRepository listRestaurantRepository;
     private final PcmapSearchClient pcmapSearchClient;
     private final ReliabilityScoreService reliabilityScoreService;
+    private final NaverLocalSearchClient naverLocalSearchClient;
 
 	// 리스트 생성
 	@Transactional
@@ -125,8 +130,8 @@ public class UserListService {
 	@Transactional
     public void setRepresentative(Long userId, Long listId) {
         // 기존에 대표 리스트가 있었는지 확인
-    boolean hadRepresentative = userListRepository
-            .existsByUserIdAndIsRepresentativeTrueAndIsDeletedFalse(userId);
+        boolean hadRepresentative = userListRepository
+                .existsByUserIdAndIsRepresentativeTrueAndIsDeletedFalse(userId);
 
         userListRepository.findAllByUserIdAndIsDeletedFalse(userId)
                 .forEach(list -> list.setRepresentative(false));
@@ -312,16 +317,27 @@ public class UserListService {
             throw new BusinessException("외부 식당 주소가 없어 리스트에 추가할 수 없습니다.", HttpStatus.BAD_REQUEST);
         }
 
+        Optional<NaverLocalRestaurantCandidate> officialCandidate =
+                naverLocalSearchClient.findBestRestaurantMatch(candidate.name(), address);
+        String categoryName = normalizeText(officialCandidate
+                .map(NaverLocalRestaurantCandidate::category)
+                .orElse(candidate.categoryName()));
+        String phoneNumber = normalizeText(officialCandidate
+                .map(NaverLocalRestaurantCandidate::telephone)
+                .orElse(null));
+
         return Restaurant.builder()
                 .name(candidate.name())
                 .address(address)
                 .roadAddress(normalizeText(candidate.roadAddress()))
-                .categoryName(normalizeText(candidate.categoryName()))
+                .categoryName(categoryName)
+                .primaryCategoryName(RestaurantCategoryResolver.resolvePrimaryCategory(categoryName, candidate.categoryName()))
                 .regionName(listRegionName)
                 .regionFilterNames(buildExternalRegionFilterNames(candidate, listRegionName))
                 .lat(toBigDecimal(candidate.y()))
                 .lng(toBigDecimal(candidate.x()))
                 .imageUrl(normalizeText(candidate.imageUrl()))
+                .phoneNumber(phoneNumber)
                 .pcmapPlaceId(candidate.placeId())
                 .build();
     }

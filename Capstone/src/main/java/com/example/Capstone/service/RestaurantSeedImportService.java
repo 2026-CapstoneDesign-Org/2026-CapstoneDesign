@@ -17,6 +17,8 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.Capstone.client.NaverLocalSearchClient;
+import com.example.Capstone.client.NaverLocalSearchClient.NaverLocalRestaurantCandidate;
 import com.example.Capstone.domain.Restaurant;
 import com.example.Capstone.domain.RestaurantMenuItem;
 import com.example.Capstone.domain.RestaurantTag;
@@ -28,6 +30,8 @@ import com.example.Capstone.repository.RestaurantRepository;
 import com.example.Capstone.repository.RestaurantTagRepository;
 import com.example.Capstone.repository.TagRepository;
 import com.example.Capstone.service.seed.RestaurantSeedFileLoader;
+import com.example.Capstone.service.support.RestaurantCategoryResolver;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
 
@@ -51,6 +55,7 @@ public class RestaurantSeedImportService {
     private final TagRepository tagRepository;
     private final RestaurantTagRepository restaurantTagRepository;
     private final RestaurantSeedFileLoader restaurantSeedFileLoader;
+    private final NaverLocalSearchClient naverLocalSearchClient;
 
     @Transactional
     public RestaurantSeedImportResponse importSeed(ImportRestaurantSeedRequest request) {
@@ -104,17 +109,19 @@ public class RestaurantSeedImportService {
         Map<Long, Restaurant> restaurantsBySeedIndex = new LinkedHashMap<>();
         int createdRestaurantCount = 0;
         int updatedRestaurantCount = 0;
+        boolean enrichWithNaverLocal = request != null && Boolean.TRUE.equals(request.enrichWithNaverLocal());
 
         for (RestaurantSeedRow row : restaurantRows) {
             Optional<Restaurant> existingRestaurant = findRestaurant(row);
+            RestaurantSeedEnrichment enrichment = resolveSeedEnrichment(row, enrichWithNaverLocal);
             Restaurant restaurant;
 
             if (existingRestaurant.isPresent()) {
                 restaurant = existingRestaurant.get();
-                updateRestaurant(restaurant, row);
+                updateRestaurant(restaurant, row, enrichment);
                 updatedRestaurantCount += 1;
             } else {
-                restaurant = restaurantRepository.save(createRestaurant(row));
+                restaurant = restaurantRepository.save(createRestaurant(row, enrichment));
                 createdRestaurantCount += 1;
             }
 
@@ -188,12 +195,13 @@ public class RestaurantSeedImportService {
         );
     }
 
-    private Restaurant createRestaurant(RestaurantSeedRow row) {
+    private Restaurant createRestaurant(RestaurantSeedRow row, RestaurantSeedEnrichment enrichment) {
         return Restaurant.builder()
                 .name(row.name())
                 .address(row.address())
                 .roadAddress(normalizeText(row.roadAddress()))
-                .categoryName(normalizeCategoryName(row.categoryName()))
+                .categoryName(enrichment.categoryName())
+                .primaryCategoryName(enrichment.primaryCategoryName())
                 .regionName(row.regionName())
                 .regionCityName(normalizeText(row.regionCityName()))
                 .regionDistrictName(normalizeText(row.regionDistrictName()))
@@ -203,12 +211,14 @@ public class RestaurantSeedImportService {
                 .lat(row.lat())
                 .lng(row.lng())
                 .imageUrl(row.imageUrl())
+                .phoneNumber(enrichment.phoneNumber())
+                .businessHoursRaw(enrichment.businessHoursRaw())
                 .pcmapPlaceId(row.pcmapPlaceId())
                 .menuUpdatedAt(resolveMenuUpdatedAt(row.menuUpdatedAt()))
                 .build();
     }
 
-    private void updateRestaurant(Restaurant restaurant, RestaurantSeedRow row) {
+    private void updateRestaurant(Restaurant restaurant, RestaurantSeedRow row, RestaurantSeedEnrichment enrichment) {
         restaurant.updateInfo(
                 row.name(),
                 row.address(),
@@ -221,7 +231,12 @@ public class RestaurantSeedImportService {
                 normalizeText(row.address()),
                 normalizeText(row.roadAddress())
         );
-        restaurant.updateCategoryName(normalizeCategoryName(row.categoryName()));
+        restaurant.updateCategoryName(enrichment.categoryName());
+        restaurant.updatePrimaryCategoryName(enrichment.primaryCategoryName());
+        restaurant.updateContactAndBusinessHours(
+                enrichment.phoneNumber(),
+                enrichment.businessHoursRaw()
+        );
         restaurant.updateSeedRegionInfo(
                 row.regionName(),
                 normalizeText(row.regionCityName()),
@@ -245,6 +260,50 @@ public class RestaurantSeedImportService {
         }
 
         return restaurantRepository.findByNameAndAddress(row.name(), row.address());
+    }
+
+    private RestaurantSeedEnrichment resolveSeedEnrichment(RestaurantSeedRow row, boolean enrichWithNaverLocal) {
+        Optional<NaverLocalRestaurantCandidate> officialCandidate = enrichWithNaverLocal
+                ? naverLocalSearchClient.findBestRestaurantMatch(row.name(), resolveSeedAddress(row))
+                : Optional.empty();
+
+        String categoryName = normalizeCategoryName(officialCandidate
+                .map(NaverLocalRestaurantCandidate::category)
+                .orElse(row.categoryName()));
+        String primaryCategoryName = normalizeCategoryName(row.primaryCategoryName());
+        if (primaryCategoryName == null) {
+            primaryCategoryName = RestaurantCategoryResolver.resolvePrimaryCategory(categoryName, row.categoryName());
+        }
+
+        String phoneNumber = normalizeText(row.phoneNumber());
+        if (phoneNumber == null) {
+            phoneNumber = normalizeText(officialCandidate
+                    .map(NaverLocalRestaurantCandidate::telephone)
+                    .orElse(null));
+        }
+
+        return new RestaurantSeedEnrichment(
+                categoryName,
+                primaryCategoryName,
+                phoneNumber,
+                resolveBusinessHoursRaw(row)
+        );
+    }
+
+    private String resolveBusinessHoursRaw(RestaurantSeedRow row) {
+        String businessHoursRaw = normalizeText(row.businessHoursRaw());
+        if (businessHoursRaw != null) {
+            return businessHoursRaw;
+        }
+        return normalizeText(row.openingHours());
+    }
+
+    private String resolveSeedAddress(RestaurantSeedRow row) {
+        String roadAddress = normalizeText(row.roadAddress());
+        if (roadAddress != null) {
+            return roadAddress;
+        }
+        return normalizeText(row.address());
     }
 
     private int replaceMenuItems(Restaurant restaurant, List<RestaurantMenuItemSeedRow> rows) {
@@ -415,6 +474,7 @@ public class RestaurantSeedImportService {
         }
     }
 
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public record RestaurantSeedRow(
             @JsonProperty("seed_index") long seedIndex,
             @JsonProperty("address") String address,
@@ -424,12 +484,16 @@ public class RestaurantSeedImportService {
             @JsonProperty("lng") BigDecimal lng,
             @JsonProperty("name") String name,
             @JsonProperty("category_name") String categoryName,
+            @JsonProperty("primary_category_name") String primaryCategoryName,
             @JsonProperty("region_name") String regionName,
             @JsonProperty("region_city_name") String regionCityName,
             @JsonProperty("region_district_name") String regionDistrictName,
             @JsonProperty("region_county_name") String regionCountyName,
             @JsonProperty("region_town_name") String regionTownName,
             @JsonProperty("region_filter_names") List<String> regionFilterNames,
+            @JsonProperty("phone_number") String phoneNumber,
+            @JsonProperty("business_hours_raw") String businessHoursRaw,
+            @JsonProperty("opening_hours") String openingHours,
             @JsonProperty("pcmap_place_id") String pcmapPlaceId,
             @JsonProperty("menu_updated_at") String menuUpdatedAt
     ) {
@@ -461,6 +525,14 @@ public class RestaurantSeedImportService {
             @JsonProperty("tag_key") String tagKey,
             @JsonProperty("matched_menu_count") Integer matchedMenuCount,
             @JsonProperty("is_primary") Boolean isPrimary
+    ) {
+    }
+
+    private record RestaurantSeedEnrichment(
+            String categoryName,
+            String primaryCategoryName,
+            String phoneNumber,
+            String businessHoursRaw
     ) {
     }
 }

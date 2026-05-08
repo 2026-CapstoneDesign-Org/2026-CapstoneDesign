@@ -1,5 +1,6 @@
 package com.example.Capstone.service;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
@@ -12,11 +13,14 @@ import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import com.example.Capstone.client.NaverLocalSearchClient;
+import com.example.Capstone.client.NaverLocalSearchClient.NaverLocalRestaurantCandidate;
 import com.example.Capstone.client.PcmapSearchClient;
 import com.example.Capstone.client.PcmapSearchClient.PcmapRestaurantCandidate;
 import com.example.Capstone.domain.ListRestaurant;
@@ -48,6 +52,9 @@ class UserListServiceExternalFallbackTest {
     @Mock
     private PcmapSearchClient pcmapSearchClient;
 
+    @Mock
+    private NaverLocalSearchClient naverLocalSearchClient;
+
     @InjectMocks
     private UserListService userListService;
 
@@ -58,18 +65,38 @@ class UserListServiceExternalFallbackTest {
         Long listId = 10L;
         UserList userList = ownedList(userId, listId, "Seoul Gangnam");
         PcmapRestaurantCandidate candidate = candidate("place-1", "Seoul Gangnam Road 1");
-        Restaurant savedRestaurant = restaurant(100L, "Seoul Gangnam");
 
         when(userListRepository.findByIdAndIsDeletedFalse(listId)).thenReturn(Optional.of(userList));
         when(pcmapSearchClient.searchRestaurants("Gangnam noodle", 20)).thenReturn(List.of(candidate));
         when(restaurantRepository.findByPcmapPlaceId("place-1")).thenReturn(Optional.empty());
-        when(restaurantRepository.save(any(Restaurant.class))).thenReturn(savedRestaurant);
+        when(naverLocalSearchClient.findBestRestaurantMatch("External Noodle", "Seoul Gangnam Road 1"))
+                .thenReturn(Optional.of(new NaverLocalRestaurantCandidate(
+                        "External Noodle",
+                        "\uD30C\uC2A4\uD0C0",
+                        "02-1234-5678",
+                        "Seoul Gangnam Road 1",
+                        "Seoul Gangnam Road 1",
+                        "127.0",
+                        "37.0"
+                )));
+        when(restaurantRepository.save(any(Restaurant.class))).thenAnswer(invocation -> {
+            Restaurant restaurant = invocation.getArgument(0);
+            ReflectionTestUtils.setField(restaurant, "id", 100L);
+            return restaurant;
+        });
         when(listRestaurantRepository.findByUserListIdAndRestaurantId(listId, 100L))
                 .thenReturn(Optional.empty());
 
         userListService.addExternalFallbackRestaurant(userId, listId, request("Gangnam noodle", "place-1"));
 
-        verify(restaurantRepository).save(any(Restaurant.class));
+        ArgumentCaptor<Restaurant> restaurantCaptor = ArgumentCaptor.forClass(Restaurant.class);
+        verify(naverLocalSearchClient).findBestRestaurantMatch("External Noodle", "Seoul Gangnam Road 1");
+        verify(restaurantRepository).save(restaurantCaptor.capture());
+        Restaurant capturedRestaurant = restaurantCaptor.getValue();
+        assertEquals("\uD30C\uC2A4\uD0C0", capturedRestaurant.getCategoryName());
+        assertEquals("\uC591\uC2DD", capturedRestaurant.getPrimaryCategoryName());
+        assertEquals("02-1234-5678", capturedRestaurant.getPhoneNumber());
+        assertEquals("place-1", capturedRestaurant.getPcmapPlaceId());
         verify(listRestaurantRepository).save(any(ListRestaurant.class));
     }
 

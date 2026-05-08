@@ -23,6 +23,11 @@ public record ImportRestaurantSeedRequest(
                 description = "Restaurant-tag preview JSON path.",
                 example = "seed-data/restaurant-tags-seed-preview.json"
         )
-        String restaurantTagsFilePath
+        String restaurantTagsFilePath,
+        @Schema(
+                description = "When true, enriches category and telephone fields through NAVER official local search API.",
+                example = "false"
+        )
+        Boolean enrichWithNaverLocal
 ) {
 }

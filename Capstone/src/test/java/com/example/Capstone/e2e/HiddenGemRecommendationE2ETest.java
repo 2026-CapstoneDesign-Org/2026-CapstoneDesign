@@ -7,6 +7,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.math.BigDecimal;
 import java.util.UUID;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +20,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 
 import com.example.Capstone.common.jwt.JwtProvider;
@@ -53,6 +56,19 @@ class HiddenGemRecommendationE2ETest {
 
     @Autowired
     private ListRestaurantRepository listRestaurantRepository;
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
+    @BeforeEach
+    void cleanBeforeEach() {
+        cleanupE2eData();
+    }
+
+    @AfterEach
+    void cleanAfterEach() {
+        cleanupE2eData();
+    }
 
     @Test
     @DisplayName("JWT 인증 HTTP 요청으로 동/읍/면 기준 숨은 맛집 추천 결과를 조회한다")
@@ -179,5 +195,43 @@ class HiddenGemRecommendationE2ETest {
     private String unique(String prefix) {
         String normalizedPrefix = prefix.length() > 20 ? prefix.substring(0, 20) : prefix;
         return normalizedPrefix + "-" + UUID.randomUUID().toString().substring(0, 6);
+    }
+
+    private void cleanupE2eData() {
+        jdbcTemplate.update("""
+                DELETE FROM list_restaurants
+                WHERE restaurant_id IN (
+                    SELECT id FROM restaurants
+                    WHERE name LIKE 'e2e-%'
+                       OR address LIKE '지번주소-e2e-%'
+                )
+                   OR list_id IN (
+                    SELECT ul.id
+                    FROM user_lists ul
+                    JOIN users u ON u.id = ul.user_id
+                    WHERE ul.region_name LIKE 'e2e-region-%'
+                       OR u.provider_user_id LIKE 'provider-e2e-%'
+                       OR u.nickname LIKE 'nick-e2e-%'
+                )
+                """);
+        jdbcTemplate.update("""
+                DELETE FROM user_lists
+                WHERE region_name LIKE 'e2e-region-%'
+                   OR user_id IN (
+                    SELECT id FROM users
+                    WHERE provider_user_id LIKE 'provider-e2e-%'
+                       OR nickname LIKE 'nick-e2e-%'
+                )
+                """);
+        jdbcTemplate.update("""
+                DELETE FROM restaurants
+                WHERE name LIKE 'e2e-%'
+                   OR address LIKE '지번주소-e2e-%'
+                """);
+        jdbcTemplate.update("""
+                DELETE FROM users
+                WHERE provider_user_id LIKE 'provider-e2e-%'
+                   OR nickname LIKE 'nick-e2e-%'
+                """);
     }
 }

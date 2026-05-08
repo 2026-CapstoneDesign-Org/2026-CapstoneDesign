@@ -12,6 +12,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -45,6 +46,7 @@ class UserListServiceTest {
                 .profileImageUrl("http://default.img")
                 .role(User.Role.USER)
                 .build();
+        ReflectionTestUtils.setField(user, "id", 1L);
 
         userList = UserList.builder()
                 .user(user)
@@ -88,7 +90,7 @@ class UserListServiceTest {
 
         given(userListRepository.findByIdAndIsDeletedFalse(anyLong())).willReturn(Optional.of(userList));
 
-        assertThatThrownBy(() -> userListService.toggleVisibility(null, 1L))
+        assertThatThrownBy(() -> userListService.toggleVisibility(1L, 1L))
                 .isInstanceOf(BusinessException.class)
                 .hasMessageContaining("대표 리스트는 비공개로 변경할 수 없습니다.");
     }

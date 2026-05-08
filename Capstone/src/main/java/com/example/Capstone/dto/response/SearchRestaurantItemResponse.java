@@ -13,6 +13,7 @@ public record SearchRestaurantItemResponse(
         BigDecimal lat,
         BigDecimal lng,
         String imageUrl,
+        String primaryCategoryName,
         List<String> categories,
         String matchedBy
 ) {

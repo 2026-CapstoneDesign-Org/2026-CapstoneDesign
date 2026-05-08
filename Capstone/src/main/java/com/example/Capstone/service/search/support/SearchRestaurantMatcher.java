@@ -32,7 +32,8 @@ public final class SearchRestaurantMatcher {
             if (containsIgnoreCase(restaurant.getName(), restaurantKeyword)) {
                 return MATCH_NAME_CONTAINS;
             }
-            if (containsIgnoreCase(restaurant.getCategoryName(), restaurantKeyword)) {
+            if (containsIgnoreCase(restaurant.getCategoryName(), restaurantKeyword)
+                    || containsIgnoreCase(restaurant.getPrimaryCategoryName(), restaurantKeyword)) {
                 return MATCH_CATEGORY;
             }
             if (restaurant.getMenuItems().stream().anyMatch(menuItem -> matchesMenu(menuItem, restaurantKeyword))) {

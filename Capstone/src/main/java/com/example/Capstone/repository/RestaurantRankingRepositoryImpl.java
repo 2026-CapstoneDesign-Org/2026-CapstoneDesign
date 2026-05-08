@@ -75,7 +75,7 @@ public class RestaurantRankingRepositoryImpl implements RestaurantRankingReposit
         }
 
         if (StringUtils.hasText(category)) {
-            sql.append("\n  and r.category_name = :category");
+            sql.append("\n  and (r.category_name = :category or r.primary_category_name = :category)");
         }
 
         sql.append("""

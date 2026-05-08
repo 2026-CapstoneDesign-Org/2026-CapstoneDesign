@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.Capstone.config.SwaggerConfig;
+import com.example.Capstone.dto.response.RestaurantDetailResponse;
 import com.example.Capstone.dto.response.RestaurantResponse;
 import com.example.Capstone.service.RestaurantService;
 
@@ -59,7 +60,7 @@ public class RestaurantController {
 
     @Operation(
             summary = "Get restaurant detail",
-            description = "Returns a visible restaurant by identifier."
+            description = "Returns detail data for the restaurant detail page, including home, menu, and photo fields."
     )
     @ApiResponses({
             @ApiResponse(
@@ -67,14 +68,14 @@ public class RestaurantController {
                     description = "Restaurant retrieved.",
                     content = @Content(
                             mediaType = "application/json",
-                            schema = @Schema(implementation = RestaurantResponse.class)
+                            schema = @Schema(implementation = RestaurantDetailResponse.class)
                     )
             ),
             @ApiResponse(responseCode = "401", description = "Authentication required."),
             @ApiResponse(responseCode = "404", description = "Restaurant not found.")
     })
     @GetMapping("/{id}")
-    public ResponseEntity<RestaurantResponse> getRestaurant(
+    public ResponseEntity<RestaurantDetailResponse> getRestaurant(
             @Parameter(description = "Restaurant identifier.", example = "1")
             @PathVariable Long id
     ) {
