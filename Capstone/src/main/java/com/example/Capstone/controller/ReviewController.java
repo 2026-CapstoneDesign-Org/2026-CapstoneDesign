@@ -17,9 +17,12 @@ import com.example.Capstone.dto.request.CreateReviewRequest;
 import com.example.Capstone.dto.request.ReviewVoteRequest;
 import com.example.Capstone.dto.request.UpdateReviewRequest;
 import com.example.Capstone.dto.response.ReviewResponse;
+import com.example.Capstone.dto.response.ReviewSummaryResponse;
 import com.example.Capstone.service.ReviewService;
+import com.example.Capstone.service.ReviewSummaryService;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +33,7 @@ import lombok.RequiredArgsConstructor;
 public class ReviewController {
 
     private final ReviewService reviewService;
+    private final ReviewSummaryService reviewSummaryService;
 
     @Operation(summary = "리뷰 작성")
     @PostMapping("/restaurants/{id}/reviews")
@@ -83,5 +87,13 @@ public class ReviewController {
             @PathVariable Long id) {
         reviewService.cancelVote(userId, id);
         return ResponseEntity.noContent().build();
+    }
+
+    @Operation(summary = "AI 리뷰 요약")
+    @ApiResponse(responseCode = "200", description = "요약 성공")
+    @ApiResponse(responseCode = "400", description = "리뷰 3개 미만")
+    @GetMapping("/restaurants/{id}/reviews/summary")
+    public ResponseEntity<ReviewSummaryResponse> summarize(@PathVariable Long id) {
+        return ResponseEntity.ok(reviewSummaryService.summarize(id));
     }
 }

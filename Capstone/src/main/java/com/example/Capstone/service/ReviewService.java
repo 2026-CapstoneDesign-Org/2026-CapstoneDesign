@@ -32,6 +32,7 @@ public class ReviewService {
     private final UserRepository userRepository;
     private final RestaurantRepository restaurantRepository;
     private final ReliabilityScoreService reliabilityScoreService;
+    private final ReviewSummaryService reviewSummaryService;
 
     @Transactional
     public ReviewResponse createReview(Long userId, Long restaurantId, CreateReviewRequest request) {
@@ -58,6 +59,7 @@ public class ReviewService {
         }
 
         reliabilityScoreService.increase(userId, ScoreEvent.REVIEW_CREATED);
+        reviewSummaryService.invalidateCache(restaurantId); 
         return ReviewResponse.from(review, 0, 0);
     }
 
@@ -87,11 +89,15 @@ public class ReviewService {
                             .build())
             );
         }
+
+        reviewSummaryService.invalidateCache(review.getRestaurant().getId());
     }
 
     @Transactional
     public void deleteReview(Long userId, Long reviewId) {
-        getOwnedReview(userId, reviewId).delete();
+        Review review = getOwnedReview(userId, reviewId);
+        reviewSummaryService.invalidateCache(review.getRestaurant().getId());  // ← 추가
+        review.delete();
     }
 
     @Transactional
