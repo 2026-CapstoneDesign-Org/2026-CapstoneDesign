@@ -90,4 +90,10 @@ public class UserService {
                 .orElseThrow(() -> new EntityNotFoundException("유저를 찾을 수 없습니다."));
         user.delete();
     }
+
+    public UserResponse getUserInfo(Long userId) {
+        User user = userRepository.findByIdAndIsDeletedFalse(userId)
+            .orElseThrow(() -> new EntityNotFoundException("유저를 찾을 수 없습니다."));
+        return UserResponse.from(user);
+    }
 }
