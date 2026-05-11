@@ -5,6 +5,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -52,5 +53,12 @@ public class UserController {
             @AuthenticationPrincipal Long userId) {
         userService.deleteUser(userId);
         return ResponseEntity.noContent().build();
+    }
+
+    @Operation(summary = "유저 정보 조회")
+    @ApiResponse(responseCode = "200", description = "조회 성공")
+    @GetMapping("/{id}")
+    public ResponseEntity<UserResponse> getUserInfo(@PathVariable Long id) {
+        return ResponseEntity.ok(userService.getUserInfo(id));
     }
 }
