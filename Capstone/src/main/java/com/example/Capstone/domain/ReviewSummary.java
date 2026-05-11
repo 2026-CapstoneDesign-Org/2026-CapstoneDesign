@@ -59,8 +59,6 @@ public class ReviewSummary {
         this.sentiment   = sentiment;
         this.reviewCount = reviewCount;
         this.isOutdated  = false;
-        this.createdAt   = LocalDateTime.now();
-        this.updatedAt   = LocalDateTime.now();
     }
 
     public void update(String summary, String positives, String negatives,

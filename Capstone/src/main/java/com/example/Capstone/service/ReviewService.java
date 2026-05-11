@@ -75,6 +75,18 @@ public class ReviewService {
                 .toList();
     }
 
+    public List<ReviewResponse> getUserReviews(Long userId) {
+        return reviewRepository
+                .findAllByUserIdAndIsDeletedFalseAndIsHiddenFalse(userId)
+                .stream()
+                .map(review -> ReviewResponse.from(
+                        review,
+                        reviewVoteRepository.countByReviewIdAndVoteType(review.getId(), ReviewVote.VoteType.LIKE),
+                        reviewVoteRepository.countByReviewIdAndVoteType(review.getId(), ReviewVote.VoteType.DISLIKE)
+                ))
+                .toList();
+    }
+
     @Transactional
     public void updateReview(Long userId, Long reviewId, UpdateReviewRequest request) {
         Review review = getOwnedReview(userId, reviewId);

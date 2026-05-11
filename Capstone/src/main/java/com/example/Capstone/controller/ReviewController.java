@@ -96,4 +96,10 @@ public class ReviewController {
     public ResponseEntity<ReviewSummaryResponse> summarize(@PathVariable Long id) {
         return ResponseEntity.ok(reviewSummaryService.summarize(id));
     }
+
+    @Operation(summary = "유저 리뷰 목록")
+    @GetMapping("/users/{id}/reviews")
+    public ResponseEntity<List<ReviewResponse>> getUserReviews(@PathVariable Long id) {
+        return ResponseEntity.ok(reviewService.getUserReviews(id));
+    }
 }
