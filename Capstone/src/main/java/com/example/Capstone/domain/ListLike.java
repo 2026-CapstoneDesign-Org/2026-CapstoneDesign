@@ -30,7 +30,7 @@ public class ListLike {
     private UserList userList;
 
     @CreatedDate
-    @Column(nullable = false, updatable = false)
+    @Column(nullable = false, updatable = false, insertable = false)
     private LocalDateTime createdAt;
 
     @Builder
