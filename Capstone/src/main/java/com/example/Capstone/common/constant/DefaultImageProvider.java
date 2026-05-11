@@ -4,5 +4,5 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class DefaultImageProvider {
-    public static final String DEFAULT_PROFILE_IMAGE_URL = "나중에 기본 이미지 URL로 수정";
+    public static final String DEFAULT_PROFILE_IMAGE_URL = "https://wagu-images.s3.ap-northeast-2.amazonaws.com/wagu_default_profile_image.png";
 }

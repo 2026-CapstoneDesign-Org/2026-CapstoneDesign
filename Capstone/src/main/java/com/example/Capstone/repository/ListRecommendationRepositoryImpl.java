@@ -10,11 +10,6 @@ import java.util.stream.IntStream;
 
 import org.springframework.stereotype.Repository;
 
-import com.example.Capstone.repository.ListRecommendationRepository.CandidateListRestaurantRow;
-import com.example.Capstone.repository.ListRecommendationRepository.CandidateListSummaryRow;
-import com.example.Capstone.repository.ListRecommendationRepository.OwnerInteractionRow;
-import com.example.Capstone.repository.ListRecommendationRepository.UserListInteractionRow;
-
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.Query;

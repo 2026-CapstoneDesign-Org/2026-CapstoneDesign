@@ -4,13 +4,11 @@ import com.example.Capstone.common.enums.ScoreEvent;
 import com.example.Capstone.domain.ReliabilityScore;
 import com.example.Capstone.domain.User;
 import com.example.Capstone.dto.response.ReliabilityScoreResponse;
-import com.example.Capstone.exception.BusinessException;
 import com.example.Capstone.repository.ReliabilityScoreRepository;
 import com.example.Capstone.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -83,7 +81,7 @@ public class ReliabilityScoreService {
     public void refreshHonorTitles() {
         List<ReliabilityScore> ranked = scoreRepository.findAllByOrderByScoreDesc();
         long total = ranked.size();
-        if (total == 0) return;
+        if (total < 100) return;                // 총 유저가 100명 이하인경우 명예 칭호 안나옴
 
         String period = LocalDateTime.now()
                 .format(DateTimeFormatter.ofPattern("yyyy-MM"));
