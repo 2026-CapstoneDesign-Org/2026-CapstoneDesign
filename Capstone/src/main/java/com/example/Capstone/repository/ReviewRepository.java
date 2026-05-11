@@ -11,5 +11,6 @@ import com.example.Capstone.domain.Review;
 @Repository
 public interface ReviewRepository extends JpaRepository<Review, Long> {
     List<Review> findAllByRestaurantIdAndIsDeletedFalseAndIsHiddenFalse(Long restaurantId);
+    List<Review> findAllByUserIdAndIsDeletedFalseAndIsHiddenFalse(Long userId);
     Optional<Review> findByIdAndIsDeletedFalse(Long id);
 }
