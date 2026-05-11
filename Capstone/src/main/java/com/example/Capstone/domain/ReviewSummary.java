@@ -42,11 +42,11 @@ public class ReviewSummary {
     private Boolean isOutdated = false;  // true 면 재생성 필요
 
     @CreatedDate
-    @Column(nullable = false, updatable = false)
+    @Column(nullable = false, updatable = false, insertable = false)
     private LocalDateTime createdAt;
 
     @LastModifiedDate
-    @Column(nullable = false)
+    @Column(nullable = false, insertable = false)
     private LocalDateTime updatedAt;
 
     @Builder

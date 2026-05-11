@@ -41,11 +41,11 @@ public class ReliabilityScore {
     private LocalDateTime lastActivityAt = LocalDateTime.now();
 
     @CreatedDate
-    @Column(nullable = false, updatable = false)
+    @Column(nullable = false, updatable = false, insertable = false)
     private LocalDateTime createdAt;
 
     @LastModifiedDate
-    @Column(nullable = false)
+    @Column(nullable = false, insertable = false)
     private LocalDateTime updatedAt;
 
     @Builder
