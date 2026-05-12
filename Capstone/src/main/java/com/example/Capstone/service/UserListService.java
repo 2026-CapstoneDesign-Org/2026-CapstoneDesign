@@ -28,6 +28,7 @@ import com.example.Capstone.dto.response.RestaurantResponse;
 import com.example.Capstone.dto.response.UserListDetailResponse;
 import com.example.Capstone.dto.response.UserListResponse;
 import com.example.Capstone.exception.BusinessException;
+import com.example.Capstone.repository.ListLikeRepository;
 import com.example.Capstone.repository.ListRestaurantRepository;
 import com.example.Capstone.repository.RestaurantRepository;
 import com.example.Capstone.repository.UserListRepository;
@@ -51,6 +52,7 @@ public class UserListService {
     private final PcmapSearchClient pcmapSearchClient;
     private final ReliabilityScoreService reliabilityScoreService;
     private final NaverLocalSearchClient naverLocalSearchClient;
+    private final ListLikeRepository listLikeRepository;
 
 	// 리스트 생성
 	@Transactional
@@ -97,7 +99,10 @@ public class UserListService {
 	public List<UserListResponse> getMyLists(Long userId) {
         return userListRepository.findAllByUserIdAndIsDeletedFalse(userId)
                 .stream()
-                .map(UserListResponse::from)
+                .map(userList -> UserListResponse.from(
+                        userList,
+                        listLikeRepository.existsByUserIdAndUserListId(userId, userList.getId())
+                ))
                 .toList();
     }
 
@@ -109,11 +114,13 @@ public class UserListService {
     }
 
 	// 리스트 상세
-	public UserListDetailResponse getList(Long listId) {
+	public UserListDetailResponse getList(Long listId, Long userId) {
         UserList userList = userListRepository.findByIdAndIsDeletedFalse(listId)
                 .orElseThrow(() -> new EntityNotFoundException("리스트를 찾을 수 없습니다."));
-        return UserListDetailResponse.from(userList);
-    }
+        boolean isLiked = userId != null &&
+                listLikeRepository.existsByUserIdAndUserListId(userId, listId);
+        return UserListDetailResponse.from(userList, isLiked);
+}
 
 	// 리스트 정보 수정
 	@Transactional

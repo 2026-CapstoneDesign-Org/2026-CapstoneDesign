@@ -11,9 +11,10 @@ public record UserListResponse(
         String regionName,
         Boolean isPublic,
         Boolean isRepresentative,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        boolean isLiked 
 ) {
-    public static UserListResponse from(UserList userList) {
+    public static UserListResponse from(UserList userList, boolean isLiked) {
         return new UserListResponse(
                 userList.getId(),
                 userList.getTitle(),
@@ -21,7 +22,12 @@ public record UserListResponse(
                 userList.getRegionName(),
                 userList.getIsPublic(),
                 userList.getIsRepresentative(),
-                userList.getCreatedAt()
+                userList.getCreatedAt(),
+                isLiked
         );
+    }
+
+    public static UserListResponse from(UserList userList) {
+        return from(userList, false);
     }
 }
