@@ -18,6 +18,7 @@ import com.example.Capstone.dto.request.ReviewVoteRequest;
 import com.example.Capstone.dto.request.UpdateReviewRequest;
 import com.example.Capstone.dto.response.ReviewResponse;
 import com.example.Capstone.dto.response.ReviewSummaryResponse;
+import com.example.Capstone.dto.response.UserReviewResponse;
 import com.example.Capstone.service.ReviewService;
 import com.example.Capstone.service.ReviewSummaryService;
 
@@ -99,7 +100,7 @@ public class ReviewController {
 
     @Operation(summary = "유저 리뷰 목록")
     @GetMapping("/users/{id}/reviews")
-    public ResponseEntity<List<ReviewResponse>> getUserReviews(@PathVariable Long id) {
+    public ResponseEntity<List<UserReviewResponse>> getUserReviews(@PathVariable Long id) {
         return ResponseEntity.ok(reviewService.getUserReviews(id));
     }
 }

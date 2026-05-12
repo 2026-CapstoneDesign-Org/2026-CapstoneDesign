@@ -135,4 +135,12 @@ public class UserListController {
         userListService.removeRestaurant(userId, id, restaurantId);
         return ResponseEntity.noContent().build();
     }
+
+    @Operation(summary = "유저 대표 리스트")
+    @GetMapping("users/{id}/representative")
+    public ResponseEntity<UserListDetailResponse> getRepresentativeList(
+            @PathVariable Long id) {
+        return ResponseEntity.ok(userListService.getRepresentativeList(id));
+    }
+
 }

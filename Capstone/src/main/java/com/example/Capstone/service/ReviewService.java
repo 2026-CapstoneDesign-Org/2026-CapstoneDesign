@@ -6,6 +6,7 @@ import com.example.Capstone.dto.request.CreateReviewRequest;
 import com.example.Capstone.dto.request.ReviewVoteRequest;
 import com.example.Capstone.dto.request.UpdateReviewRequest;
 import com.example.Capstone.dto.response.ReviewResponse;
+import com.example.Capstone.dto.response.UserReviewResponse;
 import com.example.Capstone.exception.BusinessException;
 import com.example.Capstone.repository.*;
 import jakarta.persistence.EntityNotFoundException;
@@ -75,11 +76,11 @@ public class ReviewService {
                 .toList();
     }
 
-    public List<ReviewResponse> getUserReviews(Long userId) {
+    public List<UserReviewResponse> getUserReviews(Long userId) {
         return reviewRepository
                 .findAllByUserIdAndIsDeletedFalseAndIsHiddenFalse(userId)
                 .stream()
-                .map(review -> ReviewResponse.from(
+                .map(review -> UserReviewResponse.from(
                         review,
                         reviewVoteRepository.countByReviewIdAndVoteType(review.getId(), ReviewVote.VoteType.LIKE),
                         reviewVoteRepository.countByReviewIdAndVoteType(review.getId(), ReviewVote.VoteType.DISLIKE)
