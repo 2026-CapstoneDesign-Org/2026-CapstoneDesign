@@ -15,7 +15,6 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.Capstone.common.constant.DefaultImageProvider;
 import com.example.Capstone.common.util.NicknameGenerator;
 import com.example.Capstone.domain.User;
-import com.example.Capstone.repository.ReliabilityScoreRepository;
 import com.example.Capstone.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -29,7 +28,6 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
 
     private final UserRepository userRepository;
     private final NicknameGenerator nicknameGenerator;
-    private final ReliabilityScoreRepository reliabilityScoreRepository;
 
     @Override
     @SuppressWarnings("unchecked")
