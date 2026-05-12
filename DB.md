@@ -11,6 +11,7 @@
 - [docs/db/follow.md](docs/db/follow.md)
 - [docs/db/lists.md](docs/db/lists.md)
 - [docs/db/restaurants.md](docs/db/restaurants.md)
+- [docs/db/reviews.md](docs/db/reviews.md)
 - [docs/db/auth.md](docs/db/auth.md)
 - [docs/current-gaps.md](docs/current-gaps.md)
 
@@ -25,6 +26,9 @@
 - `RestaurantMenuItem`
 - `Tag`
 - `RestaurantTag`
+- `Review`
+- `ReviewImage`
+- `ReviewVote`
 - `RefreshToken`
 
 ## 4. 핵심 관계
@@ -35,6 +39,10 @@
 - `Restaurant` 1:N `RestaurantTag`
 - `Tag` 1:N `RestaurantTag`
 - `User` N:M `User` via `UserFollow`
+- `User` 1:N `Review`
+- `Restaurant` 1:N `Review`
+- `Review` 1:N `ReviewImage`
+- `User` N:M `Review` via `ReviewVote`
 
 현재 코드 기준 식당 카테고리는 별도 `RestaurantCategory` 엔티티가 아니라 `Restaurant.categoryName` 단일 필드로 저장한다.
 

@@ -16,7 +16,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -65,25 +68,41 @@ public class ReviewService {
     }
 
     public List<ReviewResponse> getReviews(Long restaurantId) {
-        return reviewRepository
-                .findAllByRestaurantIdAndIsDeletedFalseAndIsHiddenFalse(restaurantId)
+        return getReviews(null, restaurantId);
+    }
+
+    public List<ReviewResponse> getReviews(Long viewerUserId, Long restaurantId) {
+        List<Review> reviews = reviewRepository
+                .findAllByRestaurantIdAndIsDeletedFalseAndIsHiddenFalse(restaurantId);
+        Map<Long, ReviewVote.VoteType> myVoteTypes = getMyVoteTypes(viewerUserId, reviews);
+
+        return reviews
                 .stream()
                 .map(review -> ReviewResponse.from(
                         review,
                         reviewVoteRepository.countByReviewIdAndVoteType(review.getId(), ReviewVote.VoteType.LIKE),
-                        reviewVoteRepository.countByReviewIdAndVoteType(review.getId(), ReviewVote.VoteType.DISLIKE)
+                        reviewVoteRepository.countByReviewIdAndVoteType(review.getId(), ReviewVote.VoteType.DISLIKE),
+                        myVoteTypes.get(review.getId())
                 ))
                 .toList();
     }
 
     public List<UserReviewResponse> getUserReviews(Long userId) {
-        return reviewRepository
-                .findAllByUserIdAndIsDeletedFalseAndIsHiddenFalse(userId)
+        return getUserReviews(userId, null);
+    }
+
+    public List<UserReviewResponse> getUserReviews(Long targetUserId, Long viewerUserId) {
+        List<Review> reviews = reviewRepository
+                .findAllByUserIdAndIsDeletedFalseAndIsHiddenFalse(targetUserId);
+        Map<Long, ReviewVote.VoteType> myVoteTypes = getMyVoteTypes(viewerUserId, reviews);
+
+        return reviews
                 .stream()
                 .map(review -> UserReviewResponse.from(
                         review,
                         reviewVoteRepository.countByReviewIdAndVoteType(review.getId(), ReviewVote.VoteType.LIKE),
-                        reviewVoteRepository.countByReviewIdAndVoteType(review.getId(), ReviewVote.VoteType.DISLIKE)
+                        reviewVoteRepository.countByReviewIdAndVoteType(review.getId(), ReviewVote.VoteType.DISLIKE),
+                        myVoteTypes.get(review.getId())
                 ))
                 .toList();
     }
@@ -179,5 +198,22 @@ public class ReviewService {
             throw new BusinessException("리뷰 작성자가 아닙니다.", HttpStatus.FORBIDDEN);
         }
         return review;
+    }
+
+    private Map<Long, ReviewVote.VoteType> getMyVoteTypes(Long viewerUserId, List<Review> reviews) {
+        if (viewerUserId == null || reviews.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        List<Long> reviewIds = reviews.stream()
+                .map(Review::getId)
+                .toList();
+
+        return reviewVoteRepository.findAllByUserIdAndReviewIdIn(viewerUserId, reviewIds)
+                .stream()
+                .collect(Collectors.toMap(
+                        vote -> vote.getReview().getId(),
+                        ReviewVote::getVoteType
+                ));
     }
 }
