@@ -9,19 +9,18 @@ import com.example.Capstone.domain.ReviewImage;
 public record UserReviewResponse(
         Long id,
         Long userId,
-        Long restaurantId,
         String nickname,
         String content,
         List<String> imageUrls,
         long likeCount,
         long dislikeCount,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        RestaurantSimpleResponse restaurant
 ) {
     public static UserReviewResponse from(Review review, long likeCount, long dislikeCount) {
         return new UserReviewResponse(
                 review.getId(),
                 review.getUser().getId(),
-                review.getRestaurant().getId(),
                 review.getUser().getNickname(),
                 review.getContent(),
                 review.getImages().stream()
@@ -29,7 +28,8 @@ public record UserReviewResponse(
                         .toList(),
                 likeCount,
                 dislikeCount,
-                review.getCreatedAt()
+                review.getCreatedAt(),
+                RestaurantSimpleResponse.from(review.getRestaurant())
         );
     }
 }
