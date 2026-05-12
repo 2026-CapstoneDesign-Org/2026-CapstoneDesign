@@ -40,6 +40,10 @@ public class ListLikeService {
         UserList userList = userListRepository.findByIdAndIsDeletedFalse(listId)
                 .orElseThrow(() -> new EntityNotFoundException("리스트를 찾을 수 없습니다."));
 
+        if (user.getId() == userList.getUser().getId()) {
+            throw new BusinessException("자신의 리스트에는 좋아요 할 수 없습니다.", HttpStatus.BAD_REQUEST);
+        }
+
         listLikeRepository.save(ListLike.builder()
                 .user(user)
                 .userList(userList)
