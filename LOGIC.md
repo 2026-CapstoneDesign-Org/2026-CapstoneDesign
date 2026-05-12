@@ -8,6 +8,7 @@
 ## 2. 현재 로직 문서 목록
 - [docs/logic/auth-flow.md](docs/logic/auth-flow.md)
 - [docs/logic/follow-policy.md](docs/logic/follow-policy.md)
+- [docs/logic/review-vote-policy.md](docs/logic/review-vote-policy.md)
 - [docs/logic/search-policy.md](docs/logic/search-policy.md)
 - [docs/logic/list-policy.md](docs/logic/list-policy.md)
 - [docs/logic/score-policy.md](docs/logic/score-policy.md)

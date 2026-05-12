@@ -48,8 +48,10 @@ public class ReviewController {
 
     @Operation(summary = "리뷰 목록")
     @GetMapping("/restaurants/{id}/reviews")
-    public ResponseEntity<List<ReviewResponse>> getReviews(@PathVariable Long id) {
-        return ResponseEntity.ok(reviewService.getReviews(id));
+    public ResponseEntity<List<ReviewResponse>> getReviews(
+            @AuthenticationPrincipal Long userId,
+            @PathVariable Long id) {
+        return ResponseEntity.ok(reviewService.getReviews(userId, id));
     }
 
     @Operation(summary = "리뷰 수정")
@@ -100,7 +102,9 @@ public class ReviewController {
 
     @Operation(summary = "유저 리뷰 목록")
     @GetMapping("/users/{id}/reviews")
-    public ResponseEntity<List<UserReviewResponse>> getUserReviews(@PathVariable Long id) {
-        return ResponseEntity.ok(reviewService.getUserReviews(id));
+    public ResponseEntity<List<UserReviewResponse>> getUserReviews(
+            @AuthenticationPrincipal Long viewerUserId,
+            @PathVariable Long id) {
+        return ResponseEntity.ok(reviewService.getUserReviews(id, viewerUserId));
     }
 }

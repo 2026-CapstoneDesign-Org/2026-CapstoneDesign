@@ -5,6 +5,7 @@ import java.util.List;
 
 import com.example.Capstone.domain.Review;
 import com.example.Capstone.domain.ReviewImage;
+import com.example.Capstone.domain.ReviewVote;
 
 public record UserReviewResponse(
         Long id,
@@ -14,10 +15,20 @@ public record UserReviewResponse(
         List<String> imageUrls,
         long likeCount,
         long dislikeCount,
+        ReviewVote.VoteType myVoteType,
         LocalDateTime createdAt,
         RestaurantSimpleResponse restaurant
 ) {
     public static UserReviewResponse from(Review review, long likeCount, long dislikeCount) {
+        return from(review, likeCount, dislikeCount, null);
+    }
+
+    public static UserReviewResponse from(
+            Review review,
+            long likeCount,
+            long dislikeCount,
+            ReviewVote.VoteType myVoteType
+    ) {
         return new UserReviewResponse(
                 review.getId(),
                 review.getUser().getId(),
@@ -28,6 +39,7 @@ public record UserReviewResponse(
                         .toList(),
                 likeCount,
                 dislikeCount,
+                myVoteType,
                 review.getCreatedAt(),
                 RestaurantSimpleResponse.from(review.getRestaurant())
         );
