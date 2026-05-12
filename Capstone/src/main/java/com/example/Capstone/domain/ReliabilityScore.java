@@ -52,7 +52,7 @@ public class ReliabilityScore {
     private ReliabilityScore(User user) {
         this.user           = user;
         this.score          = 20.0;
-        this.grade          = "tier1";
+        this.grade          = "bronze";
         this.honorTitle     = null;
         this.honorPeriod    = null;
         this.activityIndex  = 0.0;
@@ -81,14 +81,12 @@ public class ReliabilityScore {
     }
 
     private String calcGrade(Double score) {
-        if (score >= 97.0) return "tier8";
-        if (score >= 93.0) return "tier7";
-        if (score >= 85.0) return "tier6";
-        if (score >= 75.0) return "tier5";
-        if (score >= 65.0) return "tier4";
-        if (score >= 55.0) return "tier3";
-        if (score >= 38.0) return "tier2";
-        if (score >= 20.0) return "tier1";
-        return "tier0";
+        if (score >= 93.0) return "ruby";
+        if (score >= 83.0) return "diamond";
+        if (score >= 70.0) return "platinum";
+        if (score >= 55.0) return "gold";
+        if (score >= 40.0) return "silver";
+        if (score >= 20.0) return "bronze";
+        return "unranked";
     }
 }
