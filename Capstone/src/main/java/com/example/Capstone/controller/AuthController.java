@@ -2,12 +2,10 @@ package com.example.Capstone.controller;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.Capstone.dto.request.AdditionalInfoRequest;
@@ -47,12 +45,6 @@ public class AuthController {
         @RequestBody @Valid AdditionalInfoRequest request) {
         userService.updateAdditionalInfo(userId, request);
         return ResponseEntity.ok().build();
-    }
-
-    @GetMapping("/success")
-    @Operation(summary = "소셜 로그인 성공 테스트 - 프론트 구현 후 삭제")
-    public ResponseEntity<String> success(@RequestParam String accessToken) {
-        return ResponseEntity.ok(accessToken);
     }
     
     @PostMapping("/refresh")

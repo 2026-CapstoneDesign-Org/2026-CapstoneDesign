@@ -83,13 +83,11 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
             boolean needsProfile = user.getGender() == null || user.getBirthYear() == null;
 
             if (needsProfile) {
-                // 프론트 구현 후 /auth/signup/profile로 리다이렉션
                 getRedirectStrategy().sendRedirect(request, response,
-                    "/auth/success?accessToken=" + accessToken + "&needsProfile=true");
+                    "exp+wagu://auth/callback?accessToken=" + accessToken + "&refreshToken" + refreshToken + "&needsProfile=true");
             } else {
-                // 프론트 구현 후 메인 페이지로 리다이렉션
                 getRedirectStrategy().sendRedirect(request, response,
-                    "/auth/success?accessToken=" + accessToken + "&needsProfile=false");
+                    "exp+wagu://auth/callback?accessToken=" + accessToken + "&refreshToken" + refreshToken + "&needsProfile=false");
             }
     }
 }
