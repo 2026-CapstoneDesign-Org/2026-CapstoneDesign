@@ -41,11 +41,8 @@ public class UserService {
             request.gender()
         );
 
-        // 최초 1회만 점수 제공
-        if (isFirstBirth) {
-            reliabilityScoreService.increase(userId, ScoreEvent.PROFILE_COMPLETED);
-        }
-        if (isFirstGender) {
+        // 최초 입력 시 신뢰도 점수 생성 및 증가
+        if (isFirstBirth && isFirstGender) {
             reliabilityScoreService.increase(userId, ScoreEvent.PROFILE_COMPLETED);
         }
     }

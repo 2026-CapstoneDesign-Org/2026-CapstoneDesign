@@ -128,7 +128,7 @@ public class ReviewService {
     @Transactional
     public void deleteReview(Long userId, Long reviewId) {
         Review review = getOwnedReview(userId, reviewId);
-        reviewSummaryService.invalidateCache(review.getRestaurant().getId());  // ← 추가
+        reviewSummaryService.invalidateCache(review.getRestaurant().getId());
         review.delete();
     }
 
