@@ -108,7 +108,7 @@ public class UserListService {
 
     public UserListDetailResponse getRepresentativeList(Long userId) {
         UserList userList = userListRepository
-            .findByIdAndIsDeletedFalseAndIsRepresentativeTrue(userId)
+            .findByUserIdAndIsRepresentativeTrueAndIsDeletedFalse(userId)
             .orElseThrow(() -> new EntityNotFoundException("대표 리스트가 없습니다."));
         return UserListDetailResponse.from(userList);
     }
