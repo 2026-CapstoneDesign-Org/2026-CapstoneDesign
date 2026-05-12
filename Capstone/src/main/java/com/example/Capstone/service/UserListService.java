@@ -24,6 +24,7 @@ import com.example.Capstone.dto.request.AddRestaurantRequest;
 import com.example.Capstone.dto.request.CreateListRequest;
 import com.example.Capstone.dto.request.UpdateListRequest;
 import com.example.Capstone.dto.request.UpdateScoreRequest;
+import com.example.Capstone.dto.response.RestaurantResponse;
 import com.example.Capstone.dto.response.UserListDetailResponse;
 import com.example.Capstone.dto.response.UserListResponse;
 import com.example.Capstone.exception.BusinessException;
@@ -98,6 +99,13 @@ public class UserListService {
                 .stream()
                 .map(UserListResponse::from)
                 .toList();
+    }
+
+    public UserListDetailResponse getRepresentativeList(Long userId) {
+        UserList userList = userListRepository
+            .findByIdAndIsDeletedFalseAndIsRepresentativeTrue(userId)
+            .orElseThrow(() -> new EntityNotFoundException("대표 리스트가 없습니다."));
+        return UserListDetailResponse.from(userList);
     }
 
 	// 리스트 상세
