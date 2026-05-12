@@ -13,9 +13,10 @@ public record UserListDetailResponse(
         Boolean isPublic,
         Boolean isRepresentative,
         List<ListRestaurantResponse> restaurants,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        boolean isLiked
 ) {
-    public static UserListDetailResponse from(UserList userList) {
+    public static UserListDetailResponse from(UserList userList, boolean isLiked) {
         return new UserListDetailResponse(
                 userList.getId(),
                 userList.getTitle(),
@@ -26,7 +27,12 @@ public record UserListDetailResponse(
                 userList.getListRestaurants().stream()
                         .map(ListRestaurantResponse::from)
                         .toList(),
-                userList.getCreatedAt()
+                userList.getCreatedAt(),
+                isLiked
         );
+    }
+
+    public static UserListDetailResponse from(UserList userList) {
+        return from(userList, false);
     }
 }

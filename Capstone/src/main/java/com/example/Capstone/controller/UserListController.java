@@ -55,8 +55,9 @@ public class UserListController {
     @Operation(summary = "리스트 상세")
     @GetMapping("/{id}")
     public ResponseEntity<UserListDetailResponse> getList(
-            @PathVariable Long id) {
-        return ResponseEntity.ok(userListService.getList(id));
+            @PathVariable Long id,
+            @AuthenticationPrincipal Long userId) {
+        return ResponseEntity.ok(userListService.getList(id, userId));
     }
 
     @Operation(summary = "리스트 기본 정보 수정")
