@@ -125,6 +125,8 @@ public class HiddenGemRecommendationService {
                     row.restaurantId(),
                     row.restaurantName(),
                     row.address(),
+                    row.lat(),
+                    row.lng(),
                     row.regionName(),
                     row.regionTownName(),
                     scale(recommendationScore),

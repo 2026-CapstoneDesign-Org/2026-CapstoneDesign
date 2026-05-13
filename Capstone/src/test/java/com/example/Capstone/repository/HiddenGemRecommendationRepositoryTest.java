@@ -105,6 +105,8 @@ class HiddenGemRecommendationRepositoryTest {
 
         assertEquals(target.getId(), rows.get(0).restaurantId());
         assertEquals("도로명-target", targetRow.address());
+        assertEquals(new BigDecimal("37.1000000"), targetRow.lat());
+        assertEquals(new BigDecimal("127.1000000"), targetRow.lng());
         assertEquals(townName, targetRow.regionTownName());
         assertEquals(2L, targetRow.evaluationCount());
         assertTrue(targetRow.averageAutoScore().compareTo(new BigDecimal("90.0")) == 0);

@@ -48,6 +48,8 @@ class HiddenGemRecommendationServiceTest {
         assertEquals(10, response.limit());
         assertEquals(2, response.items().size());
         assertEquals(101L, response.items().get(0).restaurantId());
+        assertEquals(new BigDecimal("37.1000000"), response.items().get(0).lat());
+        assertEquals(new BigDecimal("127.1000000"), response.items().get(0).lng());
         assertEquals(new BigDecimal("91.50"), response.items().get(0).recommendationScore());
         assertEquals(new BigDecimal("90.00"), response.items().get(0).adjustedScore());
         assertEquals(2L, response.items().get(0).evaluationCount());
@@ -119,6 +121,8 @@ class HiddenGemRecommendationServiceTest {
                 restaurantId,
                 restaurantName,
                 "address-" + restaurantId,
+                new BigDecimal("37.1000000"),
+                new BigDecimal("127.1000000"),
                 "용인시 처인구",
                 "김량장동",
                 new BigDecimal(averageAutoScore),
