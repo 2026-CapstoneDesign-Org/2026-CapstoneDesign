@@ -84,6 +84,7 @@
   - 필수
   - 동/읍/면 단위 문자열
   - 누락, `null`, blank면 `400 BAD_REQUEST`
+  - 프론트 호환을 위해 컨트롤러에서는 `regionName`, `regionKeyword`, `townName` alias도 같은 지역값으로 받을 수 있다.
 
 지역 기준:
 - `Restaurant.regionTownName` exact match를 사용한다.

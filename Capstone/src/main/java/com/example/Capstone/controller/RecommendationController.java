@@ -45,7 +45,37 @@ public class RecommendationController {
     @Operation(summary = "숨은 맛집 추천 조회")
     @GetMapping("/restaurants/hidden-gems")
     public ResponseEntity<HiddenGemRestaurantResponse> getHiddenGemRestaurants(
-            @RequestParam(required = false) String regionTownName) {
-        return ResponseEntity.ok(hiddenGemRecommendationService.getHiddenGemRestaurants(regionTownName));
+            @RequestParam(required = false) String regionTownName,
+            @RequestParam(required = false) String regionName,
+            @RequestParam(required = false) String regionKeyword,
+            @RequestParam(required = false) String townName) {
+        return ResponseEntity.ok(hiddenGemRecommendationService.getHiddenGemRestaurants(
+                resolveRegionTownName(regionTownName, regionName, regionKeyword, townName)
+        ));
+    }
+
+    private String resolveRegionTownName(
+            String regionTownName,
+            String regionName,
+            String regionKeyword,
+            String townName
+    ) {
+        if (hasText(regionTownName)) {
+            return regionTownName;
+        }
+        if (hasText(regionName)) {
+            return regionName;
+        }
+        if (hasText(regionKeyword)) {
+            return regionKeyword;
+        }
+        if (hasText(townName)) {
+            return townName;
+        }
+        return regionTownName;
+    }
+
+    private boolean hasText(String value) {
+        return value != null && !value.isBlank();
     }
 }
