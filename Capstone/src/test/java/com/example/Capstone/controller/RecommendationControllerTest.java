@@ -218,6 +218,27 @@ class RecommendationControllerTest {
     }
 
     @Test
+    @DisplayName("regionName alias로 숨은 맛집 추천 지역을 받을 수 있다")
+    void returnsHiddenGemRestaurantsByRegionNameAlias() throws Exception {
+        when(hiddenGemRecommendationService.getHiddenGemRestaurants("김량장동"))
+                .thenReturn(HiddenGemRestaurantResponse.of(
+                        LocalDateTime.of(2026, 5, 1, 21, 30, 0),
+                        "김량장동",
+                        10,
+                        List.of()
+                ));
+
+        mockMvc.perform(get("/recommendations/restaurants/hidden-gems")
+                        .param("regionName", "김량장동"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.regionTownName").value("김량장동"))
+                .andExpect(jsonPath("$.limit").value(10))
+                .andExpect(jsonPath("$.items").isArray());
+
+        verify(hiddenGemRecommendationService).getHiddenGemRestaurants("김량장동");
+    }
+
+    @Test
     @DisplayName("regionTownName 누락 시 서비스 검증 실패를 400으로 반환한다")
     void returnsBadRequestWhenRegionTownNameIsMissing() throws Exception {
         when(hiddenGemRecommendationService.getHiddenGemRestaurants(null))

@@ -2,6 +2,7 @@
 
 ## 다음 확인 사항
 - 프론트에서 `items[].lat`, `items[].lng`를 지도 마커 위치로 사용한다.
+- 프론트 요청은 가능하면 표준 파라미터 `regionTownName`으로 맞춘다. 현재 백엔드는 호환 alias로 `regionName`, `regionKeyword`, `townName`도 허용한다.
 - 운영 데이터 중 좌표가 null인 식당이 있는 경우 프론트에서 마커 제외 또는 대체 처리를 결정한다.
 - 로컬 PostgreSQL 또는 Docker Desktop을 실행한 뒤 repository/e2e 테스트를 재실행한다.
 
