@@ -184,6 +184,8 @@ class RecommendationControllerTest {
                                         301L,
                                         "숨은 식당",
                                         "경기 용인시 처인구 금령로",
+                                        new BigDecimal("37.1000000"),
+                                        new BigDecimal("127.1000000"),
                                         "용인시 처인구",
                                         "김량장동",
                                         new BigDecimal("91.50"),
@@ -203,6 +205,8 @@ class RecommendationControllerTest {
                 .andExpect(jsonPath("$.items[0].restaurantId").value(301))
                 .andExpect(jsonPath("$.items[0].restaurantName").value("숨은 식당"))
                 .andExpect(jsonPath("$.items[0].address").value("경기 용인시 처인구 금령로"))
+                .andExpect(jsonPath("$.items[0].lat").value(37.1000000))
+                .andExpect(jsonPath("$.items[0].lng").value(127.1000000))
                 .andExpect(jsonPath("$.items[0].regionName").value("용인시 처인구"))
                 .andExpect(jsonPath("$.items[0].regionTownName").value("김량장동"))
                 .andExpect(jsonPath("$.items[0].recommendationScore").value(91.5))

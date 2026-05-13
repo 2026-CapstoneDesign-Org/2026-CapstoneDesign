@@ -106,6 +106,8 @@ class HiddenGemRecommendationE2ETest {
         assertEquals(1, response.getBody().items().get(0).rank());
         assertEquals(hiddenGem.getId(), response.getBody().items().get(0).restaurantId());
         assertEquals("도로명-숨은맛집", response.getBody().items().get(0).address());
+        assertEquals(new BigDecimal("37.1000000"), response.getBody().items().get(0).lat());
+        assertEquals(new BigDecimal("127.1000000"), response.getBody().items().get(0).lng());
         assertEquals(2L, response.getBody().items().get(0).evaluationCount());
         assertEquals(lowerScore.getId(), response.getBody().items().get(1).restaurantId());
         assertEquals("지번주소-e2e-lower-score", response.getBody().items().get(1).address());

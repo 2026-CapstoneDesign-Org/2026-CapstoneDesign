@@ -159,6 +159,8 @@ recommendationScore =
 - `restaurantId`
 - `restaurantName`
 - `address`
+- `lat`
+- `lng`
 - `regionName`
 - `regionTownName`
 - `recommendationScore`

@@ -64,6 +64,8 @@ public class HiddenGemRecommendationRepositoryImpl implements HiddenGemRecommend
                     rs.restaurant_id,
                     r.name as restaurant_name,
                     coalesce(nullif(r.road_address, ''), r.address) as address,
+                    r.lat,
+                    r.lng,
                     r.region_name,
                     r.region_town_name,
                     rs.average_auto_score,
@@ -99,11 +101,13 @@ public class HiddenGemRecommendationRepositoryImpl implements HiddenGemRecommend
                     toLong(row[0]),
                     (String) row[1],
                     (String) row[2],
-                    (String) row[3],
-                    (String) row[4],
-                    toBigDecimal(row[5]),
-                    toLong(row[6]),
-                    toBigDecimal(row[7])
+                    toBigDecimal(row[3]),
+                    toBigDecimal(row[4]),
+                    (String) row[5],
+                    (String) row[6],
+                    toBigDecimal(row[7]),
+                    toLong(row[8]),
+                    toBigDecimal(row[9])
             ));
         }
         return result;
