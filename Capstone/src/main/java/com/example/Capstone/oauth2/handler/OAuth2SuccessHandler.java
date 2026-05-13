@@ -82,6 +82,8 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
             boolean needsProfile = user.getGender() == null || user.getBirthYear() == null;
 
+            log.info(accessToken);
+
             if (needsProfile) {
                 getRedirectStrategy().sendRedirect(request, response,
                     "exp+wagu://auth/callback?accessToken=" + accessToken + "&refreshToken" + refreshToken + "&needsProfile=true");
