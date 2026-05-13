@@ -2,7 +2,9 @@ package com.example.Capstone.repository;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -383,13 +385,16 @@ public class RestaurantRecommendationRepositoryImpl implements RestaurantRecomme
 
     private LocalDateTime toLocalDateTime(Object value) {
         if (value == null) {
-            return null;
+        return null;
         }
         if (value instanceof LocalDateTime localDateTime) {
             return localDateTime;
         }
         if (value instanceof Timestamp timestamp) {
             return timestamp.toLocalDateTime();
+        }
+        if (value instanceof Instant instant) {
+            return instant.atZone(ZoneId.of("Asia/Seoul")).toLocalDateTime();
         }
         throw new IllegalArgumentException("지원하지 않는 시간 타입입니다: " + value.getClass().getName());
     }

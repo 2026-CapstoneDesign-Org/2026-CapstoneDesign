@@ -2,7 +2,12 @@ package com.example.Capstone.repository;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
+import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -373,15 +378,18 @@ public class ListRecommendationRepositoryImpl implements ListRecommendationRepos
     }
 
     private LocalDateTime toLocalDateTime(Object value) {
-        if (value == null) {
-            return null;
+        if (value instanceof LocalDateTime ldt) {
+            return ldt;
+        } else if (value instanceof LocalDate ld) {
+            return ld.atStartOfDay();
+        } else if (value instanceof Instant instant) {
+            return instant.atZone(ZoneId.of("Asia/Seoul")).toLocalDateTime();
+        } else if (value instanceof ZonedDateTime zdt) {
+            return zdt.toLocalDateTime();
+        } else if (value instanceof OffsetDateTime odt) {
+            return odt.toLocalDateTime();
+        } else {
+            throw new IllegalArgumentException("지원하지 않는 시간 타입입니다: " + value.getClass());
         }
-        if (value instanceof LocalDateTime localDateTime) {
-            return localDateTime;
-        }
-        if (value instanceof Timestamp timestamp) {
-            return timestamp.toLocalDateTime();
-        }
-        throw new IllegalArgumentException("지원하지 않는 시간 타입입니다: " + value.getClass().getName());
     }
 }
