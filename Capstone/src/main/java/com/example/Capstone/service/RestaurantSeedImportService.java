@@ -49,10 +49,10 @@ public class RestaurantSeedImportService {
     private static final int MAX_RESTAURANT_PHOTO_COUNT = 10;
     private static final String SEED_PHOTO_SOURCE = "SEED_PHOTO";
 
-    private static final Path DEFAULT_RESTAURANTS_FILE_PATH = Path.of("seed-data", "restaurants-seed-preview.json");
-    private static final Path DEFAULT_MENU_ITEMS_FILE_PATH = Path.of("seed-data", "restaurant-menu-items-seed-preview.json");
-    private static final Path DEFAULT_TAGS_FILE_PATH = Path.of("seed-data", "tags-seed-preview.json");
-    private static final Path DEFAULT_RESTAURANT_TAGS_FILE_PATH = Path.of("seed-data", "restaurant-tags-seed-preview.json");
+    private static final Path DEFAULT_RESTAURANTS_FILE_PATH = Path.of("import-data", "restaurants-seed-preview.json");
+    private static final Path DEFAULT_MENU_ITEMS_FILE_PATH = Path.of("import-data", "restaurant-menu-items-seed-preview.json");
+    private static final Path DEFAULT_TAGS_FILE_PATH = Path.of("import-data", "tags-seed-preview.json");
+    private static final Path DEFAULT_RESTAURANT_TAGS_FILE_PATH = Path.of("import-data", "restaurant-tags-seed-preview.json");
 
     private final RestaurantRepository restaurantRepository;
     private final RestaurantMenuItemRepository restaurantMenuItemRepository;

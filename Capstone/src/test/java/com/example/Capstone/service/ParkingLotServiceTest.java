@@ -15,6 +15,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.example.Capstone.client.GyeonggiParkingPlaceClient;
+import com.example.Capstone.client.GyeonggiParkingPlaceClient.GyeonggiParkingPlace;
 import com.example.Capstone.domain.ParkingLot;
 import com.example.Capstone.domain.Restaurant;
 import com.example.Capstone.dto.request.CreateParkingLotRequest;
@@ -31,6 +33,9 @@ class ParkingLotServiceTest {
 
     @Mock
     private RestaurantRepository restaurantRepository;
+
+    @Mock
+    private GyeonggiParkingPlaceClient gyeonggiParkingPlaceClient;
 
     @InjectMocks
     private ParkingLotService parkingLotService;
@@ -144,6 +149,49 @@ class ParkingLotServiceTest {
 
         assertThrows(IllegalArgumentException.class,
                 () -> parkingLotService.getParkingLotsByDistance(1L, 5, null));
+    }
+
+    @Test
+    @DisplayName("좌표 기준 조회에서 DB 결과가 부족하면 경기도 API 결과를 저장 없이 보강한다")
+    void returnsCoordinateParkingLotsWithExternalFallback() {
+        ParkingLot local = parkingLot("P-1", "local-parking", "37.2412000", "127.1777000");
+        GyeonggiParkingPlace external = new GyeonggiParkingPlace(
+                "EXT-1",
+                "external-parking",
+                "공영",
+                "노외",
+                "경기도 수원시 팔달구 테스트로 1",
+                null,
+                20,
+                "미시행",
+                "00:00~23:59",
+                "00:00~23:59",
+                "00:00~23:59",
+                new BigDecimal("37.2500000"),
+                new BigDecimal("127.0200000"),
+                30,
+                500,
+                10,
+                200,
+                "031-000-0000"
+        );
+
+        when(parkingLotRepository.findAllByParkingLotDivisionAndLatIsNotNullAndLngIsNotNull("공영"))
+                .thenReturn(List.of(local));
+        when(gyeonggiParkingPlaceClient.fetchAllParkingPlaces())
+                .thenReturn(List.of(external));
+
+        List<ParkingLotResponse> responses = parkingLotService.getParkingLotsByCoordinate(
+                new BigDecimal("37.2393490"),
+                new BigDecimal("127.1734445"),
+                2,
+                "공영"
+        );
+
+        assertEquals(2, responses.size());
+        assertEquals("local-parking", responses.get(0).parkingLotName());
+        assertEquals("external-parking", responses.get(1).parkingLotName());
+        assertEquals(null, responses.get(1).id());
     }
 
     private Restaurant restaurant(String lat, String lng) {

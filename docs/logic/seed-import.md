@@ -1,4 +1,4 @@
-# seed-import.md
+﻿# seed-import.md
 
 기준 날짜 및 시간: 2026-05-01 (Asia/Seoul)
 
@@ -27,10 +27,10 @@
 - `seed.import.exit-after-run=true`면 import 후 애플리케이션을 종료한다.
 
 ### 기본 경로
-- `seed-data/restaurants-seed-preview.json`
-- `seed-data/restaurant-menu-items-seed-preview.json`
-- `seed-data/tags-seed-preview.json`
-- `seed-data/restaurant-tags-seed-preview.json`
+- `import-data/restaurants-seed-preview.json`
+- `import-data/restaurant-menu-items-seed-preview.json`
+- `import-data/tags-seed-preview.json`
+- `import-data/restaurant-tags-seed-preview.json`
 
 ### import 방식
 - 식당은 `pcmapPlaceId` 우선, 없으면 `name + address`로 기존 row를 찾는다.

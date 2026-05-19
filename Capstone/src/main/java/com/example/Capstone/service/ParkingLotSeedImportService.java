@@ -7,6 +7,8 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.Capstone.client.GyeonggiParkingPlaceClient;
+import com.example.Capstone.client.GyeonggiParkingPlaceClient.GyeonggiParkingPlace;
 import com.example.Capstone.domain.ParkingLot;
 import com.example.Capstone.dto.request.ImportParkingLotSeedRequest;
 import com.example.Capstone.dto.response.ParkingLotSeedImportResponse;
@@ -23,10 +25,11 @@ import lombok.RequiredArgsConstructor;
 @Transactional(readOnly = true)
 public class ParkingLotSeedImportService {
 
-    private static final Path DEFAULT_PARKING_LOTS_FILE_PATH = Path.of("seed-data", "parking-lots-seed.json");
+    private static final Path DEFAULT_PARKING_LOTS_FILE_PATH = Path.of("import-data", "parking-lots-seed.json");
 
     private final ParkingLotRepository parkingLotRepository;
     private final RestaurantSeedFileLoader seedFileLoader;
+    private final GyeonggiParkingPlaceClient gyeonggiParkingPlaceClient;
 
     @Transactional
     public ParkingLotSeedImportResponse importSeed(ImportParkingLotSeedRequest request) {
@@ -40,6 +43,37 @@ public class ParkingLotSeedImportService {
                 new TypeReference<List<ParkingLotSeedRow>>() {}
         );
 
+        ImportCounts counts = importRows(rows);
+
+        return new ParkingLotSeedImportResponse(
+                parkingLotsPath.toString(),
+                rows.size(),
+                counts.createdCount(),
+                counts.updatedCount()
+        );
+    }
+
+    @Transactional
+    public ParkingLotSeedImportResponse importGyeonggiOpenApiSeed() {
+        List<ParkingLotSeedRow> rows = gyeonggiParkingPlaceClient.fetchAllParkingPlaces().stream()
+                .map(this::toSeedRow)
+                .toList();
+
+        if (rows.isEmpty()) {
+            throw new IllegalStateException("Gyeonggi ParkingPlace API returned no rows.");
+        }
+
+        ImportCounts counts = importRows(rows);
+
+        return new ParkingLotSeedImportResponse(
+                "gyeonggi-openapi:ParkingPlace",
+                rows.size(),
+                counts.createdCount(),
+                counts.updatedCount()
+        );
+    }
+
+    private ImportCounts importRows(List<ParkingLotSeedRow> rows) {
         int createdCount = 0;
         int updatedCount = 0;
 
@@ -65,11 +99,29 @@ public class ParkingLotSeedImportService {
             }
         }
 
-        return new ParkingLotSeedImportResponse(
-                parkingLotsPath.toString(),
-                rows.size(),
-                createdCount,
-                updatedCount
+        return new ImportCounts(createdCount, updatedCount);
+    }
+
+    private ParkingLotSeedRow toSeedRow(GyeonggiParkingPlace place) {
+        return new ParkingLotSeedRow(
+                place.parkingManagementNumber(),
+                place.parkingLotName(),
+                place.parkingLotDivision(),
+                place.parkingLotType(),
+                place.roadAddress(),
+                place.lotAddress(),
+                place.parkingCapacity(),
+                place.alternateNoDivision(),
+                place.weekdayOperatingHours(),
+                place.saturdayOperatingHours(),
+                place.holidayOperatingHours(),
+                place.lat(),
+                place.lng(),
+                place.basicParkingTime(),
+                place.basicParkingFee(),
+                place.additionalUnitTime(),
+                place.additionalUnitFee(),
+                place.phoneNumber()
         );
     }
 
@@ -164,6 +216,12 @@ public class ParkingLotSeedImportService {
             @JsonProperty("additional_unit_time") Integer additionalUnitTime,
             @JsonProperty("additional_unit_fee") Integer additionalUnitFee,
             @JsonProperty("phone_number") String phoneNumber
+    ) {
+    }
+
+    private record ImportCounts(
+            int createdCount,
+            int updatedCount
     ) {
     }
 }

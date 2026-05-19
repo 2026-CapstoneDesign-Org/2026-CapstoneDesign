@@ -59,7 +59,26 @@ class ParkingLotControllerTest {
     }
 
     @Test
-    @DisplayName("주차장 단건을 조회한다")
+    @DisplayName("좌표 기준 주변 주차장을 조회한다")
+    void getsNearbyParkingLotsByCoordinate() throws Exception {
+        when(parkingLotService.getParkingLotsByCoordinate(
+                new BigDecimal("37.2393490"),
+                new BigDecimal("127.1734445"),
+                10,
+                "공영"
+        )).thenReturn(List.of(response()));
+
+        mockMvc.perform(get("/parking-lots/nearby")
+                        .param("lat", "37.2393490")
+                        .param("lng", "127.1734445")
+                        .param("limit", "10")
+                        .param("parkingLotDivision", "공영"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].parkingLotName").value("테스트 공영주차장"));
+    }
+
+    @Test
+    @DisplayName("주차장 한 건을 조회한다")
     void getsParkingLot() throws Exception {
         when(parkingLotService.getParkingLot(1L))
                 .thenReturn(response());
