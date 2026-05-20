@@ -1,5 +1,6 @@
 package com.example.Capstone.controller;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import org.springframework.http.HttpStatus;
@@ -44,6 +45,26 @@ public class ParkingLotController {
             @RequestParam(required = false) Integer limit
     ) {
         return ResponseEntity.ok(parkingLotService.getParkingLots(parkingLotDivision, limit));
+    }
+
+    @Operation(summary = "Get nearby parking lots by coordinate")
+    @GetMapping("/nearby")
+    public ResponseEntity<List<ParkingLotResponse>> getNearbyParkingLots(
+            @Parameter(description = "Latitude.", example = "37.2393490")
+            @RequestParam BigDecimal lat,
+            @Parameter(description = "Longitude.", example = "127.1734445")
+            @RequestParam BigDecimal lng,
+            @Parameter(description = "Maximum number of rows. Defaults to 10, max 50.", example = "10")
+            @RequestParam(required = false) Integer limit,
+            @Parameter(description = "Optional parking lot division filter.", example = "공영")
+            @RequestParam(required = false) String parkingLotDivision
+    ) {
+        return ResponseEntity.ok(parkingLotService.getParkingLotsByCoordinate(
+                lat,
+                lng,
+                limit,
+                parkingLotDivision
+        ));
     }
 
     @Operation(summary = "Get parking lot")

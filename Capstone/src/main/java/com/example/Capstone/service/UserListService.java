@@ -53,6 +53,7 @@ public class UserListService {
     private final ReliabilityScoreService reliabilityScoreService;
     private final NaverLocalSearchClient naverLocalSearchClient;
     private final ListLikeRepository listLikeRepository;
+    private final ExternalFallbackRestaurantRegistrationService externalFallbackRestaurantRegistrationService;
 
 	// 리스트 생성
 	@Transactional
@@ -190,20 +191,10 @@ public class UserListService {
     @Transactional
     public void addExternalFallbackRestaurant(Long userId, Long listId, AddExternalRestaurantRequest request) {
         UserList userList = getOwnedList(userId, listId);
-        PcmapRestaurantCandidate candidate = resolveExternalCandidate(request);
-        validateExternalRegionMatch(userList.getRegionName(), candidate);
-
-        Restaurant restaurant = restaurantRepository.findByPcmapPlaceId(candidate.placeId())
-                .map(existing -> {
-                    validateVisibleRestaurant(existing);
-                    validateRegionMatch(userList.getRegionName(), existing.getRegionName());
-                    return existing;
-                })
-                .orElseGet(() -> restaurantRepository.save(createRestaurantFromExternalCandidate(
-                        candidate,
-                        userList.getRegionName()
-                )));
-
+        Restaurant restaurant = externalFallbackRestaurantRegistrationService.registerVerifiedRestaurant(
+                request,
+                userList.getRegionName()
+        );
         validateDuplicateRestaurant(userList.getId(), restaurant.getId());
 
         listRestaurantRepository.save(ListRestaurant.builder()

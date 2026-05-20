@@ -7,6 +7,8 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.Capstone.client.GyeonggiParkingPlaceClient;
+import com.example.Capstone.client.GyeonggiParkingPlaceClient.GyeonggiParkingPlace;
 import com.example.Capstone.domain.ParkingLot;
 import com.example.Capstone.domain.Restaurant;
 import com.example.Capstone.dto.request.CreateParkingLotRequest;
@@ -31,6 +33,7 @@ public class ParkingLotService {
 
     private final ParkingLotRepository parkingLotRepository;
     private final RestaurantRepository restaurantRepository;
+    private final GyeonggiParkingPlaceClient gyeonggiParkingPlaceClient;
 
     public List<ParkingLotResponse> getParkingLots(String parkingLotDivision, Integer limit) {
         int normalizedLimit = normalizeCrudLimit(limit);
@@ -121,29 +124,48 @@ public class ParkingLotService {
             throw new IllegalArgumentException("restaurant coordinate is required.");
         }
 
-        return buildParkingLotsByDistance(restaurant, normalizeLimit(limit), parkingLotDivision);
+        return buildParkingLotsByDistance(
+                restaurant.getLat(),
+                restaurant.getLng(),
+                normalizeLimit(limit),
+                parkingLotDivision
+        );
+    }
+
+    public List<ParkingLotResponse> getParkingLotsByCoordinate(
+            BigDecimal lat,
+            BigDecimal lng,
+            Integer limit,
+            String parkingLotDivision
+    ) {
+        if (lat == null || lng == null) {
+            throw new IllegalArgumentException("coordinate is required.");
+        }
+
+        return buildParkingLotsByDistance(lat, lng, normalizeLimit(limit), parkingLotDivision);
     }
 
     public List<ParkingLotResponse> getParkingLotsForRestaurantDetail(Restaurant restaurant, int limit) {
         if (restaurant == null || restaurant.getLat() == null || restaurant.getLng() == null) {
             return List.of();
         }
-        return buildParkingLotsByDistance(restaurant, normalizeLimit(limit), null);
+        return buildParkingLotsByDistance(restaurant.getLat(), restaurant.getLng(), normalizeLimit(limit), null);
     }
 
     private List<ParkingLotResponse> buildParkingLotsByDistance(
-            Restaurant restaurant,
+            BigDecimal lat,
+            BigDecimal lng,
             int normalizedLimit,
             String parkingLotDivision
     ) {
         List<ParkingLot> parkingLots = resolveParkingLots(parkingLotDivision);
 
-        return parkingLots.stream()
+        List<ParkingLotResponse> localResponses = parkingLots.stream()
                 .map(parkingLot -> ParkingLotDistance.of(
                         parkingLot,
                         calculateDistanceMeters(
-                                restaurant.getLat(),
-                                restaurant.getLng(),
+                                lat,
+                                lng,
                                 parkingLot.getLat(),
                                 parkingLot.getLng()
                         )
@@ -158,6 +180,18 @@ public class ParkingLotService {
                 .limit(normalizedLimit)
                 .map(distance -> ParkingLotResponse.from(distance.parkingLot(), distance.distanceMeters()))
                 .toList();
+
+        if (localResponses.size() >= normalizedLimit) {
+            return localResponses;
+        }
+
+        return mergeExternalParkingLots(
+                localResponses,
+                lat,
+                lng,
+                normalizedLimit,
+                parkingLotDivision
+        );
     }
 
     static int calculateDistanceMeters(
@@ -185,6 +219,103 @@ public class ParkingLotService {
             return parkingLotRepository.findAllByLatIsNotNullAndLngIsNotNull();
         }
         return parkingLotRepository.findAllByParkingLotDivisionAndLatIsNotNullAndLngIsNotNull(parkingLotDivision.trim());
+    }
+
+    private List<ParkingLotResponse> mergeExternalParkingLots(
+            List<ParkingLotResponse> localResponses,
+            BigDecimal lat,
+            BigDecimal lng,
+            int normalizedLimit,
+            String parkingLotDivision
+    ) {
+        List<ParkingLotResponse> externalResponses = fetchExternalParkingLots().stream()
+                .filter(place -> hasText(place.parkingLotName()))
+                .filter(place -> hasCoordinate(place.lat(), place.lng()))
+                .filter(place -> parkingLotDivision == null
+                        || parkingLotDivision.isBlank()
+                        || parkingLotDivision.trim().equals(place.parkingLotDivision()))
+                .filter(place -> localResponses.stream()
+                        .noneMatch(local -> isSameParkingLot(local, place)))
+                .map(place -> toResponse(
+                        place,
+                        calculateDistanceMeters(lat, lng, place.lat(), place.lng())
+                ))
+                .toList();
+
+        if (externalResponses.isEmpty()) {
+            return localResponses;
+        }
+
+        return java.util.stream.Stream.concat(localResponses.stream(), externalResponses.stream())
+                .sorted(Comparator
+                        .comparing(
+                                ParkingLotResponse::distanceMeters,
+                                Comparator.nullsLast(Integer::compareTo)
+                        )
+                        .thenComparing(
+                                ParkingLotResponse::parkingLotName,
+                                Comparator.nullsLast(String::compareTo)
+                        )
+                        .thenComparing(
+                                ParkingLotResponse::id,
+                                Comparator.nullsLast(Long::compareTo)
+                        ))
+                .limit(normalizedLimit)
+                .toList();
+    }
+
+    private List<GyeonggiParkingPlace> fetchExternalParkingLots() {
+        try {
+            List<GyeonggiParkingPlace> places = gyeonggiParkingPlaceClient.fetchAllParkingPlaces();
+            return places == null ? List.of() : places;
+        } catch (Exception exception) {
+            return List.of();
+        }
+    }
+
+    private boolean hasCoordinate(BigDecimal lat, BigDecimal lng) {
+        return lat != null && lng != null;
+    }
+
+    private boolean hasText(String value) {
+        return value != null && !value.isBlank();
+    }
+
+    private boolean isSameParkingLot(ParkingLotResponse local, GyeonggiParkingPlace external) {
+        return sameText(local.parkingLotName(), external.parkingLotName())
+                && (sameText(local.roadAddress(), external.roadAddress())
+                || sameText(local.lotAddress(), external.lotAddress()));
+    }
+
+    private boolean sameText(String left, String right) {
+        if (left == null || right == null) {
+            return false;
+        }
+        return left.trim().equals(right.trim());
+    }
+
+    private ParkingLotResponse toResponse(GyeonggiParkingPlace place, int distanceMeters) {
+        return new ParkingLotResponse(
+                null,
+                place.parkingLotName(),
+                place.parkingLotDivision(),
+                place.parkingLotType(),
+                place.roadAddress(),
+                place.lotAddress(),
+                place.parkingCapacity(),
+                place.alternateNoDivision(),
+                place.weekdayOperatingHours(),
+                place.saturdayOperatingHours(),
+                place.holidayOperatingHours(),
+                place.lat(),
+                place.lng(),
+                place.basicParkingTime(),
+                place.basicParkingFee(),
+                place.additionalUnitTime(),
+                place.additionalUnitFee(),
+                place.phoneNumber(),
+                distanceMeters
+        );
     }
 
     private int normalizeLimit(Integer limit) {

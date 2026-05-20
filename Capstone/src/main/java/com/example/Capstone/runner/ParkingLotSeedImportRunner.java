@@ -18,6 +18,8 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class ParkingLotSeedImportRunner implements ApplicationRunner {
 
+    private static final String OPEN_API_SOURCE = "gg-openapi";
+
     private final Environment environment;
     private final ParkingLotSeedImportService parkingLotSeedImportService;
     private final ConfigurableApplicationContext applicationContext;
@@ -28,9 +30,12 @@ public class ParkingLotSeedImportRunner implements ApplicationRunner {
             return;
         }
 
-        ParkingLotSeedImportResponse response = parkingLotSeedImportService.importSeed(new ImportParkingLotSeedRequest(
-                environment.getProperty("parking-lot.seed.import.file-path")
-        ));
+        String source = environment.getProperty("parking-lot.seed.import.source", "file");
+        ParkingLotSeedImportResponse response = OPEN_API_SOURCE.equalsIgnoreCase(source)
+                ? parkingLotSeedImportService.importGyeonggiOpenApiSeed()
+                : parkingLotSeedImportService.importSeed(new ImportParkingLotSeedRequest(
+                        environment.getProperty("parking-lot.seed.import.file-path")
+                ));
 
         log.info(
                 "parking lot seed import completed: total={} created={} updated={}",
