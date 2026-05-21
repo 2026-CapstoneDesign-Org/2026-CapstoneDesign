@@ -17,6 +17,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.example.Capstone.client.GyeonggiParkingPlaceClient;
 import com.example.Capstone.client.GyeonggiParkingPlaceClient.GyeonggiParkingPlace;
+import com.example.Capstone.client.SeoulCityDataParkingClient;
+import com.example.Capstone.client.SeoulCityDataParkingClient.SeoulRealtimeParkingPlace;
 import com.example.Capstone.domain.ParkingLot;
 import com.example.Capstone.domain.Restaurant;
 import com.example.Capstone.dto.request.CreateParkingLotRequest;
@@ -36,6 +38,9 @@ class ParkingLotServiceTest {
 
     @Mock
     private GyeonggiParkingPlaceClient gyeonggiParkingPlaceClient;
+
+    @Mock
+    private SeoulCityDataParkingClient seoulCityDataParkingClient;
 
     @InjectMocks
     private ParkingLotService parkingLotService;
@@ -192,6 +197,50 @@ class ParkingLotServiceTest {
         assertEquals("local-parking", responses.get(0).parkingLotName());
         assertEquals("external-parking", responses.get(1).parkingLotName());
         assertEquals(null, responses.get(1).id());
+    }
+
+    @Test
+    @DisplayName("coordinate lookup merges Seoul realtime parking data")
+    void returnsSeoulRealtimeParkingLotsForCoordinateLookup() {
+        SeoulRealtimeParkingPlace realtime = new SeoulRealtimeParkingPlace(
+                "Gwanghwamun",
+                "171721",
+                "Sejongno public parking",
+                "NW",
+                "Jongno-gu Sejong-daero 189",
+                "Jongno-gu Sejongno 80-1",
+                1260,
+                672,
+                "2026-05-21 11:32:43",
+                true,
+                true,
+                430,
+                5,
+                430,
+                5,
+                new BigDecimal("37.57340269"),
+                new BigDecimal("126.97588429")
+        );
+
+        when(parkingLotRepository.findAllByLatIsNotNullAndLngIsNotNull())
+                .thenReturn(List.of());
+        when(seoulCityDataParkingClient.fetchRealtimeParkingPlaces(
+                new BigDecimal("37.57340269"),
+                new BigDecimal("126.97588429")
+        )).thenReturn(List.of(realtime));
+
+        List<ParkingLotResponse> responses = parkingLotService.getParkingLotsByCoordinate(
+                new BigDecimal("37.57340269"),
+                new BigDecimal("126.97588429"),
+                5,
+                null
+        );
+
+        assertEquals(1, responses.size());
+        assertEquals("Sejongno public parking", responses.get(0).parkingLotName());
+        assertEquals(672, responses.get(0).currentParkingCount());
+        assertEquals("SEOUL_CITYDATA", responses.get(0).realtimeSource());
+        assertEquals("171721", responses.get(0).realtimeParkingCode());
     }
 
     private Restaurant restaurant(String lat, String lng) {

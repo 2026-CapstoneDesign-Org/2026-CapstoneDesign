@@ -21,7 +21,6 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.test.context.ActiveProfiles;
 
 import com.example.Capstone.common.jwt.JwtProvider;
 import com.example.Capstone.domain.ListRestaurant;
@@ -36,7 +35,6 @@ import com.example.Capstone.repository.UserListRepository;
 import com.example.Capstone.repository.UserRepository;
 
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
-@ActiveProfiles({ "db", "key" })
 class HiddenGemRecommendationE2ETest {
 
     @Autowired

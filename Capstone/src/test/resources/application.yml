@@ -53,6 +53,25 @@ jwt:
   access-token-expiration: 3600000
   refresh-token-expiration: 604800000
 
+gemini:
+  api:
+    url: http://localhost
+    key: test
+
+aws:
+  s3:
+    region: ap-northeast-2
+    access-key: test
+    secret-key: test
+    bucket: test
+    presigned-url-expiration: 3600
+
 search:
   pcmap:
+    enabled: false
+
+parking-lot:
+  gyeonggi-api:
+    enabled: false
+  seoul-citydata:
     enabled: false

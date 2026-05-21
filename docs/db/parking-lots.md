@@ -2,54 +2,54 @@
 
 ## 범위
 
-이 문서는 `ParkingLot` 저장 구조와 공공데이터 기반 seed 적재 기준을 다룬다.
+주차장 정적 정보 저장 구조와 실시간 주차 현황 처리 기준을 설명한다.
 
-대상 파일:
+대상 코드:
+
 - `Capstone/src/main/java/com/example/Capstone/domain/ParkingLot.java`
 - `Capstone/src/main/java/com/example/Capstone/repository/ParkingLotRepository.java`
+- `Capstone/src/main/java/com/example/Capstone/service/ParkingLotService.java`
 - `Capstone/src/main/java/com/example/Capstone/service/ParkingLotSeedImportService.java`
-- `Capstone/src/main/java/com/example/Capstone/runner/ParkingLotSeedImportRunner.java`
 
 ## 데이터 원천
 
-현재 단계에서는 공공데이터포털 `전국주차장정보표준데이터`만 사용한다.
+정적 주차장 정보는 seed import로 `parking_lots`에 저장한다. 현재 운영 조회는 저장된 DB 주차장을 우선 사용하고, 부족한 경우 외부 API 결과를 응답에만 fallback으로 합성한다.
 
-- 원천: https://www.data.go.kr/data/15012896/standard.do
-- 수집 방식: 포털 그리드 검색을 지역별로 분할 조회
-- 대상:
-  - 서울특별시 전역
-  - 경기도 안산시, 용인시, 김포시, 광명시, 과천시, 안성시, 화성시, 안양시, 평택시, 성남시, 부천시, 수원시, 오산시, 광주시, 하남시, 구리시, 군포시
+실시간 주차 가능 대수는 서울시 실시간 도시데이터 `citydata` API에서 조회 시점에 가져온다. 실시간 값은 변동성이 크므로 `parking_lots`에 저장하지 않는다.
 
 ## `parking_lots`
 
 주요 컬럼:
+
 - `id`
-- `parking_management_number`: 공공데이터 주차장관리번호
-- `parking_lot_name`: 주차장명
-- `parking_lot_division`: 주차장구분
-- `parking_lot_type`: 주차장유형
-- `road_address`: 소재지도로명주소
-- `lot_address`: 소재지지번주소
-- `parking_capacity`: 주차구획수
-- `alternate_no_division`: 부제시행구분
-- `weekday_operating_hours`: 평일 운영시간
-- `saturday_operating_hours`: 토요일 운영시간
-- `holiday_operating_hours`: 공휴일 운영시간
+- `parking_management_number`
+- `parking_lot_name`
+- `parking_lot_division`
+- `parking_lot_type`
+- `road_address`
+- `lot_address`
+- `parking_capacity`
+- `alternate_no_division`
+- `weekday_operating_hours`
+- `saturday_operating_hours`
+- `holiday_operating_hours`
 - `lat`
 - `lng`
-- `basic_parking_time`: 주차기본시간
-- `basic_parking_fee`: 주차기본요금
-- `additional_unit_time`: 추가단위시간
-- `additional_unit_fee`: 추가단위요금
-- `phone_number`: 전화번호
+- `basic_parking_time`
+- `basic_parking_fee`
+- `additional_unit_time`
+- `additional_unit_fee`
+- `phone_number`
 - `created_at`
 - `updated_at`
 
-## 식별 기준
+`parking_capacity`는 총 주차면수이며 현재 주차 가능 대수가 아니다.
 
-`parking_management_number`는 단독 unique 값으로 신뢰하지 않는다.
+## 중복 판정
 
-표준데이터에서 같은 주차장관리번호가 서로 다른 주차장명/주소로 반복되는 행이 존재한다. 따라서 DB unique 제약은 두지 않고, seed 재실행 시 동일 행 판정은 아래 조합으로 한다.
+`parking_management_number`는 단독 unique 값으로 신뢰하지 않는다. 같은 관리번호라도 이름, 주소, 좌표가 다른 행이 존재할 수 있다.
+
+seed 재실행 시 동일 행 판정은 아래 조합으로 한다.
 
 - 주차장관리번호
 - 주차장명
@@ -60,55 +60,16 @@
 - 위도
 - 경도
 
-기존 개발 DB에 예전 unique constraint가 남아 있으면 아래 SQL을 1회 실행한다.
+## 실시간 현황
 
-```sql
-ALTER TABLE parking_lots
-DROP CONSTRAINT IF EXISTS ukog9j2e8h5adrur0fugevmboxs;
-```
+서울시 실시간 도시데이터에서 `CUR_PRK_YN=Y`인 주차장만 실시간 현황 제공 대상으로 본다.
 
-## 적재 결과 기준
+응답 합성 필드:
 
-현재 수집본 기준:
+- `realtimeParkingAvailable`: 실시간 주차 가능 대수를 응답에 포함했는지 여부
+- `currentParkingCount`: 현재 주차 가능 대수
+- `currentParkingTime`: 현재 주차 가능 대수 업데이트 시각
+- `realtimeSource`: `SEOUL_CITYDATA`
+- `realtimeParkingCode`: 서울시 주차장 코드
 
-- 총 적재 행: 2,528건
-- 서울특별시: 889건
-- 용인시: 214건
-- 주차장구분:
-  - 공영 2,455건
-  - 민영 73건
-- 좌표 누락: 51건
-- 필수값 누락: 0건
-- 정확 동일 행 중복: 0건
-- `주차장관리번호` 중복 그룹: 168개
-
-좌표가 없는 행은 CRUD/목록에는 남기지만, 식당 기준 거리 조회에서는 제외한다.
-
-## 제외한 정보
-
-현재 단계에서는 아래 정보를 저장하지 않는다.
-
-- 실시간 주차 가능 대수
-- 혼잡도
-- 민간 앱 제휴 정보
-- 주차장 이미지
-- 지도 제공자별 장소 ID
-
-공공데이터의 `주차구획수`는 총 주차면수이며 현재 주차 가능 대수가 아니다.
-
-## 검증 SQL
-
-```sql
-SELECT COUNT(*) AS total,
-       COUNT(*) FILTER (WHERE lat IS NULL OR lng IS NULL) AS missing_coordinates
-FROM parking_lots;
-
-SELECT parking_lot_division, COUNT(*)
-FROM parking_lots
-GROUP BY parking_lot_division
-ORDER BY parking_lot_division;
-
-SELECT COUNT(*) AS yongin_count
-FROM parking_lots
-WHERE COALESCE(road_address, '') || ' ' || COALESCE(lot_address, '') LIKE '%용인시%';
-```
+실시간 값은 조회 응답에만 포함한다. 장기 저장이 필요해지면 `parking_lot_availability_snapshots` 같은 별도 테이블을 검토한다.

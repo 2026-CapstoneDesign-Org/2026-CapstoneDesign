@@ -23,8 +23,62 @@ public record ParkingLotResponse(
         Integer additionalUnitTime,
         Integer additionalUnitFee,
         String phoneNumber,
-        Integer distanceMeters
+        Integer distanceMeters,
+        Boolean realtimeParkingAvailable,
+        Integer currentParkingCount,
+        String currentParkingTime,
+        String realtimeSource,
+        String realtimeParkingCode
 ) {
+    public ParkingLotResponse(
+            Long id,
+            String parkingLotName,
+            String parkingLotDivision,
+            String parkingLotType,
+            String roadAddress,
+            String lotAddress,
+            Integer parkingCapacity,
+            String alternateNoDivision,
+            String weekdayOperatingHours,
+            String saturdayOperatingHours,
+            String holidayOperatingHours,
+            BigDecimal lat,
+            BigDecimal lng,
+            Integer basicParkingTime,
+            Integer basicParkingFee,
+            Integer additionalUnitTime,
+            Integer additionalUnitFee,
+            String phoneNumber,
+            Integer distanceMeters
+    ) {
+        this(
+                id,
+                parkingLotName,
+                parkingLotDivision,
+                parkingLotType,
+                roadAddress,
+                lotAddress,
+                parkingCapacity,
+                alternateNoDivision,
+                weekdayOperatingHours,
+                saturdayOperatingHours,
+                holidayOperatingHours,
+                lat,
+                lng,
+                basicParkingTime,
+                basicParkingFee,
+                additionalUnitTime,
+                additionalUnitFee,
+                phoneNumber,
+                distanceMeters,
+                null,
+                null,
+                null,
+                null,
+                null
+        );
+    }
+
     public static ParkingLotResponse from(ParkingLot parkingLot) {
         return from(parkingLot, null);
     }
@@ -49,7 +103,12 @@ public record ParkingLotResponse(
                 parkingLot.getAdditionalUnitTime(),
                 parkingLot.getAdditionalUnitFee(),
                 parkingLot.getPhoneNumber(),
-                distanceMeters
+                distanceMeters,
+                null,
+                null,
+                null,
+                null,
+                null
         );
     }
 

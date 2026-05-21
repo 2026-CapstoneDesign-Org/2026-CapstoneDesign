@@ -13,13 +13,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
 
 import com.example.Capstone.dto.request.ImportParkingLotSeedRequest;
 import com.example.Capstone.repository.ParkingLotRepository;
 
 @SpringBootTest
-@ActiveProfiles({ "db", "key" })
 class ParkingLotSeedImportServiceTest {
 
     @Autowired
