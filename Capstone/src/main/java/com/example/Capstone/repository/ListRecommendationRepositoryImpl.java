@@ -384,6 +384,8 @@ public class ListRecommendationRepositoryImpl implements ListRecommendationRepos
             return ld.atStartOfDay();
         } else if (value instanceof Instant instant) {
             return instant.atZone(ZoneId.of("Asia/Seoul")).toLocalDateTime();
+        } else if (value instanceof Timestamp timestamp) {
+            return timestamp.toLocalDateTime();
         } else if (value instanceof ZonedDateTime zdt) {
             return zdt.toLocalDateTime();
         } else if (value instanceof OffsetDateTime odt) {

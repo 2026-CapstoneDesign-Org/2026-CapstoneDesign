@@ -2,9 +2,7 @@
 
 ## 목표
 
-식당 상세 화면에서 사용자가 요청할 때 식당 좌표 기준 가까운 주차장을 안내한다.
-
-주차장 데이터는 식당과 별도 도메인으로 저장한다. 식당 상세 기본 응답에 강하게 결합하지 않고, 별도 API로 조회한다.
+식당 상세 화면 또는 사용자 좌표 조회에서 가까운 주차장을 거리순으로 안내한다. 정적 주차장 DB를 우선 사용하고, 서울시 실시간 도시데이터 권역에서는 조회 시점의 실시간 주차 가능 대수를 보강한다.
 
 ## API
 
@@ -12,6 +10,7 @@
 
 ```http
 GET /restaurants/{restaurantId}/parking-lots?limit=10&parkingLotDivision=공영
+GET /parking-lots/nearby?lat=37.57340269&lng=126.97588429&limit=10
 ```
 
 주차장 CRUD:
@@ -22,9 +21,9 @@ GET /restaurants/{restaurantId}/parking-lots?limit=10&parkingLotDivision=공영
 - `PATCH /parking-lots/{parkingLotId}`
 - `DELETE /parking-lots/{parkingLotId}`
 
-## 응답 기준
+## 응답
 
-응답은 `ParkingLotResponse` 배열 또는 단건이다.
+`ParkingLotResponse`는 정적 정보와 거리, 선택적 실시간 정보를 함께 담는다.
 
 - `id`
 - `parkingLotName`
@@ -33,10 +32,6 @@ GET /restaurants/{restaurantId}/parking-lots?limit=10&parkingLotDivision=공영
 - `roadAddress`
 - `lotAddress`
 - `parkingCapacity`
-- `alternateNoDivision`
-- `weekdayOperatingHours`
-- `saturdayOperatingHours`
-- `holidayOperatingHours`
 - `lat`
 - `lng`
 - `basicParkingTime`
@@ -45,17 +40,22 @@ GET /restaurants/{restaurantId}/parking-lots?limit=10&parkingLotDivision=공영
 - `additionalUnitFee`
 - `phoneNumber`
 - `distanceMeters`
+- `realtimeParkingAvailable`
+- `currentParkingCount`
+- `currentParkingTime`
+- `realtimeSource`
+- `realtimeParkingCode`
 
-`distanceMeters`는 식당 기준 거리 조회에서만 값이 있고, 일반 CRUD 응답에서는 `null`이다.
+일반 CRUD 응답에서는 `distanceMeters`와 실시간 필드가 `null`일 수 있다.
 
-## 거리 조회 정책
+## 거리순 조회
 
 - 기본 limit: 10
 - 최대 limit: 50
-- `parkingLotDivision`이 있으면 해당 구분만 조회한다.
+- `parkingLotDivision`이 있으면 DB 주차장은 해당 구분만 조회한다.
 - 좌표가 없는 주차장은 거리 계산 대상에서 제외한다.
-- 정렬은 `distanceMeters` 오름차순, `parkingLotName` 오름차순, `id` 오름차순이다.
-- 거리 계산은 애플리케이션 레벨 Haversine 공식을 사용한다.
+- 정렬은 `distanceMeters`, `parkingLotName`, `id` 순이다.
+- 거리 계산은 Haversine 공식을 사용한다.
 
 예외:
 
@@ -63,30 +63,21 @@ GET /restaurants/{restaurantId}/parking-lots?limit=10&parkingLotDivision=공영
 - 식당 좌표가 없으면 400
 - `limit < 1`이면 400
 
-## CRUD 목록 정책
+## 실시간 주차 현황
 
-- 기본 limit: 50
-- 최대 limit: 200
-- `parkingLotDivision` 필터를 지원한다.
-- 좌표 누락 데이터도 목록/단건/수정/삭제 대상에 포함한다.
+사용자가 주차장 조회를 요청하는 시점에만 서울시 실시간 도시데이터 API를 호출한다.
 
-## 주차 가능 여부 기준
+흐름:
 
-현재 저장 데이터의 `parkingCapacity`는 총 주차면수다.
+1. 요청 좌표 기준 DB 주차장을 거리순으로 조회한다.
+2. 요청 좌표가 지원 중인 서울 주요장소 반경 안이면 `citydata` API를 호출한다.
+3. `PRK_STTS` 중 `CUR_PRK_YN=Y`인 주차장만 사용한다.
+4. 이름과 주소가 기존 DB 주차장과 같으면 실시간 필드만 보강한다.
+5. DB에 없는 실시간 주차장은 `id=null`, `parkingLotDivision=서울실시간` 응답으로 추가한다.
+6. 전체 후보를 다시 거리순 정렬하고 limit만큼 반환한다.
 
-실시간 주차 가능 대수가 없으면 “주차가능”으로 표시하지 않는다. 화면 문구는 아래처럼 구분한다.
+실시간 API 실패는 사용자 조회 실패로 전파하지 않고, 기존 DB/fallback 결과만 반환한다.
 
-- 정적 데이터만 있음: `총 80면`, `현재 가능 대수 미제공`
-- 실시간 데이터 있음: `현재 12면 가능`, `실시간 정보는 실제와 차이 가능`
+## 기능 영향
 
-실시간 가능 대수를 붙일 경우 정적 테이블과 분리한 `parking_lot_availability_snapshots` 같은 별도 구조를 우선 검토한다.
-
-## 도메인 영향
-
-이 기능은 식당 상세 부가 안내 기능이다.
-
-- 리스트 내부 정렬에 사용하지 않는다.
-- 추천, 랭킹, 신뢰도, 온도 계산에 사용하지 않는다.
-- 검색과 리스트 추가 플로우를 변경하지 않는다.
-- 공개/비공개 정책과 무관하다.
-- 식당은 기존처럼 검색 결과 선택 기반으로 유지한다.
+주차장 안내는 식당 상세 부가 데이터다. 검색 정렬, 랭킹, 추천, 리스트 공개/비공개 정책에는 영향을 주지 않는다.

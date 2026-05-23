@@ -49,6 +49,10 @@
 
 기본 `application.yml`은 `db`, `key` 프로필을 활성화합니다.
 
+`application-key.yml`은 OAuth/JWT 같은 민감 설정과 외부 API key를 받습니다. 주차장 경기도 OpenAPI는 `GG_PARKING_PLACE_API_KEY` 또는 `parking-lot.gyeonggi-api.key`를 사용합니다.
+
+NAVER 공식 Local Search API는 `NAVER_SEARCH_CLIENT_ID`, `NAVER_SEARCH_CLIENT_SECRET`을 우선 사용하고, 없으면 네이버 로그인에 쓰는 `NAVER_CLIENT_ID`, `NAVER_CLIENT_SECRET`으로 fallback합니다. 같은 NAVER Developers 애플리케이션에 검색 API 권한이 켜져 있으면 로그인용 client id/secret을 같이 써도 됩니다.
+
 ### 2. 로컬 PostgreSQL 실행
 ```powershell
 cd Capstone

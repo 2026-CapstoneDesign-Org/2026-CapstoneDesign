@@ -97,29 +97,29 @@ class ReliabilityScoreServiceTest {
     @DisplayName("등급 - 점수 구간별 정확히 부여")
     void grade_correct_by_score() {
 
-        assertThat(reliabilityScore.getGrade()).isEqualTo("tier1");
+        assertThat(reliabilityScore.getGrade()).isEqualTo("bronze");
 
         // 점수 강제 업데이트 후 등급 확인
         reliabilityScore.updateScore(38.0);
-        assertThat(reliabilityScore.getGrade()).isEqualTo("tier2");
+        assertThat(reliabilityScore.getGrade()).isEqualTo("bronze");
 
         reliabilityScore.updateScore(55.0);
-        assertThat(reliabilityScore.getGrade()).isEqualTo("tier3");
+        assertThat(reliabilityScore.getGrade()).isEqualTo("gold");
 
         reliabilityScore.updateScore(65.0);
-        assertThat(reliabilityScore.getGrade()).isEqualTo("tier4");
+        assertThat(reliabilityScore.getGrade()).isEqualTo("gold");
 
         reliabilityScore.updateScore(75.0);
-        assertThat(reliabilityScore.getGrade()).isEqualTo("tier5");
+        assertThat(reliabilityScore.getGrade()).isEqualTo("platinum");
 
         reliabilityScore.updateScore(85.0);
-        assertThat(reliabilityScore.getGrade()).isEqualTo("tier6");
+        assertThat(reliabilityScore.getGrade()).isEqualTo("diamond");
 
         reliabilityScore.updateScore(93.0);
-        assertThat(reliabilityScore.getGrade()).isEqualTo("tier7");
+        assertThat(reliabilityScore.getGrade()).isEqualTo("ruby");
 
         reliabilityScore.updateScore(97.0);
-        assertThat(reliabilityScore.getGrade()).isEqualTo("tier8");
+        assertThat(reliabilityScore.getGrade()).isEqualTo("ruby");
     }
 
     @Test

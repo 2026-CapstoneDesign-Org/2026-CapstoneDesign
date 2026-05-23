@@ -14,14 +14,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
 
 import com.example.Capstone.dto.request.ImportRestaurantSeedRequest;
 import com.example.Capstone.repository.RestaurantPhotoRepository;
 import com.example.Capstone.repository.RestaurantRepository;
 
 @SpringBootTest
-@ActiveProfiles({ "db", "key" })
 class RestaurantSeedImportServiceTest {
 
     private static final String TEST_PLACE_ID = "TEST-DETAIL-PHOTO-1";

@@ -1,9 +1,16 @@
 package com.example.Capstone.service;
 
-import com.example.Capstone.common.enums.ScoreEvent;
-import com.example.Capstone.domain.*;
-import com.example.Capstone.exception.BusinessException;
-import com.example.Capstone.repository.*;
+import static org.assertj.core.api.Assertions.assertThatNoException;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.never;
+import static org.mockito.BDDMockito.then;
+
+import java.util.Optional;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -11,25 +18,41 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
-import java.util.Optional;
-
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.BDDMockito.*;
+import com.example.Capstone.common.enums.ScoreEvent;
+import com.example.Capstone.domain.ListLike;
+import com.example.Capstone.domain.User;
+import com.example.Capstone.domain.UserList;
+import com.example.Capstone.exception.BusinessException;
+import com.example.Capstone.repository.ListLikeRepository;
+import com.example.Capstone.repository.ListRestaurantRepository;
+import com.example.Capstone.repository.UserListRepository;
+import com.example.Capstone.repository.UserRepository;
 
 @ExtendWith(MockitoExtension.class)
 class ListLikeServiceTest {
 
-    @Mock ListLikeRepository listLikeRepository;
-    @Mock UserRepository userRepository;
-    @Mock UserListRepository userListRepository;
-    @Mock ListRestaurantRepository listRestaurantRepository;
-    @Mock ReliabilityScoreService reliabilityScoreService;
+    @Mock
+    private ListLikeRepository listLikeRepository;
 
-    @InjectMocks ListLikeService listLikeService;
+    @Mock
+    private UserRepository userRepository;
+
+    @Mock
+    private UserListRepository userListRepository;
+
+    @Mock
+    private ListRestaurantRepository listRestaurantRepository;
+
+    @Mock
+    private ReliabilityScoreService reliabilityScoreService;
+
+    @InjectMocks
+    private ListLikeService listLikeService;
 
     private User user;
+    private User owner;
     private UserList userList;
 
     @BeforeEach
@@ -37,50 +60,57 @@ class ListLikeServiceTest {
         user = User.builder()
                 .provider("KAKAO")
                 .providerUserId("test_1")
-                .nickname("테스트유저1")
+                .nickname("test_user_1")
                 .profileImageUrl("http://default.img")
                 .role(User.Role.USER)
                 .build();
+        ReflectionTestUtils.setField(user, "id", 1L);
+
+        owner = User.builder()
+                .provider("KAKAO")
+                .providerUserId("test_2")
+                .nickname("test_user_2")
+                .profileImageUrl("http://default.img")
+                .role(User.Role.USER)
+                .build();
+        ReflectionTestUtils.setField(owner, "id", 2L);
 
         userList = UserList.builder()
-                .user(user)
-                .title("테스트리스트")
-                .description("설명")
-                .regionName("서울")
+                .user(owner)
+                .title("test-list")
+                .description("description")
+                .regionName("Seoul")
                 .build();
+        ReflectionTestUtils.setField(userList, "id", 1L);
     }
 
     @Test
-    @DisplayName("리스트 좋아요 성공 - 아이템 5개 이상 점수 제공")
+    @DisplayName("List like succeeds and scores owner when list has 5 or more items")
     void like_success_with_5_items() {
         given(listLikeRepository.existsByUserIdAndUserListId(anyLong(), anyLong())).willReturn(false);
         given(userRepository.findByIdAndIsDeletedFalse(anyLong())).willReturn(Optional.of(user));
         given(userListRepository.findByIdAndIsDeletedFalse(anyLong())).willReturn(Optional.of(userList));
-        given(listLikeRepository.save(any())).willReturn(
-                ListLike.builder()
-                        .user(user)
-                        .userList(userList)
-                        .build()
-        );
+        given(listLikeRepository.save(any())).willReturn(ListLike.builder()
+                .user(user)
+                .userList(userList)
+                .build());
         given(listRestaurantRepository.countByUserListId(anyLong())).willReturn(5L);
 
         assertThatNoException().isThrownBy(() -> listLikeService.like(1L, 1L));
 
-        then(reliabilityScoreService).should().increase(any(), eq(ScoreEvent.LIST_LIKED));
+        then(reliabilityScoreService).should().increase(eq(2L), eq(ScoreEvent.LIST_LIKED));
     }
 
     @Test
-    @DisplayName("리스트 좋아요 성공 - 아이템 5개 미만 점수 미제공")
+    @DisplayName("List like succeeds without score when list has fewer than 5 items")
     void like_success_without_score_under_5_items() {
         given(listLikeRepository.existsByUserIdAndUserListId(anyLong(), anyLong())).willReturn(false);
         given(userRepository.findByIdAndIsDeletedFalse(anyLong())).willReturn(Optional.of(user));
         given(userListRepository.findByIdAndIsDeletedFalse(anyLong())).willReturn(Optional.of(userList));
-        given(listLikeRepository.save(any())).willReturn(
-                ListLike.builder()
-                        .user(user)
-                        .userList(userList)
-                        .build()
-        );
+        given(listLikeRepository.save(any())).willReturn(ListLike.builder()
+                .user(user)
+                .userList(userList)
+                .build());
         given(listRestaurantRepository.countByUserListId(anyLong())).willReturn(4L);
 
         assertThatNoException().isThrownBy(() -> listLikeService.like(1L, 1L));
@@ -89,7 +119,7 @@ class ListLikeServiceTest {
     }
 
     @Test
-    @DisplayName("리스트 좋아요 실패 - 중복 좋아요")
+    @DisplayName("List like fails when duplicated")
     void like_fail_duplicate() {
         given(listLikeRepository.existsByUserIdAndUserListId(anyLong(), anyLong())).willReturn(true);
 
@@ -99,7 +129,7 @@ class ListLikeServiceTest {
     }
 
     @Test
-    @DisplayName("리스트 좋아요 취소 성공")
+    @DisplayName("List unlike succeeds")
     void unlike_success() {
         given(listLikeRepository.existsByUserIdAndUserListId(anyLong(), anyLong())).willReturn(true);
 
@@ -108,7 +138,7 @@ class ListLikeServiceTest {
     }
 
     @Test
-    @DisplayName("리스트 좋아요 취소 실패 - 좋아요 안 한 리스트")
+    @DisplayName("List unlike fails when not liked")
     void unlike_fail_not_liked() {
         given(listLikeRepository.existsByUserIdAndUserListId(anyLong(), anyLong())).willReturn(false);
 

@@ -9,6 +9,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.example.Capstone.client.GyeonggiParkingPlaceClient;
 import com.example.Capstone.client.GyeonggiParkingPlaceClient.GyeonggiParkingPlace;
+import com.example.Capstone.client.SeoulCityDataParkingClient;
+import com.example.Capstone.client.SeoulCityDataParkingClient.SeoulRealtimeParkingPlace;
 import com.example.Capstone.domain.ParkingLot;
 import com.example.Capstone.domain.Restaurant;
 import com.example.Capstone.dto.request.CreateParkingLotRequest;
@@ -34,6 +36,7 @@ public class ParkingLotService {
     private final ParkingLotRepository parkingLotRepository;
     private final RestaurantRepository restaurantRepository;
     private final GyeonggiParkingPlaceClient gyeonggiParkingPlaceClient;
+    private final SeoulCityDataParkingClient seoulCityDataParkingClient;
 
     public List<ParkingLotResponse> getParkingLots(String parkingLotDivision, Integer limit) {
         int normalizedLimit = normalizeCrudLimit(limit);
@@ -181,12 +184,20 @@ public class ParkingLotService {
                 .map(distance -> ParkingLotResponse.from(distance.parkingLot(), distance.distanceMeters()))
                 .toList();
 
-        if (localResponses.size() >= normalizedLimit) {
-            return localResponses;
+        List<ParkingLotResponse> realtimeMergedResponses = mergeSeoulRealtimeParkingLots(
+                localResponses,
+                lat,
+                lng,
+                normalizedLimit,
+                parkingLotDivision
+        );
+
+        if (realtimeMergedResponses.size() >= normalizedLimit) {
+            return realtimeMergedResponses;
         }
 
         return mergeExternalParkingLots(
-                localResponses,
+                realtimeMergedResponses,
                 lat,
                 lng,
                 normalizedLimit,
@@ -264,6 +275,64 @@ public class ParkingLotService {
                 .toList();
     }
 
+    private List<ParkingLotResponse> mergeSeoulRealtimeParkingLots(
+            List<ParkingLotResponse> localResponses,
+            BigDecimal lat,
+            BigDecimal lng,
+            int normalizedLimit,
+            String parkingLotDivision
+    ) {
+        List<SeoulRealtimeParkingPlace> realtimePlaces = fetchSeoulRealtimeParkingLots(lat, lng);
+        if (realtimePlaces.isEmpty()) {
+            return localResponses;
+        }
+
+        List<ParkingLotResponse> mergedResponses = new java.util.ArrayList<>(localResponses);
+        for (SeoulRealtimeParkingPlace place : realtimePlaces) {
+            if (!hasText(place.parkingLotName()) || !hasCoordinate(place.lat(), place.lng())) {
+                continue;
+            }
+            if (hasText(parkingLotDivision)) {
+                continue;
+            }
+
+            int distanceMeters = calculateDistanceMeters(lat, lng, place.lat(), place.lng());
+            int existingIndex = findSameParkingLotIndex(mergedResponses, place);
+            if (existingIndex >= 0) {
+                ParkingLotResponse current = mergedResponses.get(existingIndex);
+                mergedResponses.set(existingIndex, withRealtimeParking(current, place));
+            } else {
+                mergedResponses.add(toResponse(place, distanceMeters));
+            }
+        }
+
+        return mergedResponses.stream()
+                .sorted(Comparator
+                        .comparing(
+                                ParkingLotResponse::distanceMeters,
+                                Comparator.nullsLast(Integer::compareTo)
+                        )
+                        .thenComparing(
+                                ParkingLotResponse::parkingLotName,
+                                Comparator.nullsLast(String::compareTo)
+                        )
+                        .thenComparing(
+                                ParkingLotResponse::id,
+                                Comparator.nullsLast(Long::compareTo)
+                        ))
+                .limit(normalizedLimit)
+                .toList();
+    }
+
+    private List<SeoulRealtimeParkingPlace> fetchSeoulRealtimeParkingLots(BigDecimal lat, BigDecimal lng) {
+        try {
+            List<SeoulRealtimeParkingPlace> places = seoulCityDataParkingClient.fetchRealtimeParkingPlaces(lat, lng);
+            return places == null ? List.of() : places;
+        } catch (Exception exception) {
+            return List.of();
+        }
+    }
+
     private List<GyeonggiParkingPlace> fetchExternalParkingLots() {
         try {
             List<GyeonggiParkingPlace> places = gyeonggiParkingPlaceClient.fetchAllParkingPlaces();
@@ -281,10 +350,25 @@ public class ParkingLotService {
         return value != null && !value.isBlank();
     }
 
+    private int findSameParkingLotIndex(List<ParkingLotResponse> localResponses, SeoulRealtimeParkingPlace realtime) {
+        for (int index = 0; index < localResponses.size(); index++) {
+            if (isSameParkingLot(localResponses.get(index), realtime)) {
+                return index;
+            }
+        }
+        return -1;
+    }
+
     private boolean isSameParkingLot(ParkingLotResponse local, GyeonggiParkingPlace external) {
         return sameText(local.parkingLotName(), external.parkingLotName())
                 && (sameText(local.roadAddress(), external.roadAddress())
                 || sameText(local.lotAddress(), external.lotAddress()));
+    }
+
+    private boolean isSameParkingLot(ParkingLotResponse local, SeoulRealtimeParkingPlace realtime) {
+        return sameText(local.parkingLotName(), realtime.parkingLotName())
+                && (sameText(local.roadAddress(), realtime.roadAddress())
+                || sameText(local.lotAddress(), realtime.lotAddress()));
     }
 
     private boolean sameText(String left, String right) {
@@ -314,7 +398,73 @@ public class ParkingLotService {
                 place.additionalUnitTime(),
                 place.additionalUnitFee(),
                 place.phoneNumber(),
-                distanceMeters
+                distanceMeters,
+                null,
+                null,
+                null,
+                null,
+                null
+        );
+    }
+
+    private ParkingLotResponse toResponse(SeoulRealtimeParkingPlace place, int distanceMeters) {
+        return new ParkingLotResponse(
+                null,
+                place.parkingLotName(),
+                "서울실시간",
+                place.parkingLotType(),
+                place.roadAddress(),
+                place.lotAddress(),
+                place.parkingCapacity(),
+                null,
+                null,
+                null,
+                null,
+                place.lat(),
+                place.lng(),
+                place.basicParkingTime(),
+                place.basicParkingFee(),
+                place.additionalUnitTime(),
+                place.additionalUnitFee(),
+                null,
+                distanceMeters,
+                place.currentParkingCount() != null,
+                place.currentParkingCount(),
+                place.currentParkingTime(),
+                "SEOUL_CITYDATA",
+                place.parkingCode()
+        );
+    }
+
+    private ParkingLotResponse withRealtimeParking(
+            ParkingLotResponse current,
+            SeoulRealtimeParkingPlace place
+    ) {
+        return new ParkingLotResponse(
+                current.id(),
+                current.parkingLotName(),
+                current.parkingLotDivision(),
+                current.parkingLotType(),
+                current.roadAddress(),
+                current.lotAddress(),
+                current.parkingCapacity(),
+                current.alternateNoDivision(),
+                current.weekdayOperatingHours(),
+                current.saturdayOperatingHours(),
+                current.holidayOperatingHours(),
+                current.lat(),
+                current.lng(),
+                current.basicParkingTime(),
+                current.basicParkingFee(),
+                current.additionalUnitTime(),
+                current.additionalUnitFee(),
+                current.phoneNumber(),
+                current.distanceMeters(),
+                place.currentParkingCount() != null,
+                place.currentParkingCount(),
+                place.currentParkingTime(),
+                "SEOUL_CITYDATA",
+                place.parkingCode()
         );
     }
 
