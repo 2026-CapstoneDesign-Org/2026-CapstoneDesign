@@ -3,10 +3,8 @@
 
 .env
 .env.*
-Capstone/src/main/resources/application-db.yml
-Capstone/src/main/resources/application-key.yml
-Capstone/src/main/resources/application-local.yml
-Capstone/src/main/resources/application-*.local.yml
+application*.yml
+application*.yaml
 
 Capstone/data/
 Capstone/seed-data/parking-lots-seed.json
