@@ -2,6 +2,7 @@ package com.example.Capstone.service;
 
 import com.example.Capstone.common.enums.ScoreEvent;
 import com.example.Capstone.domain.*;
+import com.example.Capstone.domain.Notification.NotificationType;
 import com.example.Capstone.dto.request.CreateReviewRequest;
 import com.example.Capstone.dto.request.ReviewVoteRequest;
 import com.example.Capstone.dto.request.UpdateReviewRequest;
@@ -35,8 +36,11 @@ public class ReviewService {
     private final ReportRepository reportRepository;
     private final UserRepository userRepository;
     private final RestaurantRepository restaurantRepository;
+    private final UserFollowRepository userFollowRepository;
     private final ReliabilityScoreService reliabilityScoreService;
     private final ReviewSummaryService reviewSummaryService;
+    private final NotificationService notificationService;
+
 
     @Transactional
     public ReviewResponse createReview(Long userId, Long restaurantId, CreateReviewRequest request) {
@@ -64,6 +68,15 @@ public class ReviewService {
 
         reliabilityScoreService.increase(userId, ScoreEvent.REVIEW_CREATED);
         reviewSummaryService.invalidateCache(restaurantId); 
+
+        notificationService.sendToFollowers(
+            userId,
+            NotificationType.FOLLOWING_NEW_REVIEW,
+            user.getNickname() + "님이 새로운 리뷰를 작성했습니다.",
+            review.getId(),
+            "REVIEW"
+        );
+        
         return ReviewResponse.from(review, 0, 0);
     }
 
@@ -157,6 +170,14 @@ public class ReviewService {
         // 리뷰 작성자 점수 증감
         if (request.voteType() == ReviewVote.VoteType.LIKE) {
             reliabilityScoreService.increase(review.getUser().getId(), ScoreEvent.REVIEW_LIKED);
+
+            notificationService.send(
+                review.getUser().getId(),
+                Notification.NotificationType.REVIEW_LIKE,
+                user.getNickname() + "님이 리뷰를 좋아합니다.",
+                review.getId(),
+                "REVIEW"
+            );
         } else {
             reliabilityScoreService.decrease(review.getUser().getId(), ScoreEvent.REVIEW_DISLIKED); // ← 추가
         }

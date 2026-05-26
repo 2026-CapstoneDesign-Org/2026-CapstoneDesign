@@ -8,6 +8,7 @@ import com.example.Capstone.common.enums.ScoreEvent;
 import com.example.Capstone.domain.ListLike;
 import com.example.Capstone.domain.User;
 import com.example.Capstone.domain.UserList;
+import com.example.Capstone.domain.Notification.NotificationType;
 import com.example.Capstone.exception.BusinessException;
 import com.example.Capstone.repository.ListLikeRepository;
 import com.example.Capstone.repository.ListRestaurantRepository;
@@ -27,6 +28,7 @@ public class ListLikeService {
     private final UserListRepository userListRepository;
     private final ListRestaurantRepository listRestaurantRepository;
     private final ReliabilityScoreService reliabilityScoreService;
+    private final NotificationService notificationService;
 
     // 좋아요
     @Transactional
@@ -54,6 +56,14 @@ public class ListLikeService {
         if (itemCount >= 5) {
             reliabilityScoreService.increase(userList.getUser().getId(), ScoreEvent.LIST_LIKED);
         }
+
+        notificationService.send(
+            userList.getUser().getId(),
+            NotificationType.LIST_LIKE,
+            user.getNickname() + "님이 리스트를 좋아합니다.",
+            userList.getId(),
+            "LIST"
+        );
     }
 
     // 좋아요 취소

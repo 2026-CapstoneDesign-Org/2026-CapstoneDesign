@@ -8,6 +8,7 @@ import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
+import io.swagger.v3.oas.models.servers.Server;
 
 @Configuration
 public class SwaggerConfig {
@@ -21,6 +22,8 @@ public class SwaggerConfig {
                         .title("Capstone API")
                         .version("v1.0.0")
                         .description("API documentation for the Capstone backend."))
+                .addServersItem(new Server().url("https://wagu.uk").description("개발 서버(추후 운영서버로 변경)"))
+                .addServersItem(new Server().url("http://localhost:8080").description("로컬 서버"))
                 .addSecurityItem(new SecurityRequirement().addList(BEARER_SCHEME))
                 .components(new Components()
                         .addSecuritySchemes(
