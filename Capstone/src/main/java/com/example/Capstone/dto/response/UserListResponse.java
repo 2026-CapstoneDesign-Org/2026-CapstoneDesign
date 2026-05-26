@@ -12,7 +12,7 @@ public record UserListResponse(
         Boolean isPublic,
         Boolean isRepresentative,
         LocalDateTime createdAt,
-        boolean isLiked 
+        boolean isLiked
 ) {
     public static UserListResponse from(UserList userList, boolean isLiked) {
         return new UserListResponse(
