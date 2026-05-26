@@ -8,9 +8,12 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -54,12 +57,37 @@ public class NaverLocalSearchClientImpl implements NaverLocalSearchClient {
         }
 
         try {
-            List<NaverLocalRestaurantCandidate> candidates = searchLocal(buildQuery(restaurantName, address));
-            return candidates.stream()
+            List<NaverLocalRestaurantCandidate> candidates = new ArrayList<>();
+            Set<String> dedupKeys = new LinkedHashSet<>();
+            for (String query : buildQueries(restaurantName, address)) {
+                for (NaverLocalRestaurantCandidate candidate : searchLocal(query)) {
+                    String dedupKey = normalizeForMatch(candidate.title()) + "|"
+                            + normalizeForMatch(candidate.roadAddress() + " " + candidate.address());
+                    if (dedupKeys.add(dedupKey)) {
+                        candidates.add(candidate);
+                    }
+                }
+            }
+
+            Optional<ScoredCandidate> bestCandidate = candidates.stream()
                     .map(candidate -> new ScoredCandidate(candidate, score(candidate, restaurantName, address)))
-                    .filter(candidate -> candidate.score() >= 5)
-                    .max(Comparator.comparingInt(ScoredCandidate::score))
-                    .map(ScoredCandidate::candidate);
+                    .max(Comparator.comparingInt(ScoredCandidate::score));
+
+            if (bestCandidate.isEmpty()) {
+                log.debug("naver local search returned no candidates for restaurantName={}", restaurantName);
+                return Optional.empty();
+            }
+            if (bestCandidate.get().score() < 5) {
+                log.debug(
+                        "naver local search best candidate score too low for restaurantName={}, bestTitle={}, score={}",
+                        restaurantName,
+                        bestCandidate.get().candidate().title(),
+                        bestCandidate.get().score()
+                );
+                return Optional.empty();
+            }
+
+            return bestCandidate.map(ScoredCandidate::candidate);
         } catch (Exception exception) {
             log.warn("naver local search failed for restaurantName={}", restaurantName, exception);
             return Optional.empty();
@@ -74,12 +102,30 @@ public class NaverLocalSearchClientImpl implements NaverLocalSearchClient {
                 && !clientSecret.startsWith("dummy-");
     }
 
-    private String buildQuery(String restaurantName, String address) {
-        if (isBlank(address)) {
-            return restaurantName.trim();
+    private List<String> buildQueries(String restaurantName, String address) {
+        LinkedHashSet<String> queries = new LinkedHashSet<>();
+        String normalizedName = normalizeText(restaurantName);
+        String normalizedAddress = normalizeText(address);
+
+        if (normalizedAddress != null) {
+            queries.add(normalizedAddress + " " + normalizedName);
+
+            List<String> addressTokens = tokenizeAddress(normalizedAddress);
+            if (!addressTokens.isEmpty()) {
+                StringBuilder regionQuery = new StringBuilder();
+                for (int index = 0; index < Math.min(3, addressTokens.size()); index += 1) {
+                    if (regionQuery.length() > 0) {
+                        regionQuery.append(' ');
+                    }
+                    regionQuery.append(addressTokens.get(index));
+                }
+                regionQuery.append(' ').append(normalizedName);
+                queries.add(regionQuery.toString());
+            }
         }
 
-        return address.trim() + " " + restaurantName.trim();
+        queries.add(normalizedName);
+        return new ArrayList<>(queries);
     }
 
     private List<NaverLocalRestaurantCandidate> searchLocal(String query) throws IOException, InterruptedException {
@@ -131,19 +177,25 @@ public class NaverLocalSearchClientImpl implements NaverLocalSearchClient {
         int score = 0;
         String expectedName = normalizeForMatch(restaurantName);
         String actualName = normalizeForMatch(candidate.title());
-        String expectedAddress = normalizeForMatch(address);
-        String actualAddress = normalizeForMatch(candidate.roadAddress() + " " + candidate.address());
 
         if (!expectedName.isBlank() && actualName.equals(expectedName)) {
             score += 6;
         } else if (!expectedName.isBlank()
                 && (actualName.contains(expectedName) || expectedName.contains(actualName))) {
             score += 4;
+        } else {
+            score += sharedTokenCount(tokenizeName(restaurantName), tokenizeName(candidate.title()));
         }
 
+        String expectedAddress = normalizeForMatch(address);
+        String actualAddress = normalizeForMatch(candidate.roadAddress() + " " + candidate.address());
         if (!expectedAddress.isBlank()
                 && (actualAddress.contains(expectedAddress) || expectedAddress.contains(actualAddress))) {
             score += 3;
+        } else {
+            score += Math.min(3, sharedTokenCount(tokenizeAddress(address), tokenizeAddress(
+                    candidate.roadAddress() + " " + candidate.address()
+            )));
         }
 
         return score;
@@ -173,8 +225,61 @@ public class NaverLocalSearchClientImpl implements NaverLocalSearchClient {
             return "";
         }
         return stripped
-                .replaceAll("\\s+", "")
+                .replaceAll("[^0-9A-Za-z가-힣]", "")
                 .toLowerCase();
+    }
+
+    private List<String> tokenizeName(String value) {
+        String normalized = stripHtml(value);
+        if (normalized == null) {
+            return List.of();
+        }
+        return java.util.Arrays.stream(normalized.split("[^0-9A-Za-z가-힣]+"))
+                .map(String::trim)
+                .filter(token -> token.length() >= 2)
+                .map(String::toLowerCase)
+                .toList();
+    }
+
+    private List<String> tokenizeAddress(String value) {
+        String normalized = stripHtml(value);
+        if (normalized == null) {
+            return List.of();
+        }
+        return java.util.Arrays.stream(normalized.split("[^0-9A-Za-z가-힣]+"))
+                .map(this::normalizeAddressToken)
+                .filter(token -> token.length() >= 2 || token.matches("\\d+"))
+                .distinct()
+                .toList();
+    }
+
+    private String normalizeAddressToken(String token) {
+        String normalized = token == null ? "" : token.trim().toLowerCase();
+        if (normalized.endsWith("특별시")) {
+            return normalized.substring(0, normalized.length() - 3);
+        }
+        if (normalized.endsWith("광역시")) {
+            return normalized.substring(0, normalized.length() - 3);
+        }
+        if (normalized.endsWith("특별자치시")) {
+            return normalized.substring(0, normalized.length() - 5);
+        }
+        return normalized;
+    }
+
+    private int sharedTokenCount(List<String> expectedTokens, List<String> actualTokens) {
+        int count = 0;
+        for (String expectedToken : expectedTokens) {
+            for (String actualToken : actualTokens) {
+                if (actualToken.equals(expectedToken)
+                        || actualToken.contains(expectedToken)
+                        || expectedToken.contains(actualToken)) {
+                    count += 1;
+                    break;
+                }
+            }
+        }
+        return count;
     }
 
     private boolean isBlank(String value) {

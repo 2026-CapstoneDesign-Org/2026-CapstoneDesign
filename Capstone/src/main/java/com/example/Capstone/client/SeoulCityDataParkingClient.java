@@ -27,12 +27,12 @@ public class SeoulCityDataParkingClient {
     private final String apiKey;
     private final long cacheTtlMillis;
     private final List<SeoulCityDataArea> areas = List.of(
-            new SeoulCityDataArea("광화문·덕수궁", new BigDecimal("37.57340269"), new BigDecimal("126.97588429"), DEFAULT_AREA_RADIUS_METERS),
-            new SeoulCityDataArea("명동 관광특구", new BigDecimal("37.563655"), new BigDecimal("126.983429"), DEFAULT_AREA_RADIUS_METERS),
-            new SeoulCityDataArea("홍대 관광특구", new BigDecimal("37.555200"), new BigDecimal("126.922600"), DEFAULT_AREA_RADIUS_METERS),
-            new SeoulCityDataArea("강남 MICE 관광특구", new BigDecimal("37.511800"), new BigDecimal("127.059200"), DEFAULT_AREA_RADIUS_METERS),
-            new SeoulCityDataArea("잠실 관광특구", new BigDecimal("37.513261"), new BigDecimal("127.100133"), DEFAULT_AREA_RADIUS_METERS),
-            new SeoulCityDataArea("이태원 관광특구", new BigDecimal("37.534500"), new BigDecimal("126.994600"), DEFAULT_AREA_RADIUS_METERS)
+            new SeoulCityDataArea("\uAD11\uD654\uBB38\u00B7\uB355\uC218\uAD81", new BigDecimal("37.57340269"), new BigDecimal("126.97588429"), DEFAULT_AREA_RADIUS_METERS),
+            new SeoulCityDataArea("\uBA85\uB3D9 \uAD00\uAD11\uD2B9\uAD6C", new BigDecimal("37.563655"), new BigDecimal("126.983429"), DEFAULT_AREA_RADIUS_METERS),
+            new SeoulCityDataArea("\uD64D\uB300 \uAD00\uAD11\uD2B9\uAD6C", new BigDecimal("37.555200"), new BigDecimal("126.922600"), DEFAULT_AREA_RADIUS_METERS),
+            new SeoulCityDataArea("\uAC15\uB0A8 MICE \uAD00\uAD11\uD2B9\uAD6C", new BigDecimal("37.511800"), new BigDecimal("127.059200"), DEFAULT_AREA_RADIUS_METERS),
+            new SeoulCityDataArea("\uC7A0\uC2E4 \uAD00\uAD11\uD2B9\uAD6C", new BigDecimal("37.513261"), new BigDecimal("127.100133"), DEFAULT_AREA_RADIUS_METERS),
+            new SeoulCityDataArea("\uC774\uD0DC\uC6D0 \uAD00\uAD11\uD2B9\uAD6C", new BigDecimal("37.534500"), new BigDecimal("126.994600"), DEFAULT_AREA_RADIUS_METERS)
     );
 
     private volatile String cachedAreaName;

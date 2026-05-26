@@ -6,11 +6,13 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import com.example.Capstone.client.GyeonggiParkingPlaceClient.GyeonggiParkingPlace;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -18,7 +20,10 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 public class GyeonggiParkingPlaceClientImpl implements GyeonggiParkingPlaceClient {
 
+    private static final int MAX_RESPONSE_BYTES = 4 * 1024 * 1024;
+
     private final WebClient webClient;
+    private final ObjectMapper objectMapper;
     private final boolean enabled;
     private final String apiKey;
     private final int pageSize;
@@ -29,6 +34,7 @@ public class GyeonggiParkingPlaceClientImpl implements GyeonggiParkingPlaceClien
     private volatile List<GyeonggiParkingPlace> cachedRows = List.of();
 
     public GyeonggiParkingPlaceClientImpl(
+            ObjectMapper objectMapper,
             @Value("${parking-lot.gyeonggi-api.enabled:false}") boolean enabled,
             @Value("${parking-lot.gyeonggi-api.base-url:https://openapi.gg.go.kr/ParkingPlace}") String baseUrl,
             @Value("${parking-lot.gyeonggi-api.key:${GG_PARKING_PLACE_API_KEY:}}") String apiKey,
@@ -36,9 +42,14 @@ public class GyeonggiParkingPlaceClientImpl implements GyeonggiParkingPlaceClien
             @Value("${parking-lot.gyeonggi-api.max-pages:10}") int maxPages,
             @Value("${parking-lot.gyeonggi-api.cache-ttl-ms:86400000}") long cacheTtlMillis
     ) {
+        ExchangeStrategies exchangeStrategies = ExchangeStrategies.builder()
+                .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(MAX_RESPONSE_BYTES))
+                .build();
         this.webClient = WebClient.builder()
                 .baseUrl(baseUrl)
+                .exchangeStrategies(exchangeStrategies)
                 .build();
+        this.objectMapper = objectMapper;
         this.enabled = enabled;
         this.apiKey = apiKey == null ? "" : apiKey.trim();
         this.pageSize = Math.max(1, Math.min(pageSize, 1000));
@@ -95,7 +106,7 @@ public class GyeonggiParkingPlaceClientImpl implements GyeonggiParkingPlaceClien
 
     private ParkingPlacePage fetchPage(int pageIndex) {
         try {
-            ParkingPlaceResponse response = webClient.get()
+            String responseBody = webClient.get()
                     .uri(uriBuilder -> uriBuilder
                             .queryParam("KEY", apiKey)
                             .queryParam("Type", "json")
@@ -103,8 +114,9 @@ public class GyeonggiParkingPlaceClientImpl implements GyeonggiParkingPlaceClien
                             .queryParam("pSize", pageSize)
                             .build())
                     .retrieve()
-                    .bodyToMono(ParkingPlaceResponse.class)
+                    .bodyToMono(String.class)
                     .block();
+            ParkingPlaceResponse response = objectMapper.readValue(responseBody, ParkingPlaceResponse.class);
 
             return ParkingPlacePage.from(response);
         } catch (Exception exception) {
