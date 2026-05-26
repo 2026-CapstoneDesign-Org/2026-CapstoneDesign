@@ -55,25 +55,6 @@ dependencies {
 }
 
 tasks.named('test') {
-	useJUnitPlatform {
-		excludeTags 'external'
-	}
+	useJUnitPlatform()
 }
 
-tasks.register('externalTest', Test) {
-	description = 'Runs smoke tests that call real external APIs. Requires real API keys in environment variables.'
-	group = 'verification'
-
-	useJUnitPlatform {
-		includeTags 'external'
-	}
-
-	shouldRunAfter test
-}
-
-tasks.named('bootJar') {
-	exclude 'application-db.yml'
-	exclude 'application-key.yml'
-	exclude 'application-local.yml'
-	exclude 'application-*.local.yml'
-}
