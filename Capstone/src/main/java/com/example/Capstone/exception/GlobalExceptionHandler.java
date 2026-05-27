@@ -4,6 +4,7 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -54,6 +55,13 @@ public class GlobalExceptionHandler {
         log.warn("SecurityException: {}", e.getMessage());
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
                 .body(ErrorResponse.of("FORBIDDEN", e.getMessage()));
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAccessDenied(AccessDeniedException e) {
+        log.warn("AccessDeniedException: {}", e.getMessage());
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(ErrorResponse.of("FORBIDDEN", "접근 권한이 없습니다."));
     }
 
     // 나머지 모든 예외 (500)

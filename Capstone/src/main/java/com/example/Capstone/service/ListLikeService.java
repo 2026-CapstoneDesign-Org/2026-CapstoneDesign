@@ -1,5 +1,7 @@
 package com.example.Capstone.service;
 
+import java.util.Objects;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -8,6 +10,7 @@ import com.example.Capstone.common.enums.ScoreEvent;
 import com.example.Capstone.domain.ListLike;
 import com.example.Capstone.domain.User;
 import com.example.Capstone.domain.UserList;
+import com.example.Capstone.domain.Notification.NotificationType;
 import com.example.Capstone.exception.BusinessException;
 import com.example.Capstone.repository.ListLikeRepository;
 import com.example.Capstone.repository.ListRestaurantRepository;
@@ -27,6 +30,7 @@ public class ListLikeService {
     private final UserListRepository userListRepository;
     private final ListRestaurantRepository listRestaurantRepository;
     private final ReliabilityScoreService reliabilityScoreService;
+    private final NotificationService notificationService;
 
     // 좋아요
     @Transactional
@@ -40,7 +44,7 @@ public class ListLikeService {
         UserList userList = userListRepository.findByIdAndIsDeletedFalse(listId)
                 .orElseThrow(() -> new EntityNotFoundException("리스트를 찾을 수 없습니다."));
 
-        if (user.getId() == userList.getUser().getId()) {
+        if (Objects.equals(user.getId(), userList.getUser().getId())) {
             throw new BusinessException("자신의 리스트에는 좋아요 할 수 없습니다.", HttpStatus.BAD_REQUEST);
         }
 
@@ -54,6 +58,14 @@ public class ListLikeService {
         if (itemCount >= 5) {
             reliabilityScoreService.increase(userList.getUser().getId(), ScoreEvent.LIST_LIKED);
         }
+
+        notificationService.send(
+            userList.getUser().getId(),
+            NotificationType.LIST_LIKE,
+            user.getNickname() + "님이 리스트를 좋아합니다.",
+            userList.getId(),
+            "LIST"
+        );
     }
 
     // 좋아요 취소

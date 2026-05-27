@@ -48,6 +48,18 @@
 - `Capstone/src/main/resources/application-key.yml`
 
 기본 `application.yml`은 `db`, `key` 프로필을 활성화합니다.
+실제 파일은 비밀값과 서버 주소를 포함할 수 있어 Git에서 추적하지 않습니다.
+처음 로컬 환경을 구성할 때는 예시 파일을 복사한 뒤 값을 채웁니다.
+
+```bash
+cd Capstone
+cp src/main/resources/application.example.yml src/main/resources/application.yml
+cp src/main/resources/application-db.example.yml src/main/resources/application-db.yml
+cp src/main/resources/application-key.example.yml src/main/resources/application-key.yml
+```
+
+`application.yml`, `application-db.yml`, `application-key.yml`, `.env`, `.env.*`는 Git에서 추적하지 않습니다.
+OAuth client secret, JWT secret, DB 비밀번호, 실제 서버 IP / DNS는 이 파일들에만 둡니다.
 
 `application-key.yml`은 OAuth/JWT 같은 민감 설정과 외부 API key를 받습니다. 주차장 경기도 OpenAPI는 `GG_PARKING_PLACE_API_KEY` 또는 `parking-lot.gyeonggi-api.key`를 사용합니다.
 
@@ -57,6 +69,24 @@ NAVER 공식 Local Search API는 `NAVER_SEARCH_CLIENT_ID`, `NAVER_SEARCH_CLIENT_
 ```powershell
 cd Capstone
 docker compose up -d
+```
+
+`docker-compose.yml`은 로컬 개발용 `db-dev`와 서비스 DB 형태를 맞춰보는 `db-prod`를 함께 띄울 수 있습니다.
+DB 이름 / 계정 / 비밀번호는 `Capstone/.env`에서 주입합니다.
+기본 포트는 아래와 같습니다.
+
+- `db-dev`: `localhost:5433`
+- `db-prod`: `localhost:5432`
+
+`Capstone/.env`에는 아래 변수명을 사용합니다. 이 파일은 Git에서 추적하지 않습니다.
+
+```bash
+POSTGRES_DEV_DB=
+POSTGRES_DEV_USER=
+POSTGRES_DEV_PASSWORD=
+POSTGRES_PROD_DB=
+POSTGRES_PROD_USER=
+POSTGRES_PROD_PASSWORD=
 ```
 
 ### 3. 서버 실행

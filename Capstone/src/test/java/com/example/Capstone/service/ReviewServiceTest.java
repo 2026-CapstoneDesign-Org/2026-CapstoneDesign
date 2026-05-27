@@ -30,6 +30,7 @@ import com.example.Capstone.repository.RestaurantRepository;
 import com.example.Capstone.repository.ReviewImageRepository;
 import com.example.Capstone.repository.ReviewRepository;
 import com.example.Capstone.repository.ReviewVoteRepository;
+import com.example.Capstone.repository.UserFollowRepository;
 import com.example.Capstone.repository.UserRepository;
 
 @ExtendWith(MockitoExtension.class)
@@ -54,10 +55,16 @@ class ReviewServiceTest {
     private RestaurantRepository restaurantRepository;
 
     @Mock
+    private UserFollowRepository userFollowRepository;
+
+    @Mock
     private ReliabilityScoreService reliabilityScoreService;
 
     @Mock
     private ReviewSummaryService reviewSummaryService;
+
+    @Mock
+    private NotificationService notificationService;
 
     @InjectMocks
     private ReviewService reviewService;

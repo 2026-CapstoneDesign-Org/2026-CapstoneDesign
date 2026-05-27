@@ -19,6 +19,7 @@ import com.example.Capstone.domain.ListRestaurant;
 import com.example.Capstone.domain.Restaurant;
 import com.example.Capstone.domain.User;
 import com.example.Capstone.domain.UserList;
+import com.example.Capstone.domain.Notification.NotificationType;
 import com.example.Capstone.dto.request.AddExternalRestaurantRequest;
 import com.example.Capstone.dto.request.AddRestaurantRequest;
 import com.example.Capstone.dto.request.CreateListRequest;
@@ -31,6 +32,7 @@ import com.example.Capstone.exception.BusinessException;
 import com.example.Capstone.repository.ListLikeRepository;
 import com.example.Capstone.repository.ListRestaurantRepository;
 import com.example.Capstone.repository.RestaurantRepository;
+import com.example.Capstone.repository.UserFollowRepository;
 import com.example.Capstone.repository.UserListRepository;
 import com.example.Capstone.repository.UserRepository;
 import com.example.Capstone.service.support.RestaurantCategoryResolver;
@@ -54,6 +56,8 @@ public class UserListService {
     private final NaverLocalSearchClient naverLocalSearchClient;
     private final ListLikeRepository listLikeRepository;
     private final ExternalFallbackRestaurantRegistrationService externalFallbackRestaurantRegistrationService;
+    private final UserFollowRepository userFollowRepository;
+    private final NotificationService notificationService;
 
 	// 리스트 생성
 	@Transactional
@@ -92,6 +96,14 @@ public class UserListService {
         }
 
         listRestaurantRepository.saveAll(restaurants);
+
+        notificationService.sendToFollowers(
+            userId,
+            NotificationType.FOLLOWING_NEW_LIST,
+            user.getNickname() + "님이 새로운 리스트를 생성했습니다.",
+            userList.getId(),
+            "LIST"
+        );  
 
         return UserListResponse.from(savedList);
     }

@@ -3,6 +3,7 @@ package com.example.Capstone.service;
 import com.example.Capstone.common.enums.ScoreEvent;
 import com.example.Capstone.domain.User;
 import com.example.Capstone.domain.UserFollow;
+import com.example.Capstone.domain.Notification.NotificationType;
 import com.example.Capstone.dto.response.FollowCountResponse;
 import com.example.Capstone.dto.response.FollowUserResponse;
 import com.example.Capstone.exception.BusinessException;
@@ -24,6 +25,7 @@ public class FollowService {
     private final UserFollowRepository userFollowRepository;
     private final UserRepository userRepository;
     private final ReliabilityScoreService reliabilityScoreService;
+    private final NotificationService notificationService;
 
     @Transactional
     public void follow(Long followerId, Long followingId) {
@@ -45,6 +47,14 @@ public class FollowService {
                 .build());
 
         reliabilityScoreService.increase(followingId, ScoreEvent.FOLLOWED);
+
+        notificationService.send(
+                followingId,
+                NotificationType.FOLLOW,
+                follower.getNickname() + "님이 팔로우했습니다.",
+                followerId,
+                "USER"
+        );
     }
 
     @Transactional

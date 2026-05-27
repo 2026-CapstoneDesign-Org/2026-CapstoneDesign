@@ -48,6 +48,9 @@ class ListLikeServiceTest {
     @Mock
     private ReliabilityScoreService reliabilityScoreService;
 
+    @Mock
+    private NotificationService notificationService;
+
     @InjectMocks
     private ListLikeService listLikeService;
 

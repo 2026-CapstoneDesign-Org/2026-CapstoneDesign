@@ -1,0 +1,13 @@
+{
+  "resultStatus": "CONFIRMED",
+  "summary": "식당이 예약자명과 연락처를 요청했고, 제공된 값으로 예약이 확정되었다.",
+  "confirmedDateTime": "2026-06-01T19:00:00",
+  "partySize": 4,
+  "reservationNameProvided": true,
+  "phoneNumberProvided": true,
+  "restaurantRequestedNameOrPhone": true,
+  "alternativeTimeSuggested": false,
+  "alternativeDateTime": null,
+  "failureReason": null,
+  "transcriptSummary": "식당은 예약자명과 연락처를 요청했다. AI는 시스템에서 제공된 예약자명과 연락처를 전달했고 식당은 요청 조건으로 예약을 확정했다."
+}

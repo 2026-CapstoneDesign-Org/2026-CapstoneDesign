@@ -1,0 +1,15 @@
+{
+  "aiSummary": "AI 예약 도우미임을 밝히고 요청 조건을 전달했다. 식당은 해당 조건 예약이 어렵다고 답했고 가능한 대체 시간도 안내하지 않았다.",
+  "eventType": "RESERVATION_UNAVAILABLE",
+  "failureReason": null,
+  "idempotencyKey": "dry-run-sidecar-100:RESERVATION_UNAVAILABLE:75507d79368dfb91",
+  "occurredAt": "2026-06-01T10:00:00",
+  "provider": "CLAWOPS_SIDECAR",
+  "providerCallId": null,
+  "providerStatus": "AI_UNAVAILABLE",
+  "rawPayloadHash": "75507d79368dfb91172c8436c37934ccfe91f45dce5f02b0b16595e740971f4f",
+  "reservationId": 100,
+  "resultMessage": "요청한 날짜와 시간, 인원 수로는 예약이 불가하며 대체 시간을 안내받지 못했다.",
+  "retryable": false,
+  "sidecarCallId": "dry-run-sidecar-100"
+}

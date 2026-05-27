@@ -390,6 +390,8 @@ public class ListRecommendationRepositoryImpl implements ListRecommendationRepos
             return zdt.toLocalDateTime();
         } else if (value instanceof OffsetDateTime odt) {
             return odt.toLocalDateTime();
+        } else if (value instanceof Timestamp timestamp) {
+            return timestamp.toLocalDateTime();
         } else {
             throw new IllegalArgumentException("지원하지 않는 시간 타입입니다: " + value.getClass());
         }

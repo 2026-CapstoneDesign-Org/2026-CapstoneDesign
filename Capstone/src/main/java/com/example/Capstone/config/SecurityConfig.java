@@ -31,6 +31,7 @@ public class SecurityConfig {
         http.authorizeHttpRequests(auth -> auth
             .requestMatchers(
                 "/",
+                "/ws/**", 
                 "/login/**",
                 "/oauth2/**",
                 "/login/oauth2/**",
@@ -38,6 +39,8 @@ public class SecurityConfig {
                 "/test/**",
                 "/upload/**",
                 "/auth/refresh",
+                "/webhooks/reservations/call-providers/**",
+                "/internal/reservations/provider-events/clawops-agent",
                 "/v3/api-docs/**",
                 "/swagger-ui/**",
                 "/swagger-ui.html"

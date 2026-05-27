@@ -26,6 +26,7 @@ class FollowServiceTest {
     @Mock UserFollowRepository userFollowRepository;
     @Mock UserRepository userRepository;
     @Mock ReliabilityScoreService reliabilityScoreService;
+    @Mock NotificationService notificationService;
 
     @InjectMocks FollowService followService;
 

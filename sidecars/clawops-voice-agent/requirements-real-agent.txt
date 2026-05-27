@@ -1,0 +1,5 @@
+# Optional dependencies for a later approved real-agent phase.
+# Do not install for dry-run-only tests.
+clawops[agent,openai]
+# OpenAI 2.x declares this for its realtime extra; keep it explicit and minimal.
+websockets>=13,<16

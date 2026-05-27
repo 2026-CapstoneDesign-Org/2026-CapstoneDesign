@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "reservation-result.schema.json",
+  "title": "Reservation Voice Agent Result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "resultStatus",
+    "summary",
+    "confirmedDateTime",
+    "partySize",
+    "reservationNameProvided",
+    "phoneNumberProvided",
+    "restaurantRequestedNameOrPhone",
+    "alternativeTimeSuggested",
+    "alternativeDateTime",
+    "failureReason",
+    "transcriptSummary"
+  ],
+  "properties": {
+    "resultStatus": {
+      "type": "string",
+      "enum": [
+        "CONFIRMED",
+        "UNAVAILABLE",
+        "NEEDS_CONFIRMATION",
+        "FAILED"
+      ]
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1000
+    },
+    "confirmedDateTime": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Confirmed reservation date-time only when the requested slot was clearly confirmed."
+    },
+    "partySize": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 1,
+      "maximum": 20
+    },
+    "reservationNameProvided": {
+      "type": "boolean",
+      "description": "Whether the AI provided the system-supplied reservation name during the call."
+    },
+    "phoneNumberProvided": {
+      "type": "boolean",
+      "description": "Whether the AI provided the system-supplied contact number during the call."
+    },
+    "restaurantRequestedNameOrPhone": {
+      "type": "boolean",
+      "description": "Whether the restaurant requested the reservation name or contact number."
+    },
+    "alternativeTimeSuggested": {
+      "type": "boolean"
+    },
+    "alternativeDateTime": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Restaurant-suggested alternative date-time. Presence implies NEEDS_CONFIRMATION."
+    },
+    "failureReason": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 500
+    },
+    "transcriptSummary": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 2000,
+      "description": "AI-generated call summary candidate, not a recording transcript."
+    }
+  }
+}

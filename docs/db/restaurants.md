@@ -90,6 +90,15 @@ seed import 시 메뉴는 식당 단위 delete 후 replace 방식으로 다시 �
 
 `restaurant_tags.restaurant_id + tag_id` 조합은 unique다. 추천/검색에서 태그는 보조 정보로 사용하고, 현재 랭킹 점수의 직접 입력으로는 쓰지 않는다.
 
+## seed import와의 관계
+
+- seed import는 식당, 메뉴, 태그, 식당-태그 데이터를 적재한다.
+- 식당 카테고리는 별도 카테고리 파일이 아니라 식당 preview row의 `category_name`으로 적재한다.
+- 기본 경로는 `import-data/restaurants-seed-preview.json`이다.
+- 로컬 import 데이터의 `phone_number`는 Mock 기반 AI 전화 예약 테스트를 위해 allowlist 테스트 번호로 통일할 수 있다.
+- 메뉴와 식당-태그는 식당별 delete 후 replace 방식으로 다시 적재한다.
+- 운영 규칙은 `docs/logic/seed-import.md`에서 다룬다.
+
 ## 외부 fallback 등록
 
 `POST /lists/{id}/restaurants/external-fallback`은 내부 DB에 없는 PC Map 후보를 사용자가 리스트에 추가할 때 `Restaurant` row를 생성한다.
@@ -110,3 +119,18 @@ seed import 시 메뉴는 식당 단위 delete 후 replace 방식으로 다시 �
 - `primary_category_name`: 네이버 공식 Local Search API 또는 seed category 기반 상위 카테고리다.
 - `business_hours_raw`: 영업시간 표시와 현재 영업 상태 계산 입력이다.
 - `conveniences`: `parkingAvailable` 파생 입력이다.
+
+표시 요약은 저장 컬럼으로 두지 않고, API 응답 변환 또는 클라이언트 렌더링에서 처리한다.
+
+## 추가 확인 필요
+
+- 메뉴 / 태그를 일반 API 응답으로 노출할지
+- 카테고리 alias 정규화를 둘지
+- 식당 식별자 강화가 필요한지
+- 외부 fallback으로 생성된 식당을 seed preview 또는 관리자 정제 흐름으로 편입할지
+- 실제 운영 전화번호 품질, 정규화, 검수 정책을 어떻게 둘지
+
+## 후속 수정 후보
+
+- 추천 입력에 메뉴 / 태그 활용 검토
+- 카테고리 정규화 정책 별도 문서화

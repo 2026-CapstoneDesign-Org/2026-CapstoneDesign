@@ -75,3 +75,71 @@ parking-lot:
     enabled: false
   seoul-citydata:
     enabled: false
+
+reservation:
+  provider:
+    mode: mock
+    runtime: direct-rest
+    calling-enabled: false
+    real-call-enabled: false
+    call-allowlist-enabled: true
+    require-allowlist-for-external-call: true
+    prod-external-call-blocked: true
+    external-call-allowed-profiles:
+      - dev
+    call-allowed-numbers:
+      - "01000000000"
+    webhook-base-url: http://localhost
+    webhook-max-clock-skew-seconds: 300
+    webhook-raw-payload-store-enabled: false
+    transcript-store-enabled: false
+    recording-store-enabled: false
+    mock-result-api-enabled: true
+  scheduler:
+    enabled: false
+  webhook:
+    mock:
+      enabled: true
+      signature-secret: test-mock-reservation-webhook-secret
+      allowed-clock-skew-seconds: 300
+
+openai:
+  api-key:
+  project-id:
+  webhook-secret:
+  realtime:
+    model:
+    voice:
+    instructions-version: reservation-mvp-v1
+    session-timeout-seconds: 600
+    ws-url:
+    sip-endpoint:
+
+twilio:
+  account-sid:
+  auth-token:
+  from-number:
+  status-callback-url:
+  voice-webhook-url:
+  media-stream-url:
+  webhook-signature-enabled: true
+  dialing-country-allowlist: []
+
+clawops:
+  api-key:
+  account-id:
+  base-url: https://api.claw-ops.com
+  from-number:
+  status-callback-url:
+  webhook-signing-key:
+  webhook-signature-header: X-Signature
+  call-timeout-seconds: 30
+  recording-enabled: false
+  transcript-enabled: false
+  summary-enabled: false
+  agent-runtime-mode: noop
+  sidecar-base-url:
+  sidecar-internal-signing-key:
+  sidecar-connect-timeout-seconds: 3
+  sidecar-read-timeout-seconds: 10
+  sidecar-readiness-required: false

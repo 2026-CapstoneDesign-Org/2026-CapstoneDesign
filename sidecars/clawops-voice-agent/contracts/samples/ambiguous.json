@@ -1,0 +1,13 @@
+{
+  "resultStatus": "NEEDS_CONFIRMATION",
+  "summary": "식당 응답이 모호해 예약 확정으로 처리하기 어렵다.",
+  "confirmedDateTime": null,
+  "partySize": 4,
+  "reservationNameProvided": false,
+  "phoneNumberProvided": false,
+  "restaurantRequestedNameOrPhone": false,
+  "alternativeTimeSuggested": false,
+  "alternativeDateTime": null,
+  "failureReason": null,
+  "transcriptSummary": "식당 응답에 확정 여부가 분명히 포함되지 않았다. 요청 조건이 받아들여졌는지 판단하기 어려워 사용자 또는 운영자 확인이 필요하다."
+}

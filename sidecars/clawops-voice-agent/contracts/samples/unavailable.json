@@ -1,0 +1,13 @@
+{
+  "resultStatus": "UNAVAILABLE",
+  "summary": "요청한 날짜와 시간, 인원 수로는 예약이 불가하며 대체 시간을 안내받지 못했다.",
+  "confirmedDateTime": null,
+  "partySize": 4,
+  "reservationNameProvided": false,
+  "phoneNumberProvided": false,
+  "restaurantRequestedNameOrPhone": false,
+  "alternativeTimeSuggested": false,
+  "alternativeDateTime": null,
+  "failureReason": null,
+  "transcriptSummary": "AI 예약 도우미임을 밝히고 요청 조건을 전달했다. 식당은 해당 조건 예약이 어렵다고 답했고 가능한 대체 시간도 안내하지 않았다."
+}

@@ -52,11 +52,21 @@
 - 그 결과 `restaurant-tags-seed-preview.json`의 `matched_menu_count`가 함께 보정되었다.
 - seed import 로직 자체의 입력 파일 수는 현재 4개이며, 별도 카테고리 preview 파일은 사용하지 않는다.
 
-## 5. 추가 확인 필요
+## 5. AI 전화 예약 테스트용 전화번호 보정
+2026-05-20 기준 로컬 식당 import preview인 `Capstone/import-data/restaurants-seed-preview.json`의 `phone_number`는 Mock 기반 AI 전화 예약 테스트용 allowlist 번호로 통일해 사용할 수 있다.
+
+현재 기준:
+- 이 값은 Mock 기반 AI 전화 예약 개발 / 테스트 편의를 위한 로컬 import 데이터 보정이다.
+- 운영 코드에는 전화번호를 하드코딩하지 않는다.
+- seed import는 기존처럼 seed row의 `phone_number`를 `Restaurant.phoneNumber`로 적재한다.
+- 실제 식당 전화번호 품질, 정규화, 검수 정책은 아직 별도 후속 과제다.
+
+## 6. 추가 확인 필요
 - import를 API로 노출할지
 - 운영/개발 환경별 seed import 사용 범위를 더 분리할지
 - 외부 fallback으로 생성된 식당을 seed preview 정제 흐름으로 편입할지
+- 실제 운영 전화번호 품질 검수와 정규화 기준을 어떻게 둘지
 
-## 6. 후속 수정 후보
+## 7. 후속 수정 후보
 - seed import 전용 운영 문서 보강
 - import 결과 검증 스크립트 추가

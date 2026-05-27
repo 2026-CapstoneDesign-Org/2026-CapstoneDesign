@@ -5,9 +5,9 @@ services:
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_DB: prod_db
-      POSTGRES_USER:  prod_user
-      POSTGRES_PASSWORD: prod_password
+      POSTGRES_DB: ${POSTGRES_PROD_DB:?Set POSTGRES_PROD_DB in Capstone/.env}
+      POSTGRES_USER: ${POSTGRES_PROD_USER:?Set POSTGRES_PROD_USER in Capstone/.env}
+      POSTGRES_PASSWORD: ${POSTGRES_PROD_PASSWORD:?Set POSTGRES_PROD_PASSWORD in Capstone/.env}
     volumes:
       - ./data/prod:/var/lib/postgresql/data
 
@@ -17,8 +17,8 @@ services:
     ports:
       - "5433:5432"
     environment:
-      POSTGRES_DB: dev_db
-      POSTGRES_USER: dev_user
-      POSTGRES_PASSWORD: dev_password
+      POSTGRES_DB: ${POSTGRES_DEV_DB:?Set POSTGRES_DEV_DB in Capstone/.env}
+      POSTGRES_USER: ${POSTGRES_DEV_USER:?Set POSTGRES_DEV_USER in Capstone/.env}
+      POSTGRES_PASSWORD: ${POSTGRES_DEV_PASSWORD:?Set POSTGRES_DEV_PASSWORD in Capstone/.env}
     volumes:
       - ./data/dev:/var/lib/postgresql/data

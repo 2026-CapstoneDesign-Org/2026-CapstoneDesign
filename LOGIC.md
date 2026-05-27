@@ -10,6 +10,7 @@
 - [docs/logic/follow-policy.md](docs/logic/follow-policy.md)
 - [docs/logic/review-vote-policy.md](docs/logic/review-vote-policy.md)
 - [docs/logic/search-policy.md](docs/logic/search-policy.md)
+- [docs/logic/reservation-policy.md](docs/logic/reservation-policy.md)
 - [docs/logic/list-policy.md](docs/logic/list-policy.md)
 - [docs/logic/score-policy.md](docs/logic/score-policy.md)
 - [docs/logic/visibility-policy.md](docs/logic/visibility-policy.md)
@@ -29,6 +30,9 @@
 
 ### 통합 검색 / 외부 fallback
 `docs/logic/search-policy.md`
+
+### AI 전화 예약
+`docs/logic/reservation-policy.md`
 
 ### 리스트 생성 / 수정 / 점수 / 대표 / 공개 정책
 `docs/logic/list-policy.md`
