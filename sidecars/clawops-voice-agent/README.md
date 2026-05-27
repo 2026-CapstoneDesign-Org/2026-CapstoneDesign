@@ -125,10 +125,11 @@ Checked surface, without SDK client creation or network calls:
 - Lazy import `ClawOpsAgent`, `OpenAIRealtime`, and `BuiltinTool` inside the SDK runner function, not at module import time.
 - Build the flow as prompt load, OpenAI Realtime session config, ClawOpsAgent config, result tool registration, outbound call candidate, result wait, and disconnect-finally.
 - Build the system prompt from `prompts/reservation_agent_prompt.md` and inject reservation request values without mutating date, time, party size, name, or contact assumptions.
-- Prefer ClawOps Agent SDK mode: create an `OpenAIRealtime` session, create a `ClawOpsAgent`, register a `report_reservation_result` tool, call the allowlisted target, wait for call end, disconnect, and then map the captured result through `reservation_result_mapper.py`.
+- Prefer ClawOps Agent SDK mode: create an `OpenAIRealtime` session, create a `ClawOpsAgent`, register `submit_reservation_call_result`, call the allowlisted target, race result-tool submission against call end, disconnect, and then map the captured result through `reservation_result_mapper.py`.
+- The real-agent path disables ClawOps builtin tools for now. The AI must submit `submit_reservation_call_result` before ending the conversation; once the result tool is received, the sidecar hangs up the call.
 - Do not use AI Completion mode unless explicitly re-approved, because it would pass OpenAI config through `calls.create(ai=...)` and would bypass the existing sidecar result tool boundary.
 - If the AI does not call the result tool, or the result conflicts with the original reservation request, map to `NEEDS_CONFIRMATION` or `AI_PARSE_FAILED`, never directly to confirmed.
-- Current local tests cover mocked SDK runner outcomes for confirmed, unavailable, needs-confirmation, failed, missing result tool output, and confirmed-result conflicts. The mocked tests stop at Spring dispatch candidate generation and do not send HTTP.
+- Current local tests cover mocked SDK runner outcomes for confirmed, unavailable, needs-confirmation, failed, missing result tool output, confirmed-result conflicts, result-tool-vs-call-end wait behavior, and the actual SDK runner boundary with fake ClawOps/OpenAI classes. These tests do not create real SDK clients, call external APIs, or send HTTP.
 
 ## Contract Drift Guard
 Run the local guard before changing prompt/schema/mapper/Spring event fixtures:
