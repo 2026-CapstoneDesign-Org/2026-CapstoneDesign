@@ -23,6 +23,8 @@ from real_agent_interface import RealAgentCallRequest, RealAgentCallResult
 SDK_MODULE_NAMES = ("clawops", "openai")
 SDK_NOT_READY = "SDK_NOT_READY"
 DEFAULT_PROMPT_PATH = pathlib.Path(__file__).resolve().parent / "prompts" / "reservation_agent_prompt.md"
+WAIT_RESULT_TOOL_SUBMITTED = "RESULT_TOOL_SUBMITTED"
+WAIT_CALL_ENDED = "CALL_ENDED"
 
 
 @dataclass(frozen=True)
@@ -131,6 +133,7 @@ def build_prompt_for_request(base_prompt: str, request: RealAgentCallRequest) ->
         f"- Reservation name: {request.reservation_name or '테스트 예약자'}",
         f"- Reservation contact: {request.reservation_contact_number or '테스트 연락처'}",
         "- Do not change the requested date-time or party size.",
+        "- Before ending the call, call `submit_reservation_call_result` exactly once.",
     ])
 
 
@@ -152,13 +155,17 @@ def build_agent_config() -> dict[str, Any]:
         "accountIdEnvName": "CLAWOPS_ACCOUNT_ID",
         "fromNumberEnvName": "CLAWOPS_FROM_NUMBER",
         "recording": False,
+        "builtinTools": "NONE",
     }
 
 
 def build_result_tool_spec() -> dict[str, Any]:
     return {
         "name": "submit_reservation_call_result",
-        "purpose": "Capture the final reservation_result_schema payload for Spring event mapping.",
+        "purpose": (
+            "Mandatory final result tool. The AI must call it exactly once before "
+            "the call ends so Spring can map the result to a reservation event."
+        ),
     }
 
 
@@ -174,9 +181,10 @@ def build_call_config(request: RealAgentCallRequest) -> dict[str, Any]:
 
 def build_result_wait_config() -> dict[str, Any]:
     return {
-        "source": "report_reservation_result_tool",
+        "source": "submit_reservation_call_result_tool",
         "missingResultPolicy": "AI_PARSE_FAILED",
         "conflictPolicy": "NEEDS_CONFIRMATION",
+        "strategy": "race_result_tool_against_call_end",
     }
 
 
@@ -240,7 +248,7 @@ class MockedRealAgentSdkRunner:
 
 
 class RealAgentSdkRunner:
-    """Future SDK runner boundary. It is deliberately non-executable."""
+    """SDK runner boundary guarded by real-agent approval and safety gates."""
 
     def __init__(
         self,
@@ -299,6 +307,7 @@ async def run_real_agent_sdk_call(
 
     result_box: dict[str, Any] = {}
     failure_box: dict[str, str] = {}
+    result_event = asyncio.Event()
 
     session = OpenAIRealtime(
         api_key=os.environ.get("OPENAI_API_KEY"),
@@ -315,7 +324,7 @@ async def run_real_agent_sdk_call(
         from_=os.environ.get("CLAWOPS_FROM_NUMBER", ""),
         session=session,
         recording=False,
-        builtin_tools=BuiltinTool.ALL,
+        builtin_tools=BuiltinTool.NONE,
     )
 
     @agent.tool
@@ -332,7 +341,16 @@ async def run_real_agent_sdk_call(
         failureReason: str = "",
         transcriptSummary: str = "",
     ) -> str:
-        """Submit the final reservation result to Spring."""
+        """Mandatory final reservation result.
+
+        Call this exactly once before saying goodbye or ending the call. Use
+        CONFIRMED only when the restaurant clearly accepted the original
+        requested date-time and party size. Use NEEDS_CONFIRMATION for
+        alternative times, deposits, extra information, special conditions, or
+        ambiguous outcomes. Use UNAVAILABLE only when the restaurant clearly
+        cannot accept the requested reservation and gives no usable alternative.
+        Use FAILED for connection or technical failure.
+        """
         result_box.clear()
         result_box.update({
             "resultStatus": resultStatus,
@@ -347,6 +365,7 @@ async def run_real_agent_sdk_call(
             "failureReason": none_if_blank(failureReason),
             "transcriptSummary": none_if_blank(transcriptSummary),
         })
+        result_event.set()
         return json.dumps({"accepted": True}, separators=(",", ":"))
 
     async def on_failed(call_session: Any, reason: str) -> None:
@@ -359,8 +378,13 @@ async def run_real_agent_sdk_call(
             timeout=skeleton.call_config["timeoutSeconds"],
         )
         call_session.on("call_failed", on_failed)
-        await asyncio.wait_for(call_session.wait(), timeout=180)
+        wait_outcome = await wait_for_result_tool_or_call_end(call_session, result_event, timeout_seconds=180)
         ai_result = coerce_tool_result_payload(result_box)
+        if wait_outcome == WAIT_RESULT_TOOL_SUBMITTED:
+            try:
+                await call_session.hangup()
+            except Exception:
+                pass
         if not ai_result:
             ai_result = failed_result(
                 "AI_RESULT_TOOL_MISSING",
@@ -389,6 +413,31 @@ async def run_real_agent_sdk_call(
             await agent.disconnect()
         except Exception:
             pass
+
+
+async def wait_for_result_tool_or_call_end(
+    call_session: Any,
+    result_event: asyncio.Event,
+    timeout_seconds: float,
+) -> str:
+    call_end_task = asyncio.create_task(call_session.wait())
+    result_task = asyncio.create_task(result_event.wait())
+    tasks = {call_end_task, result_task}
+    try:
+        done, pending = await asyncio.wait(
+            tasks,
+            timeout=timeout_seconds,
+            return_when=asyncio.FIRST_COMPLETED,
+        )
+        if not done:
+            raise asyncio.TimeoutError
+        if result_event.is_set():
+            return WAIT_RESULT_TOOL_SUBMITTED
+        return WAIT_CALL_ENDED
+    finally:
+        for task in tasks:
+            if not task.done():
+                task.cancel()
 
 
 def failed_result(reason: str, summary: str) -> dict[str, Any]:

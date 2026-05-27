@@ -574,6 +574,7 @@ Phase 7 이후 실제 Voice Agent 단계 전까지 사용하지 않는다:
 - [x] 실제 allowlist 1회 PoC 수동 승인 후 실행 후보 시도
 - [x] ClawOps allowlist 1회 발신 / 통화 완료 확인
 - [x] ClawOps 번호 인바운드 fallback webhook endpoint
+- [x] 결과 tool 제출 누락 방지 prompt / runner 보강
 - [ ] AI 결과 tool 제출 성공 / 예약 상태 전이 확인
 - [x] 문서 반영 완료
 
@@ -607,6 +608,7 @@ Phase 7 이후 실제 Voice Agent 단계 전까지 사용하지 않는다:
 - 2026-05-27: local dev 승인 조건에서 Spring `dev,db,key`, `ddl-auto=validate`, Python 3.12 sidecar real-agent 경로로 1회 연결 후보를 시도했다. Spring preflight와 sidecar readiness는 통과했고 Spring은 sidecar real-agent call 후보를 수락했다. 초기에는 ClawOps control websocket HTTP 403으로 실패했지만, 이후 번호 온보딩 / 인바운드 fallback 설정 후 승인된 재시도에서 ClawOps 통화 기록상 발신 완료까지 확인했다. AI 결과 tool 제출은 아직 실패 후보로 남아 있다.
 - 2026-05-27: ClawOps 전화번호 온보딩 / 인바운드 fallback 확인을 위해 임시 tunnel Voice XML webhook을 설정했고, 이후 승인된 local dev 재시도에서 ClawOps 통화 기록상 발신 완료까지 확인했다. 다만 AI가 결과 tool을 제출하지 않아 Spring에는 `AI_FAILED` 후보 이벤트가 기록되었고, 예약 확정 상태 전이는 아직 확인되지 않았다.
 - 2026-05-27: 임시 tunnel URL을 장기 설정으로 남기지 않기 위해 Spring에 `GET|POST /webhooks/reservations/call-providers/clawops/inbound` endpoint를 추가했다. 이 endpoint는 정적 Voice XML만 반환하며 예약 DB, event ledger, call attempt를 수정하지 않는다. 배포 후 ClawOps 전화번호 Webhook URL에는 Swagger UI 주소가 아니라 `https://wagu.uk/webhooks/reservations/call-providers/clawops/inbound`를 등록한다.
+- 2026-05-27: 발신 완료 후 AI가 결과 tool을 제출하지 않는 문제를 줄이기 위해 prompt에 `submit_reservation_call_result` 필수 제출 규칙과 필드 정의를 명시하고, `RealAgentSdkRunner`는 ClawOps builtin tool을 비활성화한 뒤 결과 tool 제출과 call end를 race로 기다리도록 보강했다. 결과 tool이 먼저 제출되면 sidecar가 hangup을 수행한다. fake ClawOps/OpenAI class로 실제 SDK runner boundary의 tool 제출 / hangup / missing tool 결과를 검증했다. 실제 통화 재검증은 아직 남아 있다.
 
 ## 완료 조건
 - sidecar 채택 여부가 문서화되어 있다.

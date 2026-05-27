@@ -510,7 +510,8 @@ real-agent 전용 가상환경에서 `requirements-real-agent.txt` 설치와 imp
 - lazy import 위치는 `real_agent_sdk_runner.py` 내부 실행 함수로 제한한다.
 - 실행 경계는 prompt load, OpenAI Realtime session config, ClawOpsAgent config, result tool, call config, result wait, disconnect-finally로 나눈다.
 - 입력은 기존 `RealAgentCallRequest`의 reservation id, sidecar call id, allowlist 통과 target, restaurant name, reservation datetime, party size, request note만 사용한다.
-- ClawOps Agent SDK mode 후보는 `OpenAIRealtime` session, `ClawOpsAgent`, `@agent.tool` result reporter, `agent.call(...)`, `session.wait()`, `agent.disconnect()` 순서다.
+- ClawOps Agent SDK mode 후보는 `OpenAIRealtime` session, `ClawOpsAgent`, `@agent.tool` result reporter, `agent.call(...)`, result tool 제출 / call end race, `agent.disconnect()` 순서다.
+- 현재 `RealAgentSdkRunner`는 ClawOps builtin tool을 비활성화하고 `submit_reservation_call_result` custom tool을 필수 결과 제출 경로로 둔다. AI가 결과 tool을 제출하면 sidecar가 call hangup을 수행한다.
 - AI 결과는 tool handler가 받은 JSON 문자열을 `reservation_result_schema.json`으로 검증한 뒤 `reservation_result_mapper.py`로 넘긴다.
 - tool 미호출, schema 오류, 원 예약 조건 충돌, 대체 시간 / 예약금 / 추가 개인정보 요청은 확정이 아니라 `NEEDS_CONFIRMATION` 또는 `AI_PARSE_FAILED`로 보낸다.
 
