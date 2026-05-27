@@ -1,0 +1,13 @@
+{
+  "resultStatus": "FAILED",
+  "summary": "전화 연결이 완료되지 않아 예약 가능 여부를 확인하지 못했다.",
+  "confirmedDateTime": null,
+  "partySize": null,
+  "reservationNameProvided": false,
+  "phoneNumberProvided": false,
+  "restaurantRequestedNameOrPhone": false,
+  "alternativeTimeSuggested": false,
+  "alternativeDateTime": null,
+  "failureReason": "CALL_CONNECTION_FAILED",
+  "transcriptSummary": null
+}

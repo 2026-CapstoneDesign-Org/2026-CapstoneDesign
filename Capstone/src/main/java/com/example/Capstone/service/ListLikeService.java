@@ -1,5 +1,7 @@
 package com.example.Capstone.service;
 
+import java.util.Objects;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,7 +44,7 @@ public class ListLikeService {
         UserList userList = userListRepository.findByIdAndIsDeletedFalse(listId)
                 .orElseThrow(() -> new EntityNotFoundException("리스트를 찾을 수 없습니다."));
 
-        if (user.getId() == userList.getUser().getId()) {
+        if (Objects.equals(user.getId(), userList.getUser().getId())) {
             throw new BusinessException("자신의 리스트에는 좋아요 할 수 없습니다.", HttpStatus.BAD_REQUEST);
         }
 

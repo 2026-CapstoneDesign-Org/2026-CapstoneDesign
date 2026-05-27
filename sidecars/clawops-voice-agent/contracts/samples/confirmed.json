@@ -1,0 +1,13 @@
+{
+  "resultStatus": "CONFIRMED",
+  "summary": "요청한 날짜와 시간, 인원 수로 예약 가능하다고 확인했다.",
+  "confirmedDateTime": "2026-06-01T19:00:00",
+  "partySize": 4,
+  "reservationNameProvided": true,
+  "phoneNumberProvided": true,
+  "restaurantRequestedNameOrPhone": true,
+  "alternativeTimeSuggested": false,
+  "alternativeDateTime": null,
+  "failureReason": null,
+  "transcriptSummary": "AI 예약 도우미임을 밝히고 요청 조건을 전달했다. 식당은 해당 조건으로 예약 가능하다고 답했고 예약자명과 연락처를 받아 예약을 확정했다."
+}

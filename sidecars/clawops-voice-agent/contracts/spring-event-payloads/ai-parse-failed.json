@@ -1,0 +1,15 @@
+{
+  "aiSummary": null,
+  "eventType": "AI_PARSE_FAILED",
+  "failureReason": "AI_RESULT_SCHEMA_FIELDS_INVALID",
+  "idempotencyKey": "dry-run-sidecar-100:AI_PARSE_FAILED:e25420c7a4a58f2d",
+  "occurredAt": "2026-06-01T10:00:00",
+  "provider": "CLAWOPS_SIDECAR",
+  "providerCallId": null,
+  "providerStatus": "AI_PARSE_FAILED",
+  "rawPayloadHash": "e25420c7a4a58f2d35dba27f62c7bd0434f948c062d284370ff4ba8c70b10db1",
+  "reservationId": 100,
+  "resultMessage": "AI result schema validation failed.",
+  "retryable": false,
+  "sidecarCallId": "dry-run-sidecar-100"
+}

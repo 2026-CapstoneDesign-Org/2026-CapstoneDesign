@@ -12,6 +12,7 @@
 - [docs/db/lists.md](docs/db/lists.md)
 - [docs/db/restaurants.md](docs/db/restaurants.md)
 - [docs/db/reviews.md](docs/db/reviews.md)
+- [docs/db/reservations.md](docs/db/reservations.md)
 - [docs/db/auth.md](docs/db/auth.md)
 - [docs/current-gaps.md](docs/current-gaps.md)
 
@@ -29,6 +30,9 @@
 - `Review`
 - `ReviewImage`
 - `ReviewVote`
+- `RestaurantReservation`
+- `ReservationProviderEvent`
+- `ReservationCallAttempt`
 - `RefreshToken`
 
 ## 4. 핵심 관계
@@ -43,6 +47,8 @@
 - `Restaurant` 1:N `Review`
 - `Review` 1:N `ReviewImage`
 - `User` N:M `Review` via `ReviewVote`
+- `User` 1:N `RestaurantReservation`
+- `Restaurant` 1:N `RestaurantReservation`
 
 현재 코드 기준 식당 카테고리는 별도 `RestaurantCategory` 엔티티가 아니라 `Restaurant.categoryName` 단일 필드로 저장한다.
 
@@ -61,6 +67,9 @@
 
 ### refresh token 저장 구조
 `docs/db/auth.md`
+
+### AI 전화 예약 저장 구조
+`docs/db/reservations.md`
 
 ## 6. 읽을 때 주의할 점
 - 엔티티 필드 초기값은 서비스 / 생성자 기본값일 수 있으며, DB default 제약과는 다를 수 있다.

@@ -1,0 +1,13 @@
+{
+  "resultStatus": "NEEDS_CONFIRMATION",
+  "summary": "요청한 시간은 어렵고 식당이 대체 시간을 제안했다. 사용자 확인이 필요하다.",
+  "confirmedDateTime": null,
+  "partySize": 4,
+  "reservationNameProvided": false,
+  "phoneNumberProvided": false,
+  "restaurantRequestedNameOrPhone": false,
+  "alternativeTimeSuggested": true,
+  "alternativeDateTime": "2026-06-01T20:00:00",
+  "failureReason": null,
+  "transcriptSummary": "AI 예약 도우미임을 밝히고 요청 조건을 전달했다. 식당은 요청 시간은 어렵지만 같은 날 다른 시간을 제안했다."
+}

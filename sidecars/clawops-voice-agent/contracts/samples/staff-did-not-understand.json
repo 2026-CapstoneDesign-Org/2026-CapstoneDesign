@@ -1,0 +1,13 @@
+{
+  "resultStatus": "NEEDS_CONFIRMATION",
+  "summary": "직원이 AI 예약 문의 내용을 명확히 이해하지 못해 예약 결과를 확정할 수 없다.",
+  "confirmedDateTime": null,
+  "partySize": 4,
+  "reservationNameProvided": false,
+  "phoneNumberProvided": false,
+  "restaurantRequestedNameOrPhone": false,
+  "alternativeTimeSuggested": false,
+  "alternativeDateTime": null,
+  "failureReason": null,
+  "transcriptSummary": "AI 예약 도우미임을 밝히고 예약 가능 여부를 문의했지만, 직원이 문의 의도를 이해하지 못했고 확정 또는 불가 답변을 받지 못했다."
+}

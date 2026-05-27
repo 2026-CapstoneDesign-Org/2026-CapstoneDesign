@@ -39,6 +39,8 @@ public class SecurityConfig {
                 "/test/**",
                 "/upload/**",
                 "/auth/refresh",
+                "/webhooks/reservations/call-providers/**",
+                "/internal/reservations/provider-events/clawops-agent",
                 "/v3/api-docs/**",
                 "/swagger-ui/**",
                 "/swagger-ui.html"

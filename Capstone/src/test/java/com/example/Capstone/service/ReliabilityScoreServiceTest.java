@@ -103,22 +103,19 @@ class ReliabilityScoreServiceTest {
         reliabilityScore.updateScore(38.0);
         assertThat(reliabilityScore.getGrade()).isEqualTo("bronze");
 
+        reliabilityScore.updateScore(40.0);
+        assertThat(reliabilityScore.getGrade()).isEqualTo("silver");
+
         reliabilityScore.updateScore(55.0);
         assertThat(reliabilityScore.getGrade()).isEqualTo("gold");
 
-        reliabilityScore.updateScore(65.0);
-        assertThat(reliabilityScore.getGrade()).isEqualTo("gold");
-
-        reliabilityScore.updateScore(75.0);
+        reliabilityScore.updateScore(70.0);
         assertThat(reliabilityScore.getGrade()).isEqualTo("platinum");
 
-        reliabilityScore.updateScore(85.0);
+        reliabilityScore.updateScore(83.0);
         assertThat(reliabilityScore.getGrade()).isEqualTo("diamond");
 
         reliabilityScore.updateScore(93.0);
-        assertThat(reliabilityScore.getGrade()).isEqualTo("ruby");
-
-        reliabilityScore.updateScore(97.0);
         assertThat(reliabilityScore.getGrade()).isEqualTo("ruby");
     }
 

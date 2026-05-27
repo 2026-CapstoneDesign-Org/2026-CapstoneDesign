@@ -11,11 +11,17 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.Capstone.config.SwaggerConfig;
+import com.example.Capstone.dto.request.ApplyReservationMockResultRequest;
+import com.example.Capstone.dto.request.ClawOpsRealCallPreflightRequest;
 import com.example.Capstone.dto.request.CreateRestaurantRequest;
 import com.example.Capstone.dto.request.UpdateCategoryRequest;
 import com.example.Capstone.dto.request.UpdateRestaurantRequest;
+import com.example.Capstone.dto.response.ClawOpsRealCallPreflightResponse;
+import com.example.Capstone.dto.response.ReservationResponse;
 import com.example.Capstone.dto.response.RestaurantResponse;
 import com.example.Capstone.service.AdminService;
+import com.example.Capstone.service.ClawOpsRealCallPreflightService;
+import com.example.Capstone.service.ReservationService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -30,12 +36,14 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/admin")
 @RequiredArgsConstructor
-@Tag(name = "Admin", description = "Administrative APIs for restaurant and visibility management.")
+@Tag(name = "Admin", description = "Administrative APIs for restaurant, reservation, and visibility management.")
 @SecurityRequirement(name = SwaggerConfig.BEARER_SCHEME)
 @PreAuthorize("hasRole('ADMIN')")
 public class AdminController {
 
     private final AdminService adminService;
+    private final ReservationService reservationService;
+    private final ClawOpsRealCallPreflightService clawOpsRealCallPreflightService;
 
     @Operation(
             summary = "Create restaurant",
@@ -154,5 +162,55 @@ public class AdminController {
     public ResponseEntity<Void> hideList(@PathVariable Long id) {
         adminService.hideList(id);
         return ResponseEntity.ok().build();
+    }
+
+    @Operation(
+            summary = "Apply mock reservation result",
+            description = "Applies a mock AI call result to a reservation. This endpoint is for admin/test operation only."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Mock reservation result applied.",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ReservationResponse.class)
+                    )
+            ),
+            @ApiResponse(responseCode = "400", description = "Invalid mock result or state transition."),
+            @ApiResponse(responseCode = "401", description = "Authentication required."),
+            @ApiResponse(responseCode = "403", description = "Admin role required."),
+            @ApiResponse(responseCode = "404", description = "Reservation not found.")
+    })
+    @PostMapping("/reservations/{reservationId}/mock-result")
+    public ResponseEntity<ReservationResponse> applyReservationMockResult(
+            @PathVariable Long reservationId,
+            @RequestBody @Valid ApplyReservationMockResultRequest request
+    ) {
+        return ResponseEntity.ok(reservationService.applyMockResultByAdmin(reservationId, request));
+    }
+
+    @Operation(
+            summary = "Preflight ClawOps real-call candidate",
+            description = "Checks whether a reservation or test phone number satisfies the dev-only ClawOps real-call gate. "
+                    + "This endpoint never calls ClawOps and never starts a phone call."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Preflight completed without external API calls.",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ClawOpsRealCallPreflightResponse.class)
+                    )
+            ),
+            @ApiResponse(responseCode = "401", description = "Authentication required."),
+            @ApiResponse(responseCode = "403", description = "Admin role required.")
+    })
+    @PostMapping("/reservations/clawops-real-call/preflight")
+    public ResponseEntity<ClawOpsRealCallPreflightResponse> preflightClawOpsRealCall(
+            @RequestBody ClawOpsRealCallPreflightRequest request
+    ) {
+        return ResponseEntity.ok(clawOpsRealCallPreflightService.preflight(request));
     }
 }
