@@ -472,6 +472,8 @@ Phase 19~20 기준 sidecar -> Spring event delivery와 retry / ack는 운영 구
 
 현재 `real_agent_sdk_runner.py`는 승인된 local real-agent 실행 경로에서 prompt load, OpenAI Realtime session config, ClawOpsAgent config, result tool 등록, outbound call 후보, result wait, disconnect-finally를 수행한다. SDK import와 object 생성은 실행 함수 내부 lazy boundary 뒤에 있다. `MockedRealAgentSdkRunner`는 SDK object 없이 sample 결과를 같은 mapper / dispatch candidate 경로에 태우는 테스트 double이며, confirmed / unavailable / needs-confirmation / failed / tool result missing / 예약 조건 충돌 케이스를 모두 실제 HTTP 전송 없이 검증한다.
 
+real-agent worker에서 runner 예외가 발생하면 thread를 조용히 종료하지 않고 `PROVIDER_FATAL_ERROR` 실패 이벤트 후보를 Spring internal event endpoint로 전달한다. 이 실패 이벤트는 예외 메시지 원문을 포함하지 않으며, 예약이 `CALLING`에 방치되는 위험을 줄이기 위한 안전장치다.
+
 ### 3-12. 실제 SDK / secret / 발신 전 최종 readiness 기준
 현재 dry-run / fake 완료 범위:
 - Spring sidecar client는 local dry-run 요청과 unknown diagnostic field ignore를 검증했다.
@@ -511,11 +513,12 @@ real-agent 전용 가상환경에서 `requirements-real-agent.txt` 설치와 imp
 - 실행 경계는 prompt load, OpenAI Realtime session config, ClawOpsAgent config, result tool, call config, result wait, disconnect-finally로 나눈다.
 - 입력은 기존 `RealAgentCallRequest`의 reservation id, sidecar call id, allowlist 통과 target, restaurant name, reservation datetime, party size, request note만 사용한다.
 - ClawOps Agent SDK mode 후보는 `OpenAIRealtime` session, `ClawOpsAgent`, `@agent.tool` result reporter, `agent.call(...)`, result tool 제출 / call end race, `agent.disconnect()` 순서다.
-- 현재 `RealAgentSdkRunner`는 ClawOps builtin tool을 비활성화하고 `submit_reservation_call_result` custom tool을 필수 결과 제출 경로로 둔다. AI가 결과 tool을 제출하면 sidecar가 call hangup을 수행한다.
+- 현재 `RealAgentSdkRunner`는 ClawOps builtin tool 중 `send_dtmf`만 허용하고, `submit_reservation_call_result` custom tool을 필수 결과 제출 경로로 둔다. `send_dtmf`는 ARS / 자동 안내가 예약 또는 직원 연결용 숫자를 명확히 요구할 때만 1회성 메뉴 탐색에 사용한다. AI가 결과 tool을 제출하면 sidecar가 call hangup을 수행한다.
+- 단, 초반 연결 확인만 듣고 너무 빨리 확정 / 실패 result를 제출해 통화가 끊기는 문제를 막기 위해 local real-agent runner는 초반 불명확 응답에 대한 `FAILED` result를 수락하지 않는다. 명확한 `CONFIRMED`는 45초까지 억지로 재확인하지 않고, 연결 확인성 요약만 있거나 결과 요약에 원 예약 날짜 / 시간 / 인원 수가 드러나지 않거나 `CONFIRMED`의 `confirmedDateTime` / `partySize`가 원 요청과 일치하지 않으면 tool 제출을 거절한다. 식당이 “가능합니다”라고 답한 뒤에는 같은 가능 여부 질문을 반복하지 않고, accepted tool 응답 후 짧은 closing grace 동안 “확인 감사합니다. 그 시간에 방문하겠습니다.” 수준의 마무리 멘트를 한 뒤 통화를 종료한다.
 - AI 결과는 tool handler가 받은 JSON 문자열을 `reservation_result_schema.json`으로 검증한 뒤 `reservation_result_mapper.py`로 넘긴다.
 - tool 미호출, schema 오류, 원 예약 조건 충돌, 대체 시간 / 예약금 / 추가 개인정보 요청은 확정이 아니라 `NEEDS_CONFIRMATION` 또는 `AI_PARSE_FAILED`로 보낸다.
 
-2026-05-27 local dev PoC에서는 `dev,db,key` profile과 `ddl-auto=validate`로 Spring을 실행하고, Python 3.12 sidecar real-agent 경로를 승인 조건에서 1회 시도했다. Spring preflight와 sidecar readiness는 통과했고, Spring은 sidecar real-agent call 후보를 `CALLING`으로 받았다. ClawOps 통화 기록상 발신 완료는 확인했지만 AI가 결과 tool을 제출하지 않아 Spring에는 `AI_FAILED` 후보 이벤트가 기록되었다. 예약 확정 상태 전이는 아직 확인되지 않았고, scheduler는 비활성 상태였으며 재발신은 수행하지 않았다.
+2026-05-27~28 local dev PoC에서는 `dev,db,key` profile과 `ddl-auto=validate`로 Spring을 실행하고, Python 3.12 sidecar real-agent 경로를 승인 조건에서 시도했다. Spring preflight와 sidecar readiness는 통과했고, Spring은 sidecar real-agent call 후보를 `CALLING`으로 받았다. ClawOps 통화 기록상 allowlist 번호로 outbound 통화 완료와 provider call id 생성은 확인했다. prompt / runner 보강 후에는 AI 결과 tool 호출과 Spring internal event delivery / event ledger / call attempt 기록까지 도달했다. 초반 실패 케이스에서는 테스트 번호 응답이 자동 안내, 무응답, 또는 불명확 응답으로 판단되어 AI가 `FAILED` 결과를 냈고, retryable provider failure로 매핑되어 예약은 `CALLING`, call attempt는 `RETRY_SCHEDULED`에 남았다. 이후 `send_dtmf` 허용, 초반 final result tool 수락 지연, 직원 질문 응답 규칙을 보강한 뒤 allowlist 테스트 번호에서 식당 역할 응답을 통해 ClawOps outbound call completed, `RESERVATION_CONFIRMED` event, 예약 `CONFIRMED`, call attempt `COMPLETED`까지 확인했다. scheduler는 비활성 상태였으므로 자동 재발신은 수행하지 않았다.
 
 실제 발신은 사용자가 아래 문구를 직접 제공한 뒤에만 진행할 수 있다.
 
@@ -681,7 +684,7 @@ real-agent 전용 가상환경에서 `requirements-real-agent.txt` 설치와 imp
 - 실제 OpenAI/Twilio/SIP client 구현은 아직 없다.
 - no-op client는 실제 외부 API 호출을 하지 않는다.
 - ClawOps direct REST adapter는 dev-only gate 통과 후 call create를 1회 시도했으나 `NOOP_CLAWOPS_HTTP_ERROR`로 종료되었다.
-- ClawOps sidecar real-agent 경로는 local dev 승인 조건에서 1회 발신 / 통화 완료까지 확인했다. 다만 AI 결과 tool 제출과 예약 확정 상태 전이는 아직 완료되지 않았다.
+- ClawOps sidecar real-agent 경로는 local dev 승인 조건에서 발신 / 통화 완료, AI 결과 tool 호출, Spring internal event delivery, event ledger / call attempt 기록, 예약 `CONFIRMED` 상태 전이까지 확인했다. 다만 운영 서비스 전환 전에는 실제 식당 번호 정책, 재발신 정책, process lifecycle, observability, 개인정보 / 요약 저장 정책을 별도로 확정해야 한다.
 - Python sidecar는 dry-run endpoint와 approved real-agent 후보 경로를 제공한다. sidecar는 DB에 접근하지 않는다.
 - 실제 provider adapter를 추가하거나 ClawOps PoC를 승인하기 전에는 `calling-enabled=true`도 실제 발신을 보장하지 않는다.
 
@@ -726,7 +729,7 @@ ClawOps Python Voice Agent sidecar 설계 후보:
 - sidecar가 통화 상태나 예약 결과 후보를 받으면 Spring 내부 provider event endpoint로 전달하고, Spring이 기존 idempotency / 상태 전이 규칙으로 최종 반영한다.
 - ClawOps API key와 OpenAI API key는 sidecar runtime secret으로 두는 방향을 우선 검토한다. Spring direct REST adapter를 유지하는 동안 필요한 secret과 sidecar mode secret은 분리한다.
 - sidecar mode에서도 prod profile, allowlist, real-call flag, internal signature 검증을 모두 통과해야 하며, sidecar 단독 발신 admin API는 만들지 않는다.
-- Spring sidecar runtime skeleton, local fake/dry-run dispatch, sidecar readiness 호출, sidecar -> Spring internal event endpoint, Python sidecar dry-run scaffold, approved real-agent 후보 경로는 준비되었다. 성공 기준 실제 통화 완료는 1회 확인했지만, AI 결과 tool 제출과 예약 상태 전이는 아직 남아 있다.
+- Spring sidecar runtime skeleton, local fake/dry-run dispatch, sidecar readiness 호출, sidecar -> Spring internal event endpoint, Python sidecar dry-run scaffold, approved real-agent 후보 경로는 준비되었다. local dev 기준 실제 통화 완료, 결과 tool 호출, Spring event ledger 기록, 예약 확정 상태 전이는 확인했다.
 
 Computer Use로 외부 콘솔에서 확인 / 설정할 항목:
 - OpenAI: API key 발급, 프로젝트 범위, Realtime 사용 가능 모델, webhook secret, Realtime instruction/tool schema 관리 방식

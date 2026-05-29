@@ -23,6 +23,7 @@ from clawops_agent_sidecar import (
     build_real_agent_call_request,
     make_handler,
     parse_runtime_mode,
+    run_real_agent_worker,
     sign,
 )
 from real_agent_adapter import (  # noqa: E402
@@ -33,6 +34,8 @@ from real_agent_adapter import (  # noqa: E402
     SECRET_MISSING,
     SPRING_PREFLIGHT_REQUIRED,
 )
+from real_agent_interface import RealAgentCallResult
+from spring_event_dispatch_candidate import load_sample_result
 
 
 PLACEHOLDER_PHONE_NUMBER = "+15550100001"
@@ -212,6 +215,103 @@ class ClawOpsAgentSidecarTest(unittest.TestCase):
         error_body = context.exception.read().decode("utf-8")
         self.assertNotIn("+15550100999", error_body)
         self.assertNotIn(SIGNING_KEY, error_body)
+
+    def test_real_agent_worker_uses_sidecar_call_id_for_spring_event_match(self):
+        captured = {}
+
+        class FakeRealAgentSdkRunner:
+            def __init__(self, gate_result, implementation_enabled=False):
+                self.gate_result = gate_result
+                self.implementation_enabled = implementation_enabled
+
+            def run_reservation_call(self, request):
+                return RealAgentCallResult(
+                    ai_result=load_sample_result("confirmed.json"),
+                    sidecar_call_id=request.sidecar_call_id,
+                    provider_call_id="fake-actual-provider-call-id",
+                    failure_reason=None,
+                    retryable=False,
+                )
+
+        def capture_dispatch(config, candidate):
+            captured["payload"] = candidate.payload
+
+        request = build_real_agent_call_request(real_agent_payload(), PLACEHOLDER_PHONE_NUMBER)
+        with patch("clawops_agent_sidecar.RealAgentSdkRunner", FakeRealAgentSdkRunner):
+            with patch("clawops_agent_sidecar.dispatch_spring_event", capture_dispatch):
+                run_real_agent_worker(config(), request, gate_result=object())
+
+        self.assertEqual(captured["payload"]["providerCallId"], request.sidecar_call_id)
+        self.assertEqual(captured["payload"]["sidecarCallId"], request.sidecar_call_id)
+        self.assertEqual(captured["payload"]["eventType"], "RESERVATION_CONFIRMED")
+
+    def test_real_agent_worker_dispatches_safe_failure_when_runner_raises(self):
+        captured = {}
+
+        class FailingRealAgentSdkRunner:
+            def __init__(self, gate_result, implementation_enabled=False):
+                self.gate_result = gate_result
+                self.implementation_enabled = implementation_enabled
+
+            def run_reservation_call(self, request):
+                raise RuntimeError("sdk failure with unsafe details omitted")
+
+        def capture_dispatch(config, candidate):
+            captured["payload"] = candidate.payload
+
+        request = build_real_agent_call_request(real_agent_payload(), PLACEHOLDER_PHONE_NUMBER)
+        with patch("clawops_agent_sidecar.RealAgentSdkRunner", FailingRealAgentSdkRunner):
+            with patch("clawops_agent_sidecar.dispatch_spring_event", capture_dispatch):
+                run_real_agent_worker(config(), request, gate_result=object())
+
+        serialized = json.dumps(captured["payload"])
+        self.assertEqual(captured["payload"]["providerCallId"], request.sidecar_call_id)
+        self.assertEqual(captured["payload"]["eventType"], "PROVIDER_FATAL_ERROR")
+        self.assertEqual(captured["payload"]["providerStatus"], "AI_FAILED")
+        self.assertEqual(captured["payload"]["failureReason"], "PROVIDER_FATAL_ERROR")
+        self.assertNotIn("unsafe details", serialized)
+        self.assertNotIn(PLACEHOLDER_PHONE_NUMBER, serialized)
+
+    def test_real_agent_call_endpoint_accepts_when_all_gates_pass_and_worker_is_patched(self):
+        started_workers = []
+        real_thread = threading.Thread
+        real_agent_config = config(
+            runtime_mode=RUNTIME_MODE_REAL_AGENT,
+            real_call_enabled=True,
+            real_agent_enabled=True,
+            real_agent_approval_granted=True,
+        )
+        present_env = {
+            "CLAWOPS_API_KEY": "present",
+            "CLAWOPS_ACCOUNT_ID": "present",
+            "CLAWOPS_FROM_NUMBER": "present",
+            "OPENAI_API_KEY": "present",
+        }
+
+        def fake_thread(target, args=(), daemon=False):
+            if target is not run_real_agent_worker:
+                return real_thread(target=target, args=args, daemon=daemon)
+            started_workers.append((target, args, daemon))
+
+            class ThreadStub:
+                def start(self):
+                    return None
+
+            return ThreadStub()
+
+        with patch.dict(os.environ, present_env, clear=True):
+            with patch("clawops_agent_sidecar.threading.Thread", fake_thread):
+                with DryRunSidecarServer(real_agent_config, sdk_probe=lambda: True) as server:
+                    body = request_json(server.base_url + CALLS_PATH, payload=real_agent_payload())
+
+        serialized = json.dumps(body)
+        self.assertEqual(body["providerStatus"], "CLAWOPS_SIDECAR_REAL_AGENT_ACCEPTED")
+        self.assertEqual(body["realAgentGatePreview"]["allowed"], True)
+        self.assertEqual(body["realAgentGatePreview"]["blockReasons"], [])
+        self.assertEqual(len(started_workers), 1)
+        self.assertTrue(started_workers[0][2])
+        self.assertNotIn(PLACEHOLDER_PHONE_NUMBER, serialized)
+        self.assertNotIn(SIGNING_KEY, serialized)
 
 
 def config(

@@ -26,7 +26,7 @@ from real_agent_adapter import (
     evaluate_real_agent_gate,
 )
 from real_agent_interface import RealAgentCallRequest
-from real_agent_sdk_runner import RealAgentSdkRunner, check_real_agent_sdk_surface
+from real_agent_sdk_runner import RealAgentSdkRunner, check_real_agent_sdk_surface, failed_result
 from reservation_result_mapper import ReservationResultMappingContext
 from spring_event_dispatch_candidate import (
     SPRING_EVENT_PATH,
@@ -397,10 +397,16 @@ def run_real_agent_worker(
     request: RealAgentCallRequest,
     gate_result,
 ) -> None:
-    result = RealAgentSdkRunner(
-        gate_result,
-        implementation_enabled=True,
-    ).run_reservation_call(request)
+    try:
+        ai_result = RealAgentSdkRunner(
+            gate_result,
+            implementation_enabled=True,
+        ).run_reservation_call(request).ai_result
+    except Exception:
+        ai_result = failed_result(
+            "PROVIDER_FATAL_ERROR",
+            "Real-agent worker failed before delivering a reservation result.",
+        )
     context = ReservationResultMappingContext(
         reservation_id=request.reservation_id,
         requested_date_time=request.reservation_date_time,
@@ -409,7 +415,7 @@ def run_real_agent_worker(
         provider_call_id=request.sidecar_call_id,
     )
     candidate = build_spring_event_dispatch_candidate(
-        result.ai_result,
+        ai_result,
         context,
         config.spring_internal_signing_key,
     )
