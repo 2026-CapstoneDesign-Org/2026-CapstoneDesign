@@ -108,6 +108,17 @@ class ReservationResultMapperTest(unittest.TestCase):
         self.assertEqual(event["eventType"], "AI_PARSE_FAILED")
         self.assertEqual(event["failureReason"], "AI_RESULT_CONFIRMED_DATETIME_REQUIRED")
 
+    def test_provider_fatal_error_prefix_maps_to_terminal_provider_fatal_event(self):
+        payload = load_sample("connection-failed.json")
+        payload["failureReason"] = "PROVIDER_FATAL_ERROR__AGENTERROR_HTTP_500"
+
+        event = map_reservation_result_to_spring_event(payload, context())
+
+        self.assertEqual(event["eventType"], "PROVIDER_FATAL_ERROR")
+        self.assertEqual(event["providerStatus"], "AI_FAILED")
+        self.assertFalse(event["retryable"])
+        self.assertEqual(event["failureReason"], "PROVIDER_FATAL_ERROR__AGENTERROR_HTTP_500")
+
 
 def load_sample(name):
     with (SAMPLES_DIR / name).open(encoding="utf-8") as file:

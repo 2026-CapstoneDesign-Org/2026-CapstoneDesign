@@ -507,9 +507,9 @@ Phase 7 이후 실제 Voice Agent 단계 전까지 사용하지 않는다:
 30. ClawOps 번호 inbound fallback endpoint
    - ClawOps 전화번호 온보딩 / 인바운드 라우팅에 사용할 정적 Voice XML endpoint를 Spring에 둔다.
 31. AI 결과 tool 제출 안정화
-   - 발신 완료 후 AI가 `submit_reservation_call_result` tool을 제출하지 않는 경우를 분석한다.
+   - 발신 완료 후 AI가 `submit_reservation_call_result` tool을 제출하지 않거나 너무 빨리 실패 처리하는 경우를 분석한다.
 
-2026-05-27 현재 1~30 중 approved local real-agent 실행 후보와 ClawOps 번호 inbound fallback endpoint까지 구현 / 시도했다. Spring preflight와 sidecar readiness는 통과했고 ClawOps 통화 기록상 발신 완료도 확인했다. 다음 작업은 발신 완료 후 AI 결과 tool 제출이 누락되는 원인을 분석하는 것이다.
+2026-05-28 현재 1~31 중 approved local real-agent 실행 후보와 ClawOps 번호 inbound fallback endpoint까지 구현 / 시도했다. Spring preflight와 sidecar readiness는 통과했고 ClawOps 통화 기록상 allowlist 번호 outbound call completed도 확인했다. prompt / runner 보강 후 AI 결과 tool 호출, Spring internal event delivery, event ledger 처리, call attempt 완료, 예약 `CONFIRMED` 상태 전이까지 확인했다. 초반 실패 케이스에서는 자동 안내 / 무응답 / 불명확 응답을 AI가 너무 빨리 실패로 판단했고, 이후에는 연결 확인 직후 `CONFIRMED`를 너무 빨리 제출해 통화를 끊는 문제가 보여 `send_dtmf` 허용, 초반 final result tool 수락 지연, 직원 질문 응답 규칙을 추가했다. 다음 작업은 운영 배포 / process lifecycle / 실제 식당 번호 정책 / provider call id 보존 정책 확정이다.
 
 ## 검증 방법
 현재 구현 단계:
@@ -575,7 +575,7 @@ Phase 7 이후 실제 Voice Agent 단계 전까지 사용하지 않는다:
 - [x] ClawOps allowlist 1회 발신 / 통화 완료 확인
 - [x] ClawOps 번호 인바운드 fallback webhook endpoint
 - [x] 결과 tool 제출 누락 방지 prompt / runner 보강
-- [ ] AI 결과 tool 제출 성공 / 예약 상태 전이 확인
+- [x] AI 결과 tool 제출 성공 / 예약 상태 전이 확인
 - [x] 문서 반영 완료
 
 ## 결정 사항 / 변경 로그
@@ -609,10 +609,12 @@ Phase 7 이후 실제 Voice Agent 단계 전까지 사용하지 않는다:
 - 2026-05-27: ClawOps 전화번호 온보딩 / 인바운드 fallback 확인을 위해 임시 tunnel Voice XML webhook을 설정했고, 이후 승인된 local dev 재시도에서 ClawOps 통화 기록상 발신 완료까지 확인했다. 다만 AI가 결과 tool을 제출하지 않아 Spring에는 `AI_FAILED` 후보 이벤트가 기록되었고, 예약 확정 상태 전이는 아직 확인되지 않았다.
 - 2026-05-27: 임시 tunnel URL을 장기 설정으로 남기지 않기 위해 Spring에 `GET|POST /webhooks/reservations/call-providers/clawops/inbound` endpoint를 추가했다. 이 endpoint는 정적 Voice XML만 반환하며 예약 DB, event ledger, call attempt를 수정하지 않는다. 배포 후 ClawOps 전화번호 Webhook URL에는 Swagger UI 주소가 아니라 `https://wagu.uk/webhooks/reservations/call-providers/clawops/inbound`를 등록한다.
 - 2026-05-27: 발신 완료 후 AI가 결과 tool을 제출하지 않는 문제를 줄이기 위해 prompt에 `submit_reservation_call_result` 필수 제출 규칙과 필드 정의를 명시하고, `RealAgentSdkRunner`는 ClawOps builtin tool을 비활성화한 뒤 결과 tool 제출과 call end를 race로 기다리도록 보강했다. 결과 tool이 먼저 제출되면 sidecar가 hangup을 수행한다. fake ClawOps/OpenAI class로 실제 SDK runner boundary의 tool 제출 / hangup / missing tool 결과를 검증했다. 실제 통화 재검증은 아직 남아 있다.
+- 2026-05-27: 승인된 추가 local dev 1회 발신에서 AI 결과 tool 호출까지 도달했지만, tool callback이 문자열 `partySize`를 처리하지 못했고 Spring event는 실제 provider call id와 예약에 저장된 sidecar call id 불일치로 거절되었다. `RealAgentSdkRunner`는 `partySize`를 정수로 coercion하도록 수정했고, sidecar worker는 Spring event `providerCallId`에 예약 시작 시 저장된 sidecar call id를 사용하도록 테스트를 고정했다. 실제 ClawOps provider call id를 별도 보존할지는 후속 DB / DTO 정책으로 남긴다.
+- 2026-05-28: 승인된 local dev allowlist 발신에서 초반 `FAILED` 판단과 연결 확인 직후 `CONFIRMED` 제출로 통화가 빨리 끊기는 문제가 확인되었다. `send_dtmf`를 ClawOps builtin tool로 허용하고, prompt에 직원 질문 응답 / 초반 실패 금지 / 연결 확인만으로 result 제출 금지 규칙을 추가했으며, runner가 짧은 시간 안의 final result tool을 즉시 수락하지 않도록 보강했다. 이후에도 얕은 연결 확인만으로 결과를 제출할 가능성을 줄이기 위해 terminal result summary가 원 예약 날짜 / 시간 / 인원 수를 포함하지 않거나 `CONFIRMED` 세부값이 원 요청과 충돌하면 tool 단계에서 거절하도록 추가 보강했다. 2026-05-29에는 availability 질문 직후 대답 시간을 주지 않고 “들리시나요”로 넘어가는 문제와, 명확한 가능 답변 뒤 재확인하다가 마무리 멘트 없이 끊는 문제가 확인되어 prompt의 대기 / 재확인 금지 규칙을 강화하고, clear confirmed result는 45초까지 억지 재확인하지 않으며 accepted result 뒤 closing grace를 두도록 수정했다. 이후 allowlist 테스트 번호에서 식당 역할 응답을 통해 ClawOps outbound call completed, AI result tool `RESERVATION_CONFIRMED`, Spring event ledger `PROCESSED`, 예약 `CONFIRMED`, call attempt `COMPLETED`를 확인했다.
 
 ## 완료 조건
 - sidecar 채택 여부가 문서화되어 있다.
 - Spring / sidecar 책임 경계가 문서화되어 있다.
 - 내부 endpoint 후보와 환경변수 후보가 문서화되어 있다.
 - 실제 구현 전 위험 요소와 구현 단계가 정리되어 있다.
-- 실제 allowlist 테스트 번호 1회 발신 / 통화 완료는 확인했다. 남은 완료 기준은 AI 결과 tool 제출과 Spring 예약 상태 전이 확인이다.
+- 실제 allowlist 테스트 번호 발신 / 통화 완료, AI 결과 tool 제출, Spring 예약 상태 전이 확인까지 완료했다. 남은 범위는 운영 배포와 실제 식당 번호 사용 정책 확정이다.

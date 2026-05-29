@@ -126,7 +126,8 @@ Checked surface, without SDK client creation or network calls:
 - Build the flow as prompt load, OpenAI Realtime session config, ClawOpsAgent config, result tool registration, outbound call candidate, result wait, and disconnect-finally.
 - Build the system prompt from `prompts/reservation_agent_prompt.md` and inject reservation request values without mutating date, time, party size, name, or contact assumptions.
 - Prefer ClawOps Agent SDK mode: create an `OpenAIRealtime` session, create a `ClawOpsAgent`, register `submit_reservation_call_result`, call the allowlisted target, race result-tool submission against call end, disconnect, and then map the captured result through `reservation_result_mapper.py`.
-- The real-agent path disables ClawOps builtin tools for now. The AI must submit `submit_reservation_call_result` before ending the conversation; once the result tool is received, the sidecar hangs up the call.
+- The real-agent path enables only the ClawOps `send_dtmf` builtin tool for clear ARS / staff-routing menus. The AI must submit `submit_reservation_call_result` before ending the conversation; once an accepted result tool is received, the sidecar hangs up the call.
+- To avoid calls ending during the opening exchange, the runner rejects early `FAILED` results for unclear opening responses, but it does not force a second confirmation when the restaurant clearly says the requested reservation is available. A hearing check such as "들리나요?" / "네 들립니다." is not a reservation outcome; the AI must give the restaurant time to answer after asking availability and must not immediately fill silence with another question. The runner rejects terminal result submissions whose summary does not mention the requested date/time and party size; `CONFIRMED` is accepted only when `confirmedDateTime` and `partySize` match the original request. After an accepted result tool call, the sidecar leaves a short closing grace period so the AI can say a final confirmation sentence before hangup.
 - Do not use AI Completion mode unless explicitly re-approved, because it would pass OpenAI config through `calls.create(ai=...)` and would bypass the existing sidecar result tool boundary.
 - If the AI does not call the result tool, or the result conflicts with the original reservation request, map to `NEEDS_CONFIRMATION` or `AI_PARSE_FAILED`, never directly to confirmed.
 - Current local tests cover mocked SDK runner outcomes for confirmed, unavailable, needs-confirmation, failed, missing result tool output, confirmed-result conflicts, result-tool-vs-call-end wait behavior, and the actual SDK runner boundary with fake ClawOps/OpenAI classes. These tests do not create real SDK clients, call external APIs, or send HTTP.
@@ -229,10 +230,12 @@ Current completed dry-run/fake pieces:
 - `spring_event_delivery_policy.py` classifies local/fake delivery, retry, and ack outcomes without an HTTP client or retry loop
 - Spring internal event endpoint skeleton, event ledger, and idempotency tests are covered by shared fixtures
 - contract drift guard covers Python tests, Spring fixture E2E, and sensitive-value scans
+- `scripts/check_dev_real_agent_readiness.py` checks the public dev URL, optional Spring preflight, and optional sidecar readiness without placing calls or printing secret/raw phone values
 
 - SDK wiring state: `requirements-real-agent.txt` declares opt-in `clawops[agent,openai]` and `websockets>=13,<16` dependencies. They are installed only in the sidecar Python 3.12 real-agent venv and are not imported by the default dry-run sidecar.
 - Secret environment state: real values are local-only and must not be committed, documented, or logged.
 - Voice Agent execution state: local approved execution path exists behind lazy imports and gates.
+- Worker failure behavior: if the SDK runner raises before producing a result, the worker emits a generic `PROVIDER_FATAL_ERROR` Spring event candidate without logging exception detail values.
 - Phone-call approval required: each allowlisted test-number call still requires explicit approval.
 - Docs/tests only: readiness checklist maintenance, fake policy tests, contract drift guard improvements, and local-only runbook updates.
 
@@ -250,6 +253,14 @@ SDK dependency state:
 
 Do not call SDK APIs, create SDK clients, run a Voice Agent, or place calls unless the current run has explicit local dev approval and all safety checks pass. When real secret values are missing, stop and report: `이제 사용자가 로컬 환경변수에 직접 값을 넣어야 하는 타이밍입니다`.
 
+Readiness check command:
+
+```bash
+python3 sidecars/clawops-voice-agent/scripts/check_dev_real_agent_readiness.py
+```
+
+Optional environment names for deeper checks are `DEV_BASE_URL`, `DEV_ADMIN_BEARER_TOKEN`, `DEV_PREFLIGHT_TARGET_PHONE_NUMBER`, `SIDECAR_BASE_URL`, and `SIDECAR_INTERNAL_SIGNING_KEY`. The script reports configured booleans and block reason names only.
+
 Actual phone calls remain blocked unless the user provides exactly:
 
 ```text
@@ -258,10 +269,11 @@ Actual phone calls remain blocked unless the user provides exactly:
 
 ## Local Dev PoC Status
 
-2026-05-27 local dev execution reached the approved real-agent SDK path with Spring using dev profiles and `ddl-auto=validate`. Spring preflight and sidecar readiness passed, and Spring accepted one sidecar real-agent call candidate. ClawOps control websocket connection failed with HTTP 403 before a successful provider call id or confirmed phone call was produced. The sidecar delivered a safe failure event back to Spring; no retry loop was started.
+2026-05-27~28 local dev execution reached the approved real-agent SDK path with Spring using dev profiles and `ddl-auto=validate`. Spring preflight and sidecar readiness passed, and Spring accepted sidecar real-agent call candidates. After ClawOps number onboarding and inbound fallback setup, approved allowlisted calls reached the AI result tool and Spring internal event endpoint. The runner now coerces `partySize` and boolean tool arguments, keeps Spring event matching on the sidecar id, enables `send_dtmf` only for clear ARS routing, and rejects too-early final result tool submissions. The latest local test confirmed the reservation through Spring: event ledger processed `RESERVATION_CONFIRMED`, the reservation reached `CONFIRMED`, and the call attempt reached `COMPLETED`. No automatic retry was started.
 
 Before another attempt:
 - keep scheduler disabled
 - keep allowlist to the single consented test number
-- verify ClawOps account/API key/from-number permissions in the ClawOps console
+- deploy or run the updated sidecar code next to the Spring process that will call it
+- keep actual ClawOps provider call id persistence as a separate DB / DTO policy decision
 - require a fresh one-call approval phrase

@@ -40,6 +40,7 @@ FAILURE_EVENT_BY_REASON = {
     "CALL_BUSY": "CALL_BUSY",
     "PROVIDER_FATAL_ERROR": "PROVIDER_FATAL_ERROR",
 }
+PROVIDER_FATAL_ERROR_PREFIX = "PROVIDER_FATAL_ERROR__"
 
 
 @dataclass(frozen=True)
@@ -75,7 +76,7 @@ def map_reservation_result_to_spring_event(
         return standard_event(context, ai_result, "RESERVATION_NEEDS_CONFIRMATION", provider_status)
 
     failure_reason = ai_result["failureReason"] or "AI_RESULT_FAILED"
-    event_type = FAILURE_EVENT_BY_REASON.get(failure_reason, "PROVIDER_TRANSIENT_ERROR")
+    event_type = failure_event_type(failure_reason)
     return standard_event(context, ai_result, event_type, "AI_FAILED", failure_reason=failure_reason)
 
 
@@ -143,6 +144,12 @@ def parse_failed_event(
         ai_summary=None,
         result_message="AI result schema validation failed.",
     )
+
+
+def failure_event_type(failure_reason: str) -> str:
+    if failure_reason.startswith(PROVIDER_FATAL_ERROR_PREFIX):
+        return "PROVIDER_FATAL_ERROR"
+    return FAILURE_EVENT_BY_REASON.get(failure_reason, "PROVIDER_TRANSIENT_ERROR")
 
 
 def needs_confirmation_event(
