@@ -6,6 +6,8 @@ import java.util.List;
 import java.math.BigDecimal;
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +27,7 @@ import com.example.Capstone.dto.request.AddRestaurantRequest;
 import com.example.Capstone.dto.request.CreateListRequest;
 import com.example.Capstone.dto.request.UpdateListRequest;
 import com.example.Capstone.dto.request.UpdateScoreRequest;
+import com.example.Capstone.dto.response.PageResponse;
 import com.example.Capstone.dto.response.RestaurantResponse;
 import com.example.Capstone.dto.response.UserListDetailResponse;
 import com.example.Capstone.dto.response.UserListResponse;
@@ -109,14 +112,14 @@ public class UserListService {
     }
 
 	// 내 리스트 목록
-	public List<UserListResponse> getMyLists(Long userId) {
-        return userListRepository.findAllByUserIdAndIsDeletedFalse(userId)
-                .stream()
+	public PageResponse<UserListResponse> getMyLists(Long userId, Pageable pageable) {
+        Page<UserListResponse> page = userListRepository
+                .findAllByUserIdAndIsDeletedFalse(userId, pageable)
                 .map(userList -> UserListResponse.from(
                         userList,
                         listLikeRepository.existsByUserIdAndUserListId(userId, userList.getId())
-                ))
-                .toList();
+                ));
+        return PageResponse.from(page);
     }
 
     public UserListDetailResponse getRepresentativeList(Long userId) {

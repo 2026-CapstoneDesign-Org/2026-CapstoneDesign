@@ -2,6 +2,8 @@ package com.example.Capstone.controller;
 
 import java.util.List;
 
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -10,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.Capstone.config.SwaggerConfig;
+import com.example.Capstone.dto.response.PageResponse;
 import com.example.Capstone.dto.response.RestaurantDetailResponse;
 import com.example.Capstone.dto.response.RestaurantResponse;
 import com.example.Capstone.service.RestaurantService;
@@ -51,11 +54,12 @@ public class RestaurantController {
             @ApiResponse(responseCode = "401", description = "Authentication required.")
     })
     @GetMapping
-    public ResponseEntity<List<RestaurantResponse>> searchRestaurants(
-            @Parameter(description = "Restaurant name keyword.", example = "돈까스")
-            @RequestParam String keyword
-    ) {
-        return ResponseEntity.ok(restaurantService.searchRestaurants(keyword));
+    public ResponseEntity<PageResponse<RestaurantResponse>> searchRestaurants(
+            @RequestParam String keyword,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return ResponseEntity.ok(restaurantService.searchRestaurants(keyword, pageable));
     }
 
     @Operation(
