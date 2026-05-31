@@ -114,7 +114,7 @@ public class UserListService {
 	// 내 리스트 목록
 	public PageResponse<UserListResponse> getMyLists(Long userId, Pageable pageable) {
         Page<UserListResponse> page = userListRepository
-                .findAllByUserIdAndIsDeletedFalse(userId, pageable)
+                .findAllByUserIdWithDetails(userId, pageable)
                 .map(userList -> UserListResponse.from(
                         userList,
                         listLikeRepository.existsByUserIdAndUserListId(userId, userList.getId())
@@ -131,7 +131,8 @@ public class UserListService {
 
 	// 리스트 상세
 	public UserListDetailResponse getList(Long listId, Long userId) {
-        UserList userList = userListRepository.findByIdAndIsDeletedFalse(listId)
+        UserList userList = userListRepository
+                .findByIdWithDetails(listId) 
                 .orElseThrow(() -> new EntityNotFoundException("리스트를 찾을 수 없습니다."));
         boolean isLiked = userId != null &&
                 listLikeRepository.existsByUserIdAndUserListId(userId, listId);

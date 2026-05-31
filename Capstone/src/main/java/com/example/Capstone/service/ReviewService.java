@@ -86,7 +86,7 @@ public class ReviewService {
 
     public PageResponse<ReviewResponse> getReviews(Long restaurantId, Long userId, Pageable pageable) {
         Page<ReviewResponse> page = reviewRepository
-                .findAllByRestaurantIdAndIsDeletedFalseAndIsHiddenFalse(restaurantId, pageable)
+                .findAllByRestaurantIdWithDetailsOptimized(restaurantId, pageable)
                 .map(review -> {
                     ReviewVote.VoteType myVote = null;
                     if (userId != null) {
@@ -107,7 +107,7 @@ public class ReviewService {
 
     public PageResponse<UserReviewResponse> getUserReviews(Long userId, Long currentUserId, Pageable pageable) {
         Page<UserReviewResponse> page = reviewRepository
-                .findAllByUserIdAndIsDeletedFalseAndIsHiddenFalse(userId, pageable)
+                .findAllByUserIdWithDetails(userId, pageable)
                 .map(review -> {
                     ReviewVote.VoteType myVote = null;
                     if (currentUserId != null) {
