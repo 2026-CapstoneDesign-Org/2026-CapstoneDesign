@@ -2,6 +2,7 @@ package com.example.Capstone.service;
 
 import java.util.List;
 
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -41,6 +42,7 @@ public class RestaurantService {
         return PageResponse.from(page);
     }
 
+    @Cacheable(value = "restaurant", key = "#id")
     public RestaurantDetailResponse getRestaurant(Long id) {
         Restaurant restaurant = findVisibleRestaurant(id);
         var businessHours = restaurantBusinessHoursResolver.parse(restaurant.getBusinessHoursRaw());

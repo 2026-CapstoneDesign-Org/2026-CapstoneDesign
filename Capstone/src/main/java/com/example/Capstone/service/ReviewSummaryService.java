@@ -16,6 +16,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,6 +43,8 @@ public class ReviewSummaryService {
     private static final int MIN_REVIEW_COUNT = 3;
     private static final int MAX_REVIEW_COUNT = 50;
 
+    @Cacheable(value = "reviewSummary", key = "#restaurantId")
+    @Transactional
     public ReviewSummaryResponse summarize(Long restaurantId) {
         Restaurant restaurant = restaurantRepository
                 .findByIdAndIsDeletedFalseAndIsHiddenFalse(restaurantId)
@@ -69,6 +74,7 @@ public class ReviewSummaryService {
     }
 
     // 캐시 무효화 (리뷰 추가 / 삭제 / 수정 시 호출)
+    @CacheEvict(value = "reviewSummary", key = "#restaurantId")
     @Transactional
     public void invalidateCache(Long restaurantId) {
         reviewSummaryRepository.findByRestaurantId(restaurantId)
