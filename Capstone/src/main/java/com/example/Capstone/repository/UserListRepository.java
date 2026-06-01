@@ -6,6 +6,8 @@ import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.example.Capstone.domain.UserList;
@@ -18,4 +20,20 @@ public interface UserListRepository extends JpaRepository<UserList, Long> {
     boolean existsByUserIdAndIsRepresentativeTrueAndIsDeletedFalse(Long userId);
     Page<UserList> findAllByUserIdAndIsDeletedFalse(Long userId, Pageable pageable);
     Page<UserList> findAllByIsPublicTrueAndIsDeletedFalseAndIsHiddenFalse(Pageable pageable);
+    long countByUserIdAndIsPublicTrueAndIsDeletedFalse(Long userId);
+
+    @Query("SELECT ul FROM UserList ul " +
+           "JOIN FETCH ul.user " +
+           "WHERE ul.user.id = :userId " +
+           "AND ul.isDeleted = false")
+    Page<UserList> findAllByUserIdWithDetails(
+            @Param("userId") Long userId, Pageable pageable);
+
+    @Query("SELECT ul FROM UserList ul " +
+           "JOIN FETCH ul.user " +
+           "LEFT JOIN FETCH ul.listRestaurants lr " +
+           "LEFT JOIN FETCH lr.restaurant " +
+           "WHERE ul.id = :id " +
+           "AND ul.isDeleted = false")
+    Optional<UserList> findByIdWithDetails(@Param("id") Long id);
 }
