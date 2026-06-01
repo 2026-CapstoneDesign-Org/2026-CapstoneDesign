@@ -19,6 +19,7 @@ import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -291,7 +292,28 @@ public class PcmapSearchClientImpl implements PcmapSearchClient {
             }
         }
 
-        return null;
+        return resolvePlaceListBusinessItems(apolloState);
+    }
+
+    private JsonNode resolvePlaceListBusinessItems(JsonNode apolloState) {
+        ArrayNode items = objectMapper.createArrayNode();
+        Iterator<Map.Entry<String, JsonNode>> fields = apolloState.fields();
+
+        while (fields.hasNext()) {
+            Map.Entry<String, JsonNode> field = fields.next();
+            JsonNode resolved = resolveApolloValue(apolloState, field.getValue());
+            if (resolved == null || resolved.isMissingNode() || resolved.isNull()) {
+                continue;
+            }
+
+            String typeName = text(resolved, "__typename");
+            if (field.getKey().startsWith("PlaceListBusinessesItem:")
+                    || "PlaceListBusinessesItem".equals(typeName)) {
+                items.add(resolved);
+            }
+        }
+
+        return items.isEmpty() ? null : items;
     }
 
     private JsonNode resolveApolloValue(JsonNode apolloState, JsonNode value) {

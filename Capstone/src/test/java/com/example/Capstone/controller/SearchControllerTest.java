@@ -62,7 +62,8 @@ class SearchControllerTest {
                                 "image",
                                 "한식",
                                 List.of("한식"),
-                                "NAME_CONTAINS"
+                                "NAME_CONTAINS",
+                                true
                         )),
                         List.of(new SearchUserItemResponse(2L, "성수매니아", "profile")),
                         List.of(new SearchRegionItemResponse("성수", "성수", "성수", "/rankings/restaurants?regionName=%EC%84%B1%EC%88%98"))
