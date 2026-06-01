@@ -24,13 +24,17 @@ from real_agent_sdk_runner import (  # noqa: E402
     check_real_agent_sdk_surface,
     coerce_tool_result_payload,
     final_result_rejection_reason,
+    infer_ai_result_from_transcripts,
     load_reservation_agent_prompt,
     load_real_agent_sdk_modules,
+    mask_sensitive_text,
     provider_fatal_failure_reason,
     safe_exception_failure_reason,
     run_real_agent_sdk_call,
     should_reject_early_ai_failed_result,
     should_reject_early_final_result,
+    spoken_reservation_datetime,
+    spoken_reservation_phrase,
     wait_for_result_tool_or_call_end,
 )
 from spring_event_dispatch_candidate import build_spring_event_dispatch_candidate, load_sample_result  # noqa: E402
@@ -125,6 +129,10 @@ class RealAgentSdkRunnerTest(unittest.TestCase):
 
         self.assertEqual(skeleton.session_config["className"], "OpenAIRealtime")
         self.assertEqual(skeleton.agent_config["className"], "ClawOpsAgent")
+        self.assertFalse(skeleton.session_config["greeting"])
+        self.assertFalse(skeleton.session_config["turnDetection"]["create_response"])
+        self.assertEqual(skeleton.session_config["turnDetection"]["eagerness"], "low")
+        self.assertFalse(skeleton.session_config["turnDetection"]["interrupt_response"])
         self.assertEqual(skeleton.agent_config["apiKeyEnvName"], "CLAWOPS_API_KEY")
         self.assertEqual(skeleton.agent_config["builtinTools"], "SEND_DTMF")
         self.assertEqual(skeleton.result_tool["name"], "submit_reservation_call_result")
@@ -132,6 +140,7 @@ class RealAgentSdkRunnerTest(unittest.TestCase):
         self.assertEqual(skeleton.call_config["targetPhoneMask"], "****0000")
         self.assertEqual(skeleton.result_wait_config["missingResultPolicy"], "AI_PARSE_FAILED")
         self.assertEqual(skeleton.result_wait_config["source"], "submit_reservation_call_result_tool")
+        self.assertEqual(skeleton.result_wait_config["postCallEndResultGraceSeconds"], 8.0)
         self.assertTrue(skeleton.disconnect_config["finally"])
         self.assertEqual(skeleton.call_config["postResultClosingGraceSeconds"], 6.0)
         self.assertNotIn("target_phone_number", repr(skeleton))
@@ -145,10 +154,43 @@ class RealAgentSdkRunnerTest(unittest.TestCase):
         self.assertIn("submit_reservation_call_result", skeleton.system_prompt)
         self.assertIn("After the result tool is accepted", skeleton.system_prompt)
 
+    def test_execution_skeleton_prompt_includes_opening_and_spoken_time(self):
+        skeleton = build_real_agent_execution_skeleton(
+            call_request(),
+            prompt_loader=lambda: "system prompt",
+        )
+
+        self.assertIn("혹시 예약식당 맞나요?", skeleton.system_prompt)
+        self.assertIn("AI 예약 도우미", skeleton.system_prompt)
+        self.assertIn("Mandatory First Utterance", skeleton.system_prompt)
+        self.assertIn("wait for the staff", skeleton.system_prompt)
+        self.assertIn("Do not say the reservation date/time/party size", skeleton.system_prompt)
+        self.assertIn("premature yes", skeleton.system_prompt)
+        self.assertIn("If the staff asks who is calling", skeleton.system_prompt)
+        self.assertIn("Never say the closing sentence unless", skeleton.system_prompt)
+        self.assertIn("6월 1일, 오후 7시 정각, 네 명", skeleton.system_prompt)
+        self.assertIn("commas as natural pauses", skeleton.system_prompt)
+
+    def test_spoken_reservation_phrase_uses_natural_korean_time(self):
+        request = call_request()
+
+        self.assertEqual(spoken_reservation_datetime(request.reservation_date_time), "6월 1일, 오후 7시 정각")
+        self.assertEqual(spoken_reservation_phrase(request), "6월 1일, 오후 7시 정각, 네 명")
+
     def test_prompt_instructs_wait_before_hearing_check_and_avoid_reconfirmation(self):
         prompt = load_reservation_agent_prompt()
 
         self.assertIn("Do not immediately fill silence with another question", prompt)
+        self.assertIn("Do not interrupt short pauses inside the staff answer", prompt)
+        self.assertIn("예약 가능 여부 확인을 위해 전화드린 AI 예약 도우미입니다", prompt)
+        self.assertIn("혹시 한신포차 맞나요?", prompt)
+        self.assertIn("누구세요?", prompt)
+        self.assertIn("Regardless of what the staff says first", prompt)
+        self.assertIn("before you have stated the requested date/time/party size", prompt)
+        self.assertIn("After the first assistant turn, stop speaking", prompt)
+        self.assertIn("not ask the availability question until", prompt)
+        self.assertIn("Never treat this as a reservation confirmation", prompt)
+        self.assertIn("오후 8시 30분", prompt)
         self.assertIn('Do not ask "혹시 들리시나요?"', prompt)
         self.assertIn("Do not ask the same availability question again", prompt)
         self.assertIn("그 시간에 방문하겠습니다", prompt)
@@ -171,9 +213,25 @@ class RealAgentSdkRunnerTest(unittest.TestCase):
         async def scenario():
             result_event = asyncio.Event()
             call_session = FakeCallSession(end_after_seconds=0.01)
-            return await wait_for_result_tool_or_call_end(call_session, result_event, timeout_seconds=1)
+            with patch("real_agent_sdk_runner.POST_CALL_END_RESULT_GRACE_SECONDS", 0.0):
+                return await wait_for_result_tool_or_call_end(call_session, result_event, timeout_seconds=1)
 
         self.assertEqual(asyncio.run(scenario()), WAIT_CALL_ENDED)
+
+    def test_wait_helper_accepts_result_tool_just_after_call_end(self):
+        async def scenario():
+            result_event = asyncio.Event()
+            call_session = FakeCallSession(end_after_seconds=0.01)
+
+            async def submit_result_after_call_end():
+                await asyncio.sleep(0.03)
+                result_event.set()
+
+            asyncio.create_task(submit_result_after_call_end())
+            with patch("real_agent_sdk_runner.POST_CALL_END_RESULT_GRACE_SECONDS", 0.1):
+                return await wait_for_result_tool_or_call_end(call_session, result_event, timeout_seconds=1)
+
+        self.assertEqual(asyncio.run(scenario()), WAIT_RESULT_TOOL_SUBMITTED)
 
     def test_wait_helper_times_out_when_neither_result_nor_call_end_happens(self):
         async def scenario():
@@ -327,6 +385,77 @@ class RealAgentSdkRunnerTest(unittest.TestCase):
             )
         )
 
+    def test_transcript_fallback_confirms_clear_available_answer(self):
+        result = infer_ai_result_from_transcripts(
+            call_request(),
+            [
+                ("assistant", "6월 1일 19시 4명 예약 가능할까요?"),
+                ("user", "네, 가능합니다."),
+            ],
+        )
+
+        self.assertEqual(result["resultStatus"], "CONFIRMED")
+        self.assertEqual(result["confirmedDateTime"], "2026-06-01T19:00:00")
+        self.assertEqual(result["partySize"], 4)
+        self.assertIn("6월 1일 19시 0분 4명", result["summary"])
+
+    def test_transcript_fallback_keeps_ambiguous_hearing_check_unconfirmed(self):
+        result = infer_ai_result_from_transcripts(
+            call_request(),
+            [
+                ("assistant", "혹시 들리시나요?"),
+                ("user", "네 들립니다."),
+            ],
+        )
+
+        self.assertEqual(result["resultStatus"], "NEEDS_CONFIRMATION")
+        self.assertNotEqual(result["resultStatus"], "CONFIRMED")
+
+    def test_transcript_fallback_maps_unavailable_answer(self):
+        result = infer_ai_result_from_transcripts(
+            call_request(),
+            [
+                ("assistant", "6월 1일 19시 4명 예약 가능할까요?"),
+                ("user", "그 시간은 예약이 어렵습니다."),
+            ],
+        )
+
+        self.assertEqual(result["resultStatus"], "UNAVAILABLE")
+
+    def test_transcript_fallback_maps_alternative_time_to_needs_confirmation(self):
+        result = infer_ai_result_from_transcripts(
+            RealAgentCallRequest(
+                reservation_id=100,
+                sidecar_call_id="fake-sidecar-call-100",
+                target_phone_number="placeholder-target-token",
+                target_phone_mask="****0000",
+                restaurant_name="예약식당",
+                reservation_date_time="2026-06-27T20:30:00",
+                party_size=2,
+            ),
+            [
+                ("assistant", "2026년 6월 27일 20시 30분, 2명 예약 가능할까요?"),
+                ("user", "어 안 될 것 같은데 일곱시 반은 어떠세요?"),
+                ("assistant", "요청하신 2026년 6월 27일 20시 30분, 2명은 불가하고 19시 30분 대안을 제안받아 사용자 확인이 필요한 상태로 정리하겠습니다."),
+            ],
+        )
+
+        self.assertEqual(result["resultStatus"], "NEEDS_CONFIRMATION")
+        self.assertTrue(result["alternativeTimeSuggested"])
+        self.assertEqual(result["alternativeDateTime"], "2026-06-27T19:30:00")
+
+    def test_mask_sensitive_text_scrubs_secret_and_phone(self):
+        raw_phone = "010" + "-1234" + "-5678"
+        raw_secret = "sk-" + "testsecret000000000"
+        text = "Bearer " + "abcdefghijk " + raw_secret + " target " + raw_phone
+
+        masked = mask_sensitive_text(text)
+
+        self.assertIn("Bearer ***", masked)
+        self.assertIn("sk-***", masked)
+        self.assertIn("***PHONE***", masked)
+        self.assertNotIn(raw_phone, masked)
+
     def test_accepted_result_tool_response_instructs_closing_sentence(self):
         payload = accepted_result_tool_response()
 
@@ -354,7 +483,8 @@ class RealAgentSdkRunnerTest(unittest.TestCase):
     def test_real_sdk_call_boundary_with_fake_sdk_maps_missing_tool_result(self):
         fake_agent_class = build_fake_agent_class(submit_tool_result=False)
 
-        with patch.dict(sys.modules, fake_clawops_agent_modules(fake_agent_class)):
+        with patch.dict(sys.modules, fake_clawops_agent_modules(fake_agent_class)), \
+                patch("real_agent_sdk_runner.POST_CALL_END_RESULT_GRACE_SECONDS", 0.0):
             result = asyncio.run(run_real_agent_sdk_call(call_request(), fake_execution_skeleton()))
 
         agent = fake_agent_class.instances[-1]
@@ -363,6 +493,60 @@ class RealAgentSdkRunnerTest(unittest.TestCase):
         self.assertEqual(result.ai_result["resultStatus"], "FAILED")
         self.assertEqual(result.ai_result["failureReason"], "AI_RESULT_TOOL_MISSING")
         self.assertTrue(result.retryable)
+
+    def test_real_sdk_call_boundary_with_fake_sdk_uses_transcript_fallback(self):
+        fake_agent_class = build_fake_agent_class(
+            submit_tool_result=False,
+            transcripts=[
+                ("assistant", "6월 1일 19시 4명 예약 가능할까요?"),
+                ("user", "네 가능합니다."),
+            ],
+        )
+
+        with patch.dict(sys.modules, fake_clawops_agent_modules(fake_agent_class)), \
+                patch("real_agent_sdk_runner.POST_CALL_END_RESULT_GRACE_SECONDS", 0.0):
+            result = asyncio.run(run_real_agent_sdk_call(call_request(), fake_execution_skeleton()))
+
+        self.assertEqual(result.ai_result["resultStatus"], "CONFIRMED")
+        self.assertEqual(result.ai_result["confirmedDateTime"], "2026-06-01T19:00:00")
+        self.assertFalse(result.retryable)
+
+    def test_real_sdk_call_boundary_requests_initial_response_after_call_start(self):
+        fake_agent_class = build_fake_agent_class(
+            submit_tool_result=False,
+            transcripts=[],
+            end_after_seconds=0.01,
+        )
+
+        with patch.dict(sys.modules, fake_clawops_agent_modules(fake_agent_class)), \
+                patch("real_agent_sdk_runner.CALL_ANSWER_GREETING_DELAY_SECONDS", 0.0), \
+                patch("real_agent_sdk_runner.POST_CALL_END_RESULT_GRACE_SECONDS", 0.0):
+            result = asyncio.run(run_real_agent_sdk_call(call_request(), fake_execution_skeleton()))
+
+        agent = fake_agent_class.instances[-1]
+        session = agent.kwargs["session"]
+        self.assertGreaterEqual(session._connection.response.create_count, 1)
+        self.assertEqual(result.ai_result["failureReason"], "AI_RESULT_TOOL_MISSING")
+
+    def test_real_sdk_call_boundary_hangs_up_with_live_transcript_fallback(self):
+        fake_agent_class = build_fake_agent_class(
+            submit_tool_result=False,
+            transcripts=[
+                ("assistant", "6월 1일 19시 4명 예약 가능할까요?"),
+                ("user", "네 가능합니다."),
+            ],
+            end_after_seconds=None,
+        )
+
+        with patch.dict(sys.modules, fake_clawops_agent_modules(fake_agent_class)), \
+                patch("real_agent_sdk_runner.POST_RESULT_CLOSING_GRACE_SECONDS", 0.0):
+            result = asyncio.run(run_real_agent_sdk_call(call_request(), fake_execution_skeleton()))
+
+        agent = fake_agent_class.instances[-1]
+        self.assertTrue(agent.call_session.hungup)
+        self.assertTrue(agent.disconnected)
+        self.assertEqual(result.ai_result["resultStatus"], "CONFIRMED")
+        self.assertEqual(result.ai_result["confirmedDateTime"], "2026-06-01T19:00:00")
 
     def test_real_sdk_call_boundary_captures_fast_call_failed_event(self):
         fake_agent_class = build_fast_failure_agent_class("busy")
@@ -540,9 +724,10 @@ class FakeCallSession:
 
 
 class FakeSdkCallSession:
-    def __init__(self, end_after_seconds=None):
+    def __init__(self, end_after_seconds=None, transcripts=None):
         self.call_id = "fake-provider-call-sdk"
         self.end_after_seconds = end_after_seconds
+        self.transcripts = transcripts or []
         self.hungup = False
         self.handlers = {}
 
@@ -550,6 +735,13 @@ class FakeSdkCallSession:
         self.handlers[event_name] = handler
 
     async def wait(self):
+        handler = self.handlers.get("call_start")
+        if handler:
+            await handler(self)
+        for speaker, transcript in self.transcripts:
+            handler = self.handlers.get("transcript")
+            if handler:
+                await handler(self, speaker, transcript)
         if self.end_after_seconds is None:
             await asyncio.Event().wait()
         else:
@@ -562,6 +754,20 @@ class FakeSdkCallSession:
 class FakeOpenAIRealtime:
     def __init__(self, **kwargs):
         self.kwargs = kwargs
+        self._connection = FakeRealtimeConnection()
+
+
+class FakeRealtimeResponse:
+    def __init__(self):
+        self.create_count = 0
+
+    async def create(self):
+        self.create_count += 1
+
+
+class FakeRealtimeConnection:
+    def __init__(self):
+        self.response = FakeRealtimeResponse()
 
 
 class FakeBuiltinTool:
@@ -569,7 +775,7 @@ class FakeBuiltinTool:
     SEND_DTMF = "send_dtmf"
 
 
-def build_fake_agent_class(submit_tool_result):
+def build_fake_agent_class(submit_tool_result, transcripts=None, end_after_seconds=0.01):
     class FakeClawOpsAgent:
         instances = []
 
@@ -599,7 +805,10 @@ def build_fake_agent_class(submit_tool_result):
                 self.call_session = FakeSdkCallSession()
                 asyncio.create_task(self.submit_result_after_tool_registration())
             else:
-                self.call_session = FakeSdkCallSession(end_after_seconds=0.01)
+                self.call_session = FakeSdkCallSession(
+                    end_after_seconds=end_after_seconds,
+                    transcripts=transcripts,
+                )
             for event_name, handlers in self.event_handlers.items():
                 for handler in handlers:
                     self.call_session.on(event_name, handler)
