@@ -1,9 +1,12 @@
 package com.example.Capstone.service;
 
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
@@ -20,6 +23,7 @@ import com.example.Capstone.dto.response.SearchResponse;
 import com.example.Capstone.dto.response.SearchRestaurantItemResponse;
 import com.example.Capstone.dto.response.SearchUserItemResponse;
 import com.example.Capstone.exception.BusinessException;
+import com.example.Capstone.repository.RestaurantRankingRow;
 import com.example.Capstone.repository.RestaurantRepository;
 import com.example.Capstone.repository.UserRepository;
 import com.example.Capstone.service.search.support.SearchInterpretation;
@@ -44,8 +48,10 @@ public class SearchService {
     private static final int RESTAURANT_RESULT_LIMIT = 10;
     private static final int USER_RESULT_LIMIT = 10;
     private static final int REGION_RESULT_LIMIT = 10;
-    private static final int INTERNAL_CANDIDATE_FETCH_LIMIT = 30;
+    private static final int INTERNAL_CANDIDATE_FETCH_LIMIT = 300;
     private static final int EXTERNAL_FALLBACK_LIMIT = 5;
+    private static final int RANKING_SIGNAL_LIMIT = 100;
+    private static final int RANKING_SMOOTHING_CONSTANT = 5;
 
     private final RestaurantRepository restaurantRepository;
     private final UserRepository userRepository;
@@ -94,10 +100,12 @@ public class SearchService {
             return List.of();
         }
 
+        Map<Long, Integer> rankingOrder = loadRankingOrder(interpretation, internalCandidates);
+
         List<SearchRestaurantItemResponse> internalItems = internalCandidates.stream()
                 .map(candidate -> mapInternalRestaurantItem(candidate, interpretation))
                 .filter(Objects::nonNull)
-                .sorted(SearchRestaurantMatcher.internalResultComparator())
+                .sorted(internalResultComparator(rankingOrder))
                 .limit(RESTAURANT_RESULT_LIMIT)
                 .toList();
 
@@ -113,22 +121,39 @@ public class SearchService {
     }
 
     private List<Restaurant> loadInternalRestaurantCandidates(SearchInterpretation interpretation) {
-        List<Restaurant> candidates;
+        List<Restaurant> candidates = new ArrayList<>();
+        PageRequest candidatePage = PageRequest.of(0, INTERNAL_CANDIDATE_FETCH_LIMIT);
+
         if (interpretation.restaurantKeyword() != null) {
-            candidates = restaurantRepository.searchVisibleRestaurantsBySearchKeyword(
+            if (interpretation.regionKeyword() != null) {
+                addCandidates(candidates, restaurantRepository.searchVisibleRestaurantsByRegionAndSearchTokens(
+                        interpretation.regionKeyword(),
+                        interpretation.restaurantKeyword(),
+                        candidatePage
+                ));
+            }
+            addCandidates(candidates, restaurantRepository.searchVisibleRestaurantsBySearchTokens(
                     interpretation.restaurantKeyword(),
-                    PageRequest.of(0, INTERNAL_CANDIDATE_FETCH_LIMIT)
-            );
+                    candidatePage
+            ));
+            addCandidates(candidates, restaurantRepository.searchVisibleRestaurantsBySearchKeyword(
+                    interpretation.restaurantKeyword(),
+                    candidatePage
+            ));
         } else if (interpretation.regionKeyword() != null) {
-            candidates = restaurantRepository.searchVisibleRestaurantsByRegionSignal(
+            addCandidates(candidates, restaurantRepository.searchVisibleRestaurantsByRegionSignal(
                     interpretation.regionKeyword(),
-                    PageRequest.of(0, INTERNAL_CANDIDATE_FETCH_LIMIT)
-            );
+                    candidatePage
+            ));
         } else {
-            candidates = restaurantRepository.searchVisibleRestaurantsBySearchKeyword(
+            addCandidates(candidates, restaurantRepository.searchVisibleRestaurantsBySearchTokens(
                     interpretation.normalizedQuery(),
-                    PageRequest.of(0, INTERNAL_CANDIDATE_FETCH_LIMIT)
-            );
+                    candidatePage
+            ));
+            addCandidates(candidates, restaurantRepository.searchVisibleRestaurantsBySearchKeyword(
+                    interpretation.normalizedQuery(),
+                    candidatePage
+            ));
         }
 
         LinkedHashMap<Long, Restaurant> deduplicated = new LinkedHashMap<>();
@@ -141,6 +166,13 @@ public class SearchService {
         }
 
         return new ArrayList<>(deduplicated.values());
+    }
+
+    private void addCandidates(List<Restaurant> target, List<Restaurant> candidates) {
+        if (candidates == null || candidates.isEmpty()) {
+            return;
+        }
+        target.addAll(candidates);
     }
 
     private SearchRestaurantItemResponse mapInternalRestaurantItem(
@@ -160,6 +192,67 @@ public class SearchService {
                 && userItemsEmpty
                 && interpretation.restaurantKeyword() != null
                 && !interpretation.genericBrowseQuery();
+    }
+
+    private Comparator<SearchRestaurantItemResponse> internalResultComparator(Map<Long, Integer> rankingOrder) {
+        if (!rankingOrder.isEmpty()) {
+            return Comparator
+                    .comparingInt((SearchRestaurantItemResponse item) ->
+                            rankingOrder.getOrDefault(item.restaurantId(), Integer.MAX_VALUE))
+                    .thenComparingInt(item -> SearchRestaurantMatcher.matchPriority(item.matchedBy()))
+                    .thenComparing(SearchRestaurantItemResponse::restaurantName, Comparator.nullsLast(String::compareToIgnoreCase))
+                    .thenComparing(SearchRestaurantItemResponse::restaurantId, Comparator.nullsLast(Long::compareTo));
+        }
+        return Comparator
+                .comparingInt((SearchRestaurantItemResponse item) -> SearchRestaurantMatcher.matchPriority(item.matchedBy()))
+                .thenComparing(SearchRestaurantItemResponse::restaurantName, Comparator.nullsLast(String::compareToIgnoreCase))
+                .thenComparing(SearchRestaurantItemResponse::restaurantId, Comparator.nullsLast(Long::compareTo));
+    }
+
+    private Map<Long, Integer> loadRankingOrder(
+            SearchInterpretation interpretation,
+            List<Restaurant> internalCandidates
+    ) {
+        if (internalCandidates == null || internalCandidates.isEmpty()) {
+            return Map.of();
+        }
+
+        String regionName = interpretation.regionKeyword();
+        String category = resolveRankingCategory(interpretation.restaurantKeyword());
+        List<RestaurantRankingRow> rows = safeRankingRows(regionName, category);
+        if (rows.isEmpty() && category != null) {
+            rows = safeRankingRows(regionName, null);
+        }
+        if (rows.isEmpty()) {
+            return Map.of();
+        }
+
+        Map<Long, Integer> rankingOrder = new HashMap<>();
+        for (int index = 0; index < rows.size(); index += 1) {
+            rankingOrder.putIfAbsent(rows.get(index).restaurantId(), index);
+        }
+        return rankingOrder;
+    }
+
+    private List<RestaurantRankingRow> safeRankingRows(String regionName, String category) {
+        List<RestaurantRankingRow> rows = restaurantRepository.findRestaurantRankings(
+                regionName,
+                category,
+                RANKING_SIGNAL_LIMIT,
+                RANKING_SMOOTHING_CONSTANT
+        );
+        return rows == null ? List.of() : rows;
+    }
+
+    private String resolveRankingCategory(String restaurantKeyword) {
+        if (restaurantKeyword == null || restaurantKeyword.isBlank()) {
+            return null;
+        }
+        List<String> tokens = SearchRestaurantMatcher.tokenize(restaurantKeyword);
+        if (tokens.isEmpty()) {
+            return null;
+        }
+        return tokens.get(tokens.size() - 1);
     }
 
     private List<SearchRestaurantItemResponse> loadExternalFallbackItems(

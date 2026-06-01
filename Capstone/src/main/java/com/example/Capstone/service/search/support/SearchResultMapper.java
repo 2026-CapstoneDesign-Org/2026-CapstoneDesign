@@ -46,7 +46,8 @@ public final class SearchResultMapper {
                 restaurant.getImageUrl(),
                 restaurant.getPrimaryCategoryName(),
                 restaurant.getCategoryNames(),
-                matchedBy
+                matchedBy,
+                SearchRestaurantMatcher.hasParkingSignal(restaurant)
         );
     }
 
@@ -71,7 +72,8 @@ public final class SearchResultMapper {
                 candidate.categoryName() == null || candidate.categoryName().isBlank()
                         ? List.of()
                         : List.of(candidate.categoryName()),
-                matchedBy
+                matchedBy,
+                null
         );
     }
 

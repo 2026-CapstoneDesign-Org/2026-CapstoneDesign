@@ -71,11 +71,22 @@ public class RestaurantRankingRepositoryImpl implements RestaurantRankingReposit
                 """);
 
         if (StringUtils.hasText(regionName)) {
-            sql.append("\n  and r.region_name = :regionName");
+            sql.append("""
+
+                      and (
+                            r.region_name = :regionName
+                         or lower(r.region_name) like lower(concat('%', :regionName, '%'))
+                         or lower(coalesce(r.region_city_name, '')) like lower(concat('%', :regionName, '%'))
+                         or lower(coalesce(r.region_district_name, '')) like lower(concat('%', :regionName, '%'))
+                         or lower(coalesce(r.region_county_name, '')) like lower(concat('%', :regionName, '%'))
+                         or lower(coalesce(r.region_town_name, '')) like lower(concat('%', :regionName, '%'))
+                         or lower(coalesce(r.region_filter_names, '')) like lower(concat('%', :regionName, '%'))
+                      )
+                    """);
         }
 
         if (StringUtils.hasText(category)) {
-            sql.append("\n  and (r.category_name = :category or r.primary_category_name = :category)");
+            sql.append("\n  and (r.category_name ilike concat('%', :category, '%') or r.primary_category_name ilike concat('%', :category, '%'))");
         }
 
         sql.append("""

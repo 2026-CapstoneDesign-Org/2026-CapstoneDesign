@@ -48,6 +48,120 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long>, R
             """)
     List<Restaurant> searchVisibleRestaurantsBySearchKeyword(@Param("keyword") String keyword, Pageable pageable);
 
+    @Query(value = """
+            select r.*
+            from restaurants r
+            where r.is_deleted = false
+              and r.is_hidden = false
+              and not exists (
+                    select 1
+                    from regexp_split_to_table(:keyword, '\\s+') as token(value)
+                    where btrim(token.value) <> ''
+                      and not (
+                            lower(r.name) like lower(concat('%', token.value, '%'))
+                         or lower(r.address) like lower(concat('%', token.value, '%'))
+                         or lower(coalesce(r.road_address, '')) like lower(concat('%', token.value, '%'))
+                         or lower(r.region_name) like lower(concat('%', token.value, '%'))
+                         or lower(coalesce(r.region_city_name, '')) like lower(concat('%', token.value, '%'))
+                         or lower(coalesce(r.region_district_name, '')) like lower(concat('%', token.value, '%'))
+                         or lower(coalesce(r.region_county_name, '')) like lower(concat('%', token.value, '%'))
+                         or lower(coalesce(r.region_town_name, '')) like lower(concat('%', token.value, '%'))
+                         or lower(coalesce(r.region_filter_names, '')) like lower(concat('%', token.value, '%'))
+                         or lower(coalesce(r.category_name, '')) like lower(concat('%', token.value, '%'))
+                         or lower(coalesce(r.primary_category_name, '')) like lower(concat('%', token.value, '%'))
+                         or lower(coalesce(r.conveniences, '')) like lower(concat('%', token.value, '%'))
+                         or exists (
+                                select 1
+                                from restaurant_menu_items mi
+                                where mi.restaurant_id = r.id
+                                  and (
+                                        lower(coalesce(mi.menu_name, '')) like lower(concat('%', token.value, '%'))
+                                     or lower(coalesce(mi.normalized_menu_name, '')) like lower(concat('%', token.value, '%'))
+                                  )
+                           )
+                         or exists (
+                                select 1
+                                from restaurant_tags rt
+                                join tags t on t.id = rt.tag_id
+                                where rt.restaurant_id = r.id
+                                  and t.is_active = true
+                                  and lower(coalesce(t.tag_name, '')) like lower(concat('%', token.value, '%'))
+                           )
+                      )
+              )
+            order by
+              case
+                when lower(r.name) like lower(concat(:keyword, '%')) then 0
+                when lower(r.name) like lower(concat('%', :keyword, '%')) then 1
+                when lower(coalesce(r.category_name, '')) like lower(concat('%', :keyword, '%'))
+                  or lower(coalesce(r.primary_category_name, '')) like lower(concat('%', :keyword, '%')) then 2
+                else 3
+              end,
+              r.name asc,
+              r.id asc
+            """, nativeQuery = true)
+    List<Restaurant> searchVisibleRestaurantsBySearchTokens(@Param("keyword") String keyword, Pageable pageable);
+
+    @Query(value = """
+            select r.*
+            from restaurants r
+            where r.is_deleted = false
+              and r.is_hidden = false
+              and (
+                    lower(r.region_name) like lower(concat('%', :regionKeyword, '%'))
+                 or lower(coalesce(r.region_city_name, '')) like lower(concat('%', :regionKeyword, '%'))
+                 or lower(coalesce(r.region_district_name, '')) like lower(concat('%', :regionKeyword, '%'))
+                 or lower(coalesce(r.region_county_name, '')) like lower(concat('%', :regionKeyword, '%'))
+                 or lower(coalesce(r.region_town_name, '')) like lower(concat('%', :regionKeyword, '%'))
+                 or lower(coalesce(r.region_filter_names, '')) like lower(concat('%', :regionKeyword, '%'))
+              )
+              and not exists (
+                    select 1
+                    from regexp_split_to_table(:keyword, '\\s+') as token(value)
+                    where btrim(token.value) <> ''
+                      and not (
+                            lower(r.name) like lower(concat('%', token.value, '%'))
+                         or lower(r.address) like lower(concat('%', token.value, '%'))
+                         or lower(coalesce(r.road_address, '')) like lower(concat('%', token.value, '%'))
+                         or lower(coalesce(r.category_name, '')) like lower(concat('%', token.value, '%'))
+                         or lower(coalesce(r.primary_category_name, '')) like lower(concat('%', token.value, '%'))
+                         or lower(coalesce(r.conveniences, '')) like lower(concat('%', token.value, '%'))
+                         or exists (
+                                select 1
+                                from restaurant_menu_items mi
+                                where mi.restaurant_id = r.id
+                                  and (
+                                        lower(coalesce(mi.menu_name, '')) like lower(concat('%', token.value, '%'))
+                                     or lower(coalesce(mi.normalized_menu_name, '')) like lower(concat('%', token.value, '%'))
+                                  )
+                           )
+                         or exists (
+                                select 1
+                                from restaurant_tags rt
+                                join tags t on t.id = rt.tag_id
+                                where rt.restaurant_id = r.id
+                                  and t.is_active = true
+                                  and lower(coalesce(t.tag_name, '')) like lower(concat('%', token.value, '%'))
+                           )
+                      )
+              )
+            order by
+              case
+                when lower(r.name) like lower(concat(:keyword, '%')) then 0
+                when lower(r.name) like lower(concat('%', :keyword, '%')) then 1
+                when lower(coalesce(r.category_name, '')) like lower(concat('%', :keyword, '%'))
+                  or lower(coalesce(r.primary_category_name, '')) like lower(concat('%', :keyword, '%')) then 2
+                else 3
+              end,
+              r.name asc,
+              r.id asc
+            """, nativeQuery = true)
+    List<Restaurant> searchVisibleRestaurantsByRegionAndSearchTokens(
+            @Param("regionKeyword") String regionKeyword,
+            @Param("keyword") String keyword,
+            Pageable pageable
+    );
+
     @Query("""
             select r
             from Restaurant r

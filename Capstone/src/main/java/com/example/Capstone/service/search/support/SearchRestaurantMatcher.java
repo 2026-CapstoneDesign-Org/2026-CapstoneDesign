@@ -1,6 +1,8 @@
 package com.example.Capstone.service.search.support;
 
+import java.util.Arrays;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Locale;
 
 import com.example.Capstone.domain.Restaurant;
@@ -15,6 +17,8 @@ public final class SearchRestaurantMatcher {
     public static final String MATCH_CATEGORY = "CATEGORY";
     public static final String MATCH_MENU = "MENU";
     public static final String MATCH_TAG = "TAG";
+    public static final String MATCH_CONVENIENCE = "CONVENIENCE";
+    public static final String MATCH_MULTI_TOKEN = "MULTI_TOKEN";
     public static final String MATCH_ADDRESS = "ADDRESS";
     public static final String MATCH_REGION = "REGION";
     public static final String MATCH_EXTERNAL_FALLBACK = "EXTERNAL_FALLBACK";
@@ -42,9 +46,15 @@ public final class SearchRestaurantMatcher {
             if (restaurant.getRestaurantTags().stream().anyMatch(tag -> matchesTag(tag, restaurantKeyword))) {
                 return MATCH_TAG;
             }
+            if (matchesConvenience(restaurant, restaurantKeyword)) {
+                return MATCH_CONVENIENCE;
+            }
             if (containsIgnoreCase(restaurant.getAddress(), restaurantKeyword)
                     || containsIgnoreCase(restaurant.getRoadAddress(), restaurantKeyword)) {
                 return MATCH_ADDRESS;
+            }
+            if (matchesAllSearchTokens(restaurant, restaurantKeyword)) {
+                return MATCH_MULTI_TOKEN;
             }
         }
 
@@ -69,8 +79,10 @@ public final class SearchRestaurantMatcher {
             case MATCH_CATEGORY -> 2;
             case MATCH_MENU -> 3;
             case MATCH_TAG -> 4;
-            case MATCH_ADDRESS -> 5;
-            case MATCH_REGION -> 6;
+            case MATCH_CONVENIENCE -> 5;
+            case MATCH_MULTI_TOKEN -> 6;
+            case MATCH_ADDRESS -> 7;
+            case MATCH_REGION -> 8;
             default -> 100;
         };
     }
@@ -108,6 +120,28 @@ public final class SearchRestaurantMatcher {
         return source.toLowerCase(Locale.ROOT).contains(keyword.toLowerCase(Locale.ROOT));
     }
 
+    public static List<String> tokenize(String keyword) {
+        if (keyword == null || keyword.isBlank()) {
+            return List.of();
+        }
+        return Arrays.stream(keyword.trim().split("\\s+"))
+                .map(String::trim)
+                .filter(token -> !token.isBlank())
+                .distinct()
+                .toList();
+    }
+
+    public static boolean hasParkingSignal(Restaurant restaurant) {
+        if (restaurant == null) {
+            return false;
+        }
+        return restaurant.isParkingAvailable()
+                || matchesConvenience(restaurant, "주차")
+                || matchesConvenience(restaurant, "二쇱감")
+                || restaurant.getRestaurantTags().stream().anyMatch(tag -> matchesTag(tag, "주차"))
+                || restaurant.getRestaurantTags().stream().anyMatch(tag -> matchesTag(tag, "二쇱감"));
+    }
+
     private static boolean startsWithIgnoreCase(String source, String prefix) {
         if (source == null || prefix == null) {
             return false;
@@ -124,5 +158,28 @@ public final class SearchRestaurantMatcher {
         return restaurantTag.getTag() != null
                 && Boolean.TRUE.equals(restaurantTag.getTag().getIsActive())
                 && containsIgnoreCase(restaurantTag.getTag().getTagName(), keyword);
+    }
+
+    private static boolean matchesConvenience(Restaurant restaurant, String keyword) {
+        return restaurant.getConveniences() != null
+                && restaurant.getConveniences().stream()
+                .anyMatch(convenience -> containsIgnoreCase(convenience, keyword));
+    }
+
+    private static boolean matchesAllSearchTokens(Restaurant restaurant, String keyword) {
+        List<String> tokens = tokenize(keyword);
+        return tokens.size() > 1 && tokens.stream()
+                .allMatch(token -> matchesAnySearchSurface(restaurant, token));
+    }
+
+    private static boolean matchesAnySearchSurface(Restaurant restaurant, String token) {
+        return containsIgnoreCase(restaurant.getName(), token)
+                || containsIgnoreCase(restaurant.getCategoryName(), token)
+                || containsIgnoreCase(restaurant.getPrimaryCategoryName(), token)
+                || restaurant.getMenuItems().stream().anyMatch(menuItem -> matchesMenu(menuItem, token))
+                || restaurant.getRestaurantTags().stream().anyMatch(tag -> matchesTag(tag, token))
+                || matchesConvenience(restaurant, token)
+                || containsIgnoreCase(restaurant.getAddress(), token)
+                || containsIgnoreCase(restaurant.getRoadAddress(), token);
     }
 }
