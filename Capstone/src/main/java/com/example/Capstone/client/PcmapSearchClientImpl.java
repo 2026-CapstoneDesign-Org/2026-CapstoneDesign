@@ -47,8 +47,8 @@ public class PcmapSearchClientImpl implements PcmapSearchClient {
     public PcmapSearchClientImpl(
             ObjectMapper objectMapper,
             @Value("${search.pcmap.enabled:true}") boolean enabled,
-            @Value("${search.pcmap.center-x:127.1775537}") String centerX,
-            @Value("${search.pcmap.center-y:37.2410864}") String centerY,
+            @Value("${search.pcmap.center-x:}") String centerX,
+            @Value("${search.pcmap.center-y:}") String centerY,
             @Value("${search.pcmap.display:10}") int display,
             @Value("${search.pcmap.min-interval-ms:3000}") long minIntervalMillis,
             @Value("${search.pcmap.cooldown-ms:60000}") long cooldownMillis,
@@ -60,8 +60,8 @@ public class PcmapSearchClientImpl implements PcmapSearchClient {
                 .connectTimeout(Duration.ofSeconds(5))
                 .build();
         this.enabled = enabled;
-        this.centerX = centerX;
-        this.centerY = centerY;
+        this.centerX = centerX == null ? "" : centerX.trim();
+        this.centerY = centerY == null ? "" : centerY.trim();
         this.display = normalizeDisplay(display);
         this.minIntervalMillis = Math.max(0L, minIntervalMillis);
         this.cooldownMillis = Math.max(0L, cooldownMillis);
@@ -140,20 +140,22 @@ public class PcmapSearchClientImpl implements PcmapSearchClient {
         waitForRequestSlot();
 
         String encodedKeyword = URLEncoder.encode(keyword, StandardCharsets.UTF_8);
-        String url = "https://pcmap.place.naver.com/place/list"
-                + "?query=" + encodedKeyword
-                + "&x=" + centerX
-                + "&y=" + centerY
-                + "&clientX=" + centerX
-                + "&clientY=" + centerY
-                + "&from=map"
-                + "&display=" + requestedDisplay
-                + "&locale=ko"
-                + "&svcName=map_pcv5"
-                + "&noredirect=1";
+        StringBuilder url = new StringBuilder("https://pcmap.place.naver.com/place/list")
+                .append("?query=").append(encodedKeyword)
+                .append("&from=map")
+                .append("&display=").append(requestedDisplay)
+                .append("&locale=ko")
+                .append("&svcName=map_pcv5")
+                .append("&noredirect=1");
+        if (!centerX.isBlank() && !centerY.isBlank()) {
+            url.append("&x=").append(centerX)
+                    .append("&y=").append(centerY)
+                    .append("&clientX=").append(centerX)
+                    .append("&clientY=").append(centerY);
+        }
 
         HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
-                .uri(URI.create(url))
+                .uri(URI.create(url.toString()))
                 .timeout(Duration.ofSeconds(10))
                 .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
                 .header("Accept-Language", "ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7")
