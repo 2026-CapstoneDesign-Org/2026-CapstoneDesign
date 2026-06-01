@@ -1,8 +1,10 @@
 package com.example.Capstone.dto.response;
 
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
 
+import com.example.Capstone.domain.ListRestaurant;
 import com.example.Capstone.domain.UserList;
 
 public record UserListDetailResponse(
@@ -25,6 +27,7 @@ public record UserListDetailResponse(
                 userList.getIsPublic(),
                 userList.getIsRepresentative(),
                 userList.getListRestaurants().stream()
+                        .sorted(Comparator.comparing(ListRestaurant::getAutoScore).reversed())
                         .map(ListRestaurantResponse::from)
                         .toList(),
                 userList.getCreatedAt(),
