@@ -405,6 +405,17 @@ class ReservationProviderWebhookE2ETest {
                 )
                 """);
         jdbcTemplate.update("""
+                DELETE FROM reservation_provider_events
+                WHERE provider = 'MOCK'
+                  AND provider_event_id IN (
+                    'webhook-event-1',
+                    'webhook-event-duplicate',
+                    'webhook-event-wrong-call',
+                    'webhook-event-missing-reservation',
+                    'webhook-event-late-started'
+                  )
+                """);
+        jdbcTemplate.update("""
                 DELETE FROM restaurant_reservations
                 WHERE restaurant_id IN (
                     SELECT id FROM restaurants

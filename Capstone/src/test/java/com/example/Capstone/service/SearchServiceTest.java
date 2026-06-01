@@ -313,6 +313,53 @@ class SearchServiceTest {
         assertEquals(new BigDecimal("127.0"), response.restaurants().get(0).lng());
     }
 
+    @Test
+    @DisplayName("region plus category query uses combined internal candidates before fallback")
+    void searchUsesCombinedRegionAndKeywordCandidatesBeforeFallback() {
+        Restaurant target = restaurant(61L, "Town Cafe", "city-a district-a", "city-a district-a town-a", "cafe", "latte", "brunch", "town-a");
+
+        when(restaurantRepository.searchVisibleRestaurantsByRegionSignal(eq("town-a cafe"), any(Pageable.class)))
+                .thenReturn(List.of());
+        when(restaurantRepository.searchVisibleRestaurantsByRegionSignal(eq("town-a"), any(Pageable.class)))
+                .thenReturn(List.of(target));
+        when(restaurantRepository.searchVisibleRestaurantsByRegionAndSearchTokens(eq("town-a"), eq("cafe"), any(Pageable.class)))
+                .thenReturn(List.of(target));
+
+        SearchResponse response = searchService.search("town-a cafe");
+
+        assertEquals("RESTAURANT", response.primaryType());
+        assertEquals("town-a", response.interpretation().regionKeyword());
+        assertEquals("cafe", response.interpretation().restaurantKeyword());
+        assertEquals(1, response.restaurants().size());
+        assertEquals("Town Cafe", response.restaurants().get(0).restaurantName());
+        assertFalse(response.interpretation().fallbackUsed());
+        verify(pcmapSearchClient, never()).searchRestaurants(eq("town-a cafe"), any(Integer.class));
+    }
+
+    @Test
+    @DisplayName("multi-token query can match tag/convenience and category together")
+    void searchTreatsMultiTokenTagAndCategoryAsInternalMatch() {
+        Restaurant target = restaurant(62L, "Parking Cafe", "region-a", "region-a town-b", "cafe", "latte", "주차 가능", "town-b");
+        ReflectionTestUtils.setField(target, "conveniences", new ArrayList<>(List.of("주차 가능")));
+
+        when(restaurantRepository.searchVisibleRestaurantsByRegionSignal(any(), any(Pageable.class)))
+                .thenReturn(List.of());
+        when(restaurantRepository.searchVisibleRestaurantsBySearchTokens(eq("주차 cafe"), any(Pageable.class)))
+                .thenReturn(List.of(target));
+        when(restaurantRepository.searchVisibleRestaurantsBySearchKeyword(eq("주차 cafe"), any(Pageable.class)))
+                .thenReturn(List.of());
+        when(userRepository.searchVisibleUsers(eq("주차 cafe"), any(Pageable.class)))
+                .thenReturn(List.of());
+
+        SearchResponse response = searchService.search("주차 cafe");
+
+        assertEquals("RESTAURANT", response.primaryType());
+        assertEquals("MULTI_TOKEN", response.restaurants().get(0).matchedBy());
+        assertTrue(response.restaurants().get(0).parkingAvailable());
+        assertFalse(response.interpretation().fallbackUsed());
+        verify(pcmapSearchClient, never()).searchRestaurants(eq("주차 cafe"), any(Integer.class));
+    }
+
     private User user(Long id, String nickname) {
         User user = User.builder()
                 .provider("KAKAO")

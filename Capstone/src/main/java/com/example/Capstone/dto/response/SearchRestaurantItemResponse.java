@@ -15,6 +15,7 @@ public record SearchRestaurantItemResponse(
         String imageUrl,
         String primaryCategoryName,
         List<String> categories,
-        String matchedBy
+        String matchedBy,
+        Boolean parkingAvailable
 ) {
 }
