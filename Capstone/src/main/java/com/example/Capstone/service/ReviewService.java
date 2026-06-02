@@ -6,6 +6,7 @@ import com.example.Capstone.domain.Notification.NotificationType;
 import com.example.Capstone.dto.request.CreateReviewRequest;
 import com.example.Capstone.dto.request.ReviewVoteRequest;
 import com.example.Capstone.dto.request.UpdateReviewRequest;
+import com.example.Capstone.dto.response.PageResponse;
 import com.example.Capstone.dto.response.ReviewResponse;
 import com.example.Capstone.dto.response.UserReviewResponse;
 import com.example.Capstone.exception.BusinessException;
@@ -13,6 +14,9 @@ import com.example.Capstone.repository.*;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -78,46 +82,48 @@ public class ReviewService {
         );
         
         return ReviewResponse.from(review, 0, 0);
+    } 
+
+    public PageResponse<ReviewResponse> getReviews(Long restaurantId, Long userId, Pageable pageable) {
+        Page<ReviewResponse> page = reviewRepository
+                .findAllByRestaurantIdWithDetailsOptimized(restaurantId, pageable)
+                .map(review -> {
+                    ReviewVote.VoteType myVote = null;
+                    if (userId != null) {
+                        myVote = reviewVoteRepository
+                                .findByUserIdAndReviewId(userId, review.getId())
+                                .map(ReviewVote::getVoteType)
+                                .orElse(null);
+                    }
+                    return ReviewResponse.from(
+                            review,
+                            reviewVoteRepository.countByReviewIdAndVoteType(review.getId(), ReviewVote.VoteType.LIKE),
+                            reviewVoteRepository.countByReviewIdAndVoteType(review.getId(), ReviewVote.VoteType.DISLIKE),
+                            myVote
+                    );
+                });
+        return PageResponse.from(page);
     }
 
-    public List<ReviewResponse> getReviews(Long restaurantId) {
-        return getReviews(null, restaurantId);
-    }
-
-    public List<ReviewResponse> getReviews(Long viewerUserId, Long restaurantId) {
-        List<Review> reviews = reviewRepository
-                .findAllByRestaurantIdAndIsDeletedFalseAndIsHiddenFalse(restaurantId);
-        Map<Long, ReviewVote.VoteType> myVoteTypes = getMyVoteTypes(viewerUserId, reviews);
-
-        return reviews
-                .stream()
-                .map(review -> ReviewResponse.from(
-                        review,
-                        reviewVoteRepository.countByReviewIdAndVoteType(review.getId(), ReviewVote.VoteType.LIKE),
-                        reviewVoteRepository.countByReviewIdAndVoteType(review.getId(), ReviewVote.VoteType.DISLIKE),
-                        myVoteTypes.get(review.getId())
-                ))
-                .toList();
-    }
-
-    public List<UserReviewResponse> getUserReviews(Long userId) {
-        return getUserReviews(userId, null);
-    }
-
-    public List<UserReviewResponse> getUserReviews(Long targetUserId, Long viewerUserId) {
-        List<Review> reviews = reviewRepository
-                .findAllByUserIdAndIsDeletedFalseAndIsHiddenFalse(targetUserId);
-        Map<Long, ReviewVote.VoteType> myVoteTypes = getMyVoteTypes(viewerUserId, reviews);
-
-        return reviews
-                .stream()
-                .map(review -> UserReviewResponse.from(
-                        review,
-                        reviewVoteRepository.countByReviewIdAndVoteType(review.getId(), ReviewVote.VoteType.LIKE),
-                        reviewVoteRepository.countByReviewIdAndVoteType(review.getId(), ReviewVote.VoteType.DISLIKE),
-                        myVoteTypes.get(review.getId())
-                ))
-                .toList();
+    public PageResponse<UserReviewResponse> getUserReviews(Long userId, Long currentUserId, Pageable pageable) {
+        Page<UserReviewResponse> page = reviewRepository
+                .findAllByUserIdWithDetails(userId, pageable)
+                .map(review -> {
+                    ReviewVote.VoteType myVote = null;
+                    if (currentUserId != null) {
+                        myVote = reviewVoteRepository
+                                .findByUserIdAndReviewId(currentUserId, review.getId())
+                                .map(ReviewVote::getVoteType)
+                                .orElse(null);
+                    }
+                    return UserReviewResponse.from(
+                            review,
+                            reviewVoteRepository.countByReviewIdAndVoteType(review.getId(), ReviewVote.VoteType.LIKE),
+                            reviewVoteRepository.countByReviewIdAndVoteType(review.getId(), ReviewVote.VoteType.DISLIKE),
+                            myVote
+                    );
+                });
+        return PageResponse.from(page);
     }
 
     @Transactional

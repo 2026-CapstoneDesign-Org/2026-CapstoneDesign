@@ -6,6 +6,10 @@ import java.util.List;
 import java.math.BigDecimal;
 import java.util.Optional;
 
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +29,7 @@ import com.example.Capstone.dto.request.AddRestaurantRequest;
 import com.example.Capstone.dto.request.CreateListRequest;
 import com.example.Capstone.dto.request.UpdateListRequest;
 import com.example.Capstone.dto.request.UpdateScoreRequest;
+import com.example.Capstone.dto.response.PageResponse;
 import com.example.Capstone.dto.response.RestaurantResponse;
 import com.example.Capstone.dto.response.UserListDetailResponse;
 import com.example.Capstone.dto.response.UserListResponse;
@@ -109,14 +114,14 @@ public class UserListService {
     }
 
 	// 내 리스트 목록
-	public List<UserListResponse> getMyLists(Long userId) {
-        return userListRepository.findAllByUserIdAndIsDeletedFalse(userId)
-                .stream()
+	public PageResponse<UserListResponse> getMyLists(Long userId, Pageable pageable) {
+        Page<UserListResponse> page = userListRepository
+                .findAllByUserIdWithDetails(userId, pageable)
                 .map(userList -> UserListResponse.from(
                         userList,
                         listLikeRepository.existsByUserIdAndUserListId(userId, userList.getId())
-                ))
-                .toList();
+                ));
+        return PageResponse.from(page);
     }
 
     public UserListDetailResponse getRepresentativeList(Long userId) {
@@ -127,8 +132,10 @@ public class UserListService {
     }
 
 	// 리스트 상세
+    @Cacheable(value = "listDetail", key = "#listId + '_' + #userId")
 	public UserListDetailResponse getList(Long listId, Long userId) {
-        UserList userList = userListRepository.findByIdAndIsDeletedFalse(listId)
+        UserList userList = userListRepository
+                .findByIdWithDetails(listId) 
                 .orElseThrow(() -> new EntityNotFoundException("리스트를 찾을 수 없습니다."));
         boolean isLiked = userId != null &&
                 listLikeRepository.existsByUserIdAndUserListId(userId, listId);
@@ -136,6 +143,7 @@ public class UserListService {
 }
 
 	// 리스트 정보 수정
+    @CacheEvict(value = "listDetail", key = "#listId + '_' + #userId")
 	@Transactional
     public UserListResponse updateList(Long userId, Long listId, UpdateListRequest request) {
         UserList userList = getOwnedList(userId, listId);
@@ -174,6 +182,7 @@ public class UserListService {
     }
 
 	// 리스트 삭제
+    @CacheEvict(value = "listDetail", allEntries = true)
 	@Transactional
 	public void deleteList(Long userId, Long listId) {
         UserList userList = getOwnedList(userId, listId);
