@@ -2,8 +2,6 @@ package com.example.Capstone.repository;
 
 import java.util.List;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -19,6 +17,4 @@ public interface UserFollowRepository extends JpaRepository<UserFollow, Long> {
     List<UserFollow> findAllByFollowerId(Long followerId);   // 팔로잉 목록
     long countByFollowingId(Long followingId);
     long countByFollowerId(Long followerId);
-    Page<UserFollow> findAllByFollowingId(Long followingId, Pageable pageable);
-    Page<UserFollow> findAllByFollowerId(Long followerId, Pageable pageable);
 }
