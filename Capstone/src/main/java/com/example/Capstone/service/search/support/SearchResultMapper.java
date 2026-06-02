@@ -29,7 +29,10 @@ public final class SearchResultMapper {
                 interpretation.regionKeyword(),
                 interpretation.restaurantKeyword(),
                 interpretation.genericBrowseQuery(),
-                interpretation.fallbackUsed()
+                interpretation.fallbackUsed(),
+                interpretation.fallbackAttempted(),
+                interpretation.fallbackReason(),
+                interpretation.fallbackResultCount()
         );
     }
 

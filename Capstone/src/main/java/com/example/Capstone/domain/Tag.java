@@ -6,6 +6,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import org.hibernate.annotations.BatchSize;
 import com.example.Capstone.domain.base.BaseTimeEntity;
 
 import lombok.AccessLevel;
@@ -15,6 +16,7 @@ import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "tags")
+@BatchSize(size = 100)
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Tag extends BaseTimeEntity {

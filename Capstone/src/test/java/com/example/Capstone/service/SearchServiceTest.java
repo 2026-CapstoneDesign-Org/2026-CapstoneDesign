@@ -13,6 +13,7 @@ import static org.mockito.Mockito.when;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -78,7 +79,7 @@ class SearchServiceTest {
 
         when(restaurantRepository.searchVisibleRestaurantsByRegionSignal(eq("온더보더"), any(Pageable.class)))
                 .thenReturn(List.of());
-        when(restaurantRepository.searchVisibleRestaurantsBySearchKeyword(eq("온더보더"), any(Pageable.class)))
+        when(restaurantRepository.searchVisibleRestaurantsByCoreKeyword(eq("온더보더"), any(Pageable.class)))
                 .thenReturn(List.of(restaurant));
         when(userRepository.searchVisibleUsers(eq("온더보더"), any(Pageable.class)))
                 .thenReturn(List.of());
@@ -99,10 +100,6 @@ class SearchServiceTest {
     void searchTreatsPlainNicknameAsUserIntentWithoutFallbackPollution() {
         User user = user(9L, "tester");
 
-        when(restaurantRepository.searchVisibleRestaurantsByRegionSignal(eq("tester"), any(Pageable.class)))
-                .thenReturn(List.of());
-        when(restaurantRepository.searchVisibleRestaurantsBySearchKeyword(eq("tester"), any(Pageable.class)))
-                .thenReturn(List.of());
         when(userRepository.searchVisibleUsers(eq("tester"), any(Pageable.class)))
                 .thenReturn(List.of(user));
 
@@ -167,8 +164,8 @@ class SearchServiceTest {
                 .thenReturn(List.of());
         when(restaurantRepository.searchVisibleRestaurantsByRegionSignal(eq("성수"), any(Pageable.class)))
                 .thenReturn(List.of(seongsuDonkkaseu));
-        when(restaurantRepository.searchVisibleRestaurantsBySearchKeyword(eq("돈까스"), any(Pageable.class)))
-                .thenReturn(List.of(seongsuDonkkaseu, gangnamDonkkaseu));
+        when(restaurantRepository.searchVisibleRestaurantsByRegionAndMenuKeyword(eq("성수"), eq("돈까스"), any(Pageable.class)))
+                .thenReturn(List.of(seongsuDonkkaseu));
 
         SearchResponse response = searchService.search("성수 돈까스");
 
@@ -187,7 +184,7 @@ class SearchServiceTest {
 
         when(restaurantRepository.searchVisibleRestaurantsByRegionSignal(eq("브런치"), any(Pageable.class)))
                 .thenReturn(List.of());
-        when(restaurantRepository.searchVisibleRestaurantsBySearchKeyword(eq("브런치"), any(Pageable.class)))
+        when(restaurantRepository.searchVisibleRestaurantsByCoreKeyword(eq("브런치"), any(Pageable.class)))
                 .thenReturn(List.of(categoryRestaurant));
         when(userRepository.searchVisibleUsers(eq("브런치"), any(Pageable.class)))
                 .thenReturn(List.of());
@@ -210,8 +207,8 @@ class SearchServiceTest {
                 .thenReturn(List.of());
         when(restaurantRepository.searchVisibleRestaurantsByRegionSignal(eq("역북"), any(Pageable.class)))
                 .thenReturn(List.of(target));
-        when(restaurantRepository.searchVisibleRestaurantsBySearchKeyword(eq("하이볼"), any(Pageable.class)))
-                .thenReturn(List.of(target, otherRegion));
+        when(restaurantRepository.searchVisibleRestaurantsByRegionAndTagKeyword(eq("역북"), eq("하이볼"), any(Pageable.class)))
+                .thenReturn(List.of(target));
 
         SearchResponse response = searchService.search("역북 하이볼");
 
@@ -248,7 +245,7 @@ class SearchServiceTest {
 
         when(restaurantRepository.searchVisibleRestaurantsByRegionSignal(eq("Road Street"), any(Pageable.class)))
                 .thenReturn(List.of());
-        when(restaurantRepository.searchVisibleRestaurantsBySearchKeyword(eq("Road Street"), any(Pageable.class)))
+        when(restaurantRepository.searchVisibleRestaurantsByCoreKeyword(eq("Road Street"), any(Pageable.class)))
                 .thenReturn(List.of(restaurant));
         when(userRepository.searchVisibleUsers(eq("Road Street"), any(Pageable.class)))
                 .thenReturn(List.of());
@@ -267,7 +264,7 @@ class SearchServiceTest {
 
         when(restaurantRepository.searchVisibleRestaurantsByRegionSignal(eq("곱창"), any(Pageable.class)))
                 .thenReturn(List.of());
-        when(restaurantRepository.searchVisibleRestaurantsBySearchKeyword(eq("곱창"), any(Pageable.class)))
+        when(restaurantRepository.searchVisibleRestaurantsByCoreKeyword(eq("곱창"), any(Pageable.class)))
                 .thenReturn(List.of(internalRestaurant));
         when(userRepository.searchVisibleUsers(eq("곱창"), any(Pageable.class)))
                 .thenReturn(List.of());
@@ -285,8 +282,6 @@ class SearchServiceTest {
     @DisplayName("fallback appends external candidates when the restaurant is absent from DB")
     void searchUsesFallbackWhenInternalRestaurantCandidatesAreEmpty() {
         when(restaurantRepository.searchVisibleRestaurantsByRegionSignal(eq("missing-place"), any(Pageable.class)))
-                .thenReturn(List.of());
-        when(restaurantRepository.searchVisibleRestaurantsBySearchKeyword(eq("missing-place"), any(Pageable.class)))
                 .thenReturn(List.of());
         when(userRepository.searchVisibleUsers(eq("missing-place"), any(Pageable.class)))
                 .thenReturn(List.of());
@@ -307,10 +302,113 @@ class SearchServiceTest {
 
         assertEquals("RESTAURANT", response.primaryType());
         assertTrue(response.interpretation().fallbackUsed());
+        assertTrue(response.interpretation().fallbackAttempted());
+        assertEquals("NO_INTERNAL_RESULTS", response.interpretation().fallbackReason());
+        assertEquals(1, response.interpretation().fallbackResultCount());
         assertEquals(1, response.restaurants().size());
         assertEquals("EXTERNAL_FALLBACK", response.restaurants().get(0).source());
         assertEquals(new BigDecimal("37.0"), response.restaurants().get(0).lat());
         assertEquals(new BigDecimal("127.0"), response.restaurants().get(0).lng());
+    }
+
+    @Test
+    @DisplayName("fallback candidate is mapped back to an internal restaurant by pcmap place id")
+    void searchMapsFallbackCandidateToInternalRestaurantWhenPcmapPlaceIdExists() {
+        Restaurant mappedRestaurant = restaurant(56L, "내부 매핑 식당", "서울 강남", "서울 강남구", "한식", "김치찌개", "한식", "역삼동");
+        ReflectionTestUtils.setField(mappedRestaurant, "pcmapPlaceId", "external-registered");
+
+        when(restaurantRepository.searchVisibleRestaurantsByRegionSignal(eq("registered-place"), any(Pageable.class)))
+                .thenReturn(List.of());
+        when(userRepository.searchVisibleUsers(eq("registered-place"), any(Pageable.class)))
+                .thenReturn(List.of());
+        when(pcmapSearchClient.searchRestaurants(eq("registered-place"), any(Integer.class)))
+                .thenReturn(List.of(new PcmapRestaurantCandidate(
+                        "external-registered",
+                        "내부 매핑 식당",
+                        "한식",
+                        "서울 강남구",
+                        "서울 강남구",
+                        "서울 강남구",
+                        "external-image",
+                        "127.0",
+                        "37.0"
+                )));
+        when(restaurantRepository.findByPcmapPlaceId("external-registered"))
+                .thenReturn(Optional.of(mappedRestaurant));
+
+        SearchResponse response = searchService.search("registered-place");
+
+        assertTrue(response.interpretation().fallbackUsed());
+        assertTrue(response.interpretation().fallbackAttempted());
+        assertEquals(1, response.interpretation().fallbackResultCount());
+        assertEquals(1, response.restaurants().size());
+        assertEquals(56L, response.restaurants().get(0).restaurantId());
+        assertEquals("INTERNAL", response.restaurants().get(0).source());
+        assertEquals("EXTERNAL_FALLBACK", response.restaurants().get(0).matchedBy());
+    }
+
+    @Test
+    @DisplayName("fallback excludes clearly non-food pcmap candidates")
+    void searchFiltersClearlyNonFoodFallbackCandidates() {
+        when(restaurantRepository.searchVisibleRestaurantsByRegionSignal(eq("missing-clinic"), any(Pageable.class)))
+                .thenReturn(List.of());
+        when(userRepository.searchVisibleUsers(eq("missing-clinic"), any(Pageable.class)))
+                .thenReturn(List.of());
+        when(pcmapSearchClient.searchRestaurants(eq("missing-clinic"), any(Integer.class)))
+                .thenReturn(List.of(new PcmapRestaurantCandidate(
+                        "clinic-1",
+                        "Missing Clinic",
+                        "병원",
+                        "Seoul Gangnam",
+                        "Seoul Gangnam",
+                        "Seoul Gangnam",
+                        "external-image",
+                        "127.0",
+                        "37.0"
+                )));
+
+        SearchResponse response = searchService.search("missing-clinic");
+
+        assertFalse(response.interpretation().fallbackUsed());
+        assertTrue(response.interpretation().fallbackAttempted());
+        assertEquals("NO_INTERNAL_RESULTS", response.interpretation().fallbackReason());
+        assertEquals(0, response.interpretation().fallbackResultCount());
+        assertTrue(response.restaurants().isEmpty());
+    }
+
+    @Test
+    @DisplayName("region plus menu query uses fallback when internal result count is low")
+    void searchUsesFallbackWhenRegionMenuInternalResultsAreLow() {
+        Restaurant internalRestaurant = restaurant(55L, "역북 점심집", "용인 처인구", "용인시 처인구 역북동", "일식", "돈까스", "돈까스", "역북동");
+
+        when(restaurantRepository.searchVisibleRestaurantsByRegionSignal(eq("역북 돈까스"), any(Pageable.class)))
+                .thenReturn(List.of());
+        when(restaurantRepository.searchVisibleRestaurantsByRegionSignal(eq("역북"), any(Pageable.class)))
+                .thenReturn(List.of(internalRestaurant));
+        when(restaurantRepository.searchVisibleRestaurantsByRegionAndMenuKeyword(eq("역북"), eq("돈까스"), any(Pageable.class)))
+                .thenReturn(List.of(internalRestaurant));
+        when(pcmapSearchClient.searchRestaurants(eq("역북 돈까스"), any(Integer.class)))
+                .thenReturn(List.of(new PcmapRestaurantCandidate(
+                        "external-low-count",
+                        "역북 새돈까스",
+                        "돈까스",
+                        "용인시 처인구 역북동",
+                        "용인시 처인구 역북동",
+                        "용인시 처인구 역북동",
+                        "external-image",
+                        "127.1",
+                        "37.1"
+                )));
+
+        SearchResponse response = searchService.search("역북 돈까스");
+
+        assertTrue(response.interpretation().fallbackUsed());
+        assertTrue(response.interpretation().fallbackAttempted());
+        assertEquals("LOW_INTERNAL_RESULT_COUNT", response.interpretation().fallbackReason());
+        assertEquals(1, response.interpretation().fallbackResultCount());
+        assertEquals(2, response.restaurants().size());
+        assertEquals("INTERNAL", response.restaurants().get(0).source());
+        assertEquals("EXTERNAL_FALLBACK", response.restaurants().get(1).source());
     }
 
     @Test
@@ -322,7 +420,7 @@ class SearchServiceTest {
                 .thenReturn(List.of());
         when(restaurantRepository.searchVisibleRestaurantsByRegionSignal(eq("town-a"), any(Pageable.class)))
                 .thenReturn(List.of(target));
-        when(restaurantRepository.searchVisibleRestaurantsByRegionAndSearchTokens(eq("town-a"), eq("cafe"), any(Pageable.class)))
+        when(restaurantRepository.searchVisibleRestaurantsByRegionAndCoreKeyword(eq("town-a"), eq("cafe"), any(Pageable.class)))
                 .thenReturn(List.of(target));
 
         SearchResponse response = searchService.search("town-a cafe");
@@ -344,10 +442,12 @@ class SearchServiceTest {
 
         when(restaurantRepository.searchVisibleRestaurantsByRegionSignal(any(), any(Pageable.class)))
                 .thenReturn(List.of());
-        when(restaurantRepository.searchVisibleRestaurantsBySearchTokens(eq("주차 cafe"), any(Pageable.class)))
-                .thenReturn(List.of(target));
-        when(restaurantRepository.searchVisibleRestaurantsBySearchKeyword(eq("주차 cafe"), any(Pageable.class)))
+        when(restaurantRepository.searchVisibleRestaurantsByCoreKeyword(eq("주차 cafe"), any(Pageable.class)))
                 .thenReturn(List.of());
+        when(restaurantRepository.searchVisibleRestaurantsByCoreKeyword(eq("주차"), any(Pageable.class)))
+                .thenReturn(List.of(target));
+        when(restaurantRepository.searchVisibleRestaurantsByCoreKeyword(eq("cafe"), any(Pageable.class)))
+                .thenReturn(List.of(target));
         when(userRepository.searchVisibleUsers(eq("주차 cafe"), any(Pageable.class)))
                 .thenReturn(List.of());
 
