@@ -67,12 +67,17 @@
 
 ## 4. 외부 fallback 검색
 ### 4-1. fallback 사용 조건
-현재 코드 기준 외부 fallback은 아래 조건을 모두 만족할 때만 사용한다.
-- 내부 식당 결과가 0개다.
-- restaurant keyword가 존재한다.
-- generic browse query가 아니다.
+현재 코드 기준 외부 fallback은 사용자/지역 탐색 의도가 아니라 식당 검색 의도가 있을 때만 검토한다.
 
-SeokH-dev의 마지막 병합 커밋 이후 현재 `main`에서는 fallback 기준이 `내부 결과 5개 미만`이 아니라 `내부 결과 0개`로 좁혀져 있다.
+fallback 판단 사유는 아래 값으로 분류한다.
+- `NO_INTERNAL_RESULTS`: 내부 식당 결과가 없다.
+- `LOW_INTERNAL_RESULT_COUNT`: 지역 + 메뉴/태그 검색에서 내부 결과가 5개 미만이고 상호명 매칭이 없다.
+- `WEAK_INTERNAL_MATCH`: 내부 결과는 있으나 상호/카테고리/메뉴/태그/편의/멀티 토큰 매칭이 없다.
+
+아래 경우에는 fallback을 호출하지 않는다.
+- `@nickname` 명시 사용자 검색
+- 지역 단독 또는 `맛집`, `식당`, `밥집`, `추천`, `근처`, `주변` 중심의 generic browse 검색
+- 내부 결과가 충분하거나 상호명 매칭이 있는 경우
 
 ### 4-2. Pcmap 조회
 - `PcmapSearchClientImpl`은 NAVER Pcmap HTML의 Apollo state를 파싱해 후보를 만든다.
@@ -81,11 +86,16 @@ SeokH-dev의 마지막 병합 커밋 이후 현재 `main`에서는 fallback 기�
 - `NAVER_COOKIE`가 있으면 요청 Cookie 헤더로 사용한다.
 
 ### 4-3. fallback 결과 응답
-- fallback 결과의 `source`는 `EXTERNAL_FALLBACK`이다.
-- fallback 결과의 `restaurantId`는 아직 DB row가 없을 수 있으므로 `null`일 수 있다.
+- fallback 경로를 검토하면 `interpretation.fallbackAttempted=true`로 응답한다.
+- fallback으로 실제 보강 결과가 생기면 `interpretation.fallbackUsed=true`로 응답한다.
+- `interpretation.fallbackReason`은 fallback 판단 사유를 나타낸다.
+- `interpretation.fallbackResultCount`는 fallback 경로로 추가된 결과 수다.
+- fallback 후보의 `pcmapPlaceId`가 기존 내부 식당과 일치하면 `source=INTERNAL`, 내부 `restaurantId` 포함 형태로 응답한다.
+- 내부 DB에 없는 fallback 결과의 `source`는 `EXTERNAL_FALLBACK`이고 `restaurantId=null`일 수 있다.
 - fallback 결과는 최대 5개까지 붙인다.
 - 클라이언트가 리스트에 추가하려면 `externalPlaceId`와 원래 `searchQuery`를 사용해 `POST /lists/{id}/restaurants/external-fallback`를 호출한다.
 - 외부 fallback 결과는 내부 식당의 `pcmapPlaceId` 또는 `name + address`와 중복되면 제외한다.
+- 명백한 비식당 카테고리 fallback 후보는 검색 응답에서 제외한다.
 
 ## 5. 리스트 추가 흐름과의 연결
 - 검색 fallback은 외부 후보를 응답에 노출만 한다.

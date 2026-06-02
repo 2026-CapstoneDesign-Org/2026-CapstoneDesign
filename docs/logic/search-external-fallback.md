@@ -7,9 +7,13 @@
 ## 검색 정책
 
 - 검색 API는 내부 식당 결과가 부족할 때 pcmap fallback을 호출한다.
-- fallback 응답은 `source=EXTERNAL_FALLBACK`, `restaurantId=null`, `externalPlaceId` 포함 형태다.
+- fallback 판단 사유는 `NO_INTERNAL_RESULTS`, `LOW_INTERNAL_RESULT_COUNT`, `WEAK_INTERNAL_MATCH`로 구분한다.
+- fallback 경로를 검토하면 `fallbackAttempted=true`, 실제 보강 결과가 있으면 `fallbackUsed=true`로 응답한다.
+- fallback 응답에는 `fallbackReason`, `fallbackResultCount`를 포함한다.
+- fallback 후보의 `pcmapPlaceId`가 기존 내부 식당과 일치하면 `source=INTERNAL`, 내부 `restaurantId` 포함 형태로 응답한다.
+- 내부 DB에 없는 fallback 응답은 `source=EXTERNAL_FALLBACK`, `restaurantId=null`, `externalPlaceId` 포함 형태다.
 - 검색 단계에서는 `restaurants`, `restaurant_menu_items`, `list_restaurants`에 저장하지 않는다.
-- fallback 후보가 이미 DB에 존재하는 경우에도 내부 키워드 매칭이 0건이면 외부 후보로 내려갈 수 있다. 이후 `pcmapPlaceId` 기반 내부 매핑 보강이 필요하다.
+- 명백한 비식당 카테고리 fallback 후보는 검색 응답 단계에서 제외한다.
 
 ## 리스트 등록 정책
 
@@ -66,6 +70,5 @@
 
 ## 남은 보강점
 
-- fallback 후보의 `pcmapPlaceId`가 기존 DB에 있으면 검색 응답 단계에서 내부 `restaurantId`로 매핑하는 보강이 필요하다.
 - `한신포차` detail의 `category_name`은 `포장마차`이고 현재 `primary_category_name`은 `기타`로 저장된다. 카테고리 정규화가 더 필요하면 resolver 규칙을 추가한다.
 - 메뉴는 저장하지만 `restaurant_tags`는 현재 생성하지 않는다. 추천 품질을 높이려면 `Naver_seed`의 태그 추출 규칙을 Java 등록 경로에도 이식해야 한다.

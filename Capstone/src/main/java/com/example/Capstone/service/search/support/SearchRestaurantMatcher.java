@@ -137,9 +137,8 @@ public final class SearchRestaurantMatcher {
         }
         return restaurant.isParkingAvailable()
                 || matchesConvenience(restaurant, "주차")
-                || matchesConvenience(restaurant, "二쇱감")
                 || restaurant.getRestaurantTags().stream().anyMatch(tag -> matchesTag(tag, "주차"))
-                || restaurant.getRestaurantTags().stream().anyMatch(tag -> matchesTag(tag, "二쇱감"));
+                || restaurant.getRestaurantTags().stream().anyMatch(tag -> matchesTag(tag, "파킹"));
     }
 
     private static boolean startsWithIgnoreCase(String source, String prefix) {

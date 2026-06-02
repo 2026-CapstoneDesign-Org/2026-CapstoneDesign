@@ -32,8 +32,9 @@ public class SearchController {
             summary = "Search restaurants, users, and regions",
             description = "Interprets a single query across restaurant, user, and region search flows. "
                     + "Region plus category, menu, or tag combinations are supported. "
-                    + "When internal restaurant matches are insufficient, the service may merge external "
-                    + "NAVER Pcmap fallback results."
+                    + "When internal restaurant matches are insufficient, weak, or too sparse for region-menu "
+                    + "queries, the service may merge NAVER Pcmap fallback results. "
+                    + "Fallback candidates that already exist internally are mapped to internal restaurant IDs."
     )
     @ApiResponses({
             @ApiResponse(

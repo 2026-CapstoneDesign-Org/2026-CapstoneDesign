@@ -6,8 +6,10 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.data.domain.PageRequest;
@@ -49,9 +51,15 @@ public class SearchService {
     private static final int USER_RESULT_LIMIT = 10;
     private static final int REGION_RESULT_LIMIT = 10;
     private static final int INTERNAL_CANDIDATE_FETCH_LIMIT = 300;
+    private static final int PER_TOKEN_CANDIDATE_FETCH_LIMIT = 120;
     private static final int EXTERNAL_FALLBACK_LIMIT = 5;
+    private static final int FALLBACK_MIN_INTERNAL_RESULTS = 5;
     private static final int RANKING_SIGNAL_LIMIT = 100;
     private static final int RANKING_SMOOTHING_CONSTANT = 5;
+
+    private static final String FALLBACK_REASON_NO_INTERNAL_RESULTS = "NO_INTERNAL_RESULTS";
+    private static final String FALLBACK_REASON_LOW_INTERNAL_RESULT_COUNT = "LOW_INTERNAL_RESULT_COUNT";
+    private static final String FALLBACK_REASON_WEAK_INTERNAL_MATCH = "WEAK_INTERNAL_MATCH";
 
     private final RestaurantRepository restaurantRepository;
     private final UserRepository userRepository;
@@ -66,16 +74,19 @@ public class SearchService {
         SearchInterpretation interpretation = new SearchQueryInterpreter(restaurantRepository).interpret(normalizedQuery);
         List<Restaurant> internalCandidates = loadInternalRestaurantCandidates(interpretation);
         List<SearchUserItemResponse> userItems = searchUserItems(interpretation);
-        List<SearchRestaurantItemResponse> restaurantItems = searchRestaurantItems(
+        RestaurantSearchResult restaurantSearchResult = searchRestaurantItems(
                 interpretation,
                 internalCandidates,
                 userItems.isEmpty()
         );
+        List<SearchRestaurantItemResponse> restaurantItems = restaurantSearchResult.items();
 
-        boolean fallbackUsed = restaurantItems.stream()
-                .anyMatch(item -> SOURCE_EXTERNAL_FALLBACK.equals(item.source()));
-
-        SearchInterpretation finalizedInterpretation = interpretation.withFallbackUsed(fallbackUsed);
+        SearchInterpretation finalizedInterpretation = interpretation.withFallbackDecision(
+                restaurantSearchResult.fallbackUsed(),
+                restaurantSearchResult.fallbackAttempted(),
+                restaurantSearchResult.fallbackReason(),
+                restaurantSearchResult.fallbackResultCount()
+        );
         List<SearchRegionItemResponse> regionItems = searchRegionItems(finalizedInterpretation);
 
         return new SearchResponse(
@@ -91,13 +102,13 @@ public class SearchService {
         );
     }
 
-    private List<SearchRestaurantItemResponse> searchRestaurantItems(
+    private RestaurantSearchResult searchRestaurantItems(
             SearchInterpretation interpretation,
             List<Restaurant> internalCandidates,
             boolean userItemsEmpty
     ) {
         if (interpretation.explicitUserQuery()) {
-            return List.of();
+            return new RestaurantSearchResult(List.of(), false, false, null, 0);
         }
 
         Map<Long, Integer> rankingOrder = loadRankingOrder(interpretation, internalCandidates);
@@ -109,51 +120,40 @@ public class SearchService {
                 .limit(RESTAURANT_RESULT_LIMIT)
                 .toList();
 
-        if (!shouldUseFallback(interpretation, internalItems.size(), userItemsEmpty)) {
-            return internalItems;
+        String fallbackReason = resolveFallbackReason(interpretation, internalItems, userItemsEmpty);
+        if (fallbackReason == null) {
+            return new RestaurantSearchResult(internalItems, false, false, null, 0);
         }
 
         List<SearchRestaurantItemResponse> mergedItems = new ArrayList<>(internalItems);
-        mergedItems.addAll(loadExternalFallbackItems(interpretation, internalCandidates));
-        return mergedItems.stream()
+        List<SearchRestaurantItemResponse> fallbackItems = loadExternalFallbackItems(interpretation, internalCandidates);
+        mergedItems.addAll(fallbackItems);
+        return new RestaurantSearchResult(mergedItems.stream()
                 .limit(RESTAURANT_RESULT_LIMIT)
-                .toList();
+                .toList(), !fallbackItems.isEmpty(), true, fallbackReason, fallbackItems.size());
     }
 
     private List<Restaurant> loadInternalRestaurantCandidates(SearchInterpretation interpretation) {
         List<Restaurant> candidates = new ArrayList<>();
         PageRequest candidatePage = PageRequest.of(0, INTERNAL_CANDIDATE_FETCH_LIMIT);
+        PageRequest tokenPage = PageRequest.of(0, PER_TOKEN_CANDIDATE_FETCH_LIMIT);
 
         if (interpretation.restaurantKeyword() != null) {
             if (interpretation.regionKeyword() != null) {
-                addCandidates(candidates, restaurantRepository.searchVisibleRestaurantsByRegionAndSearchTokens(
-                        interpretation.regionKeyword(),
-                        interpretation.restaurantKeyword(),
-                        candidatePage
-                ));
+                addKeywordCandidates(candidates, interpretation.regionKeyword(), interpretation.restaurantKeyword(), candidatePage);
+                addTokenCandidates(candidates, interpretation.regionKeyword(), interpretation.restaurantKeyword(), tokenPage);
+            } else {
+                addKeywordCandidates(candidates, null, interpretation.restaurantKeyword(), candidatePage);
+                addTokenCandidates(candidates, null, interpretation.restaurantKeyword(), tokenPage);
             }
-            addCandidates(candidates, restaurantRepository.searchVisibleRestaurantsBySearchTokens(
-                    interpretation.restaurantKeyword(),
-                    candidatePage
-            ));
-            addCandidates(candidates, restaurantRepository.searchVisibleRestaurantsBySearchKeyword(
-                    interpretation.restaurantKeyword(),
-                    candidatePage
-            ));
         } else if (interpretation.regionKeyword() != null) {
             addCandidates(candidates, restaurantRepository.searchVisibleRestaurantsByRegionSignal(
                     interpretation.regionKeyword(),
                     candidatePage
             ));
         } else {
-            addCandidates(candidates, restaurantRepository.searchVisibleRestaurantsBySearchTokens(
-                    interpretation.normalizedQuery(),
-                    candidatePage
-            ));
-            addCandidates(candidates, restaurantRepository.searchVisibleRestaurantsBySearchKeyword(
-                    interpretation.normalizedQuery(),
-                    candidatePage
-            ));
+            addKeywordCandidates(candidates, null, interpretation.normalizedQuery(), candidatePage);
+            addTokenCandidates(candidates, null, interpretation.normalizedQuery(), tokenPage);
         }
 
         LinkedHashMap<Long, Restaurant> deduplicated = new LinkedHashMap<>();
@@ -166,6 +166,69 @@ public class SearchService {
         }
 
         return new ArrayList<>(deduplicated.values());
+    }
+
+    private void addKeywordCandidates(
+            List<Restaurant> candidates,
+            String regionKeyword,
+            String keyword,
+            PageRequest page
+    ) {
+        if (keyword == null || keyword.isBlank()) {
+            return;
+        }
+
+        List<Restaurant> coreCandidates;
+        if (regionKeyword == null) {
+            coreCandidates = restaurantRepository.searchVisibleRestaurantsByCoreKeyword(keyword, page);
+        } else {
+            coreCandidates = restaurantRepository.searchVisibleRestaurantsByRegionAndCoreKeyword(
+                    regionKeyword,
+                    keyword,
+                    page
+            );
+        }
+        addCandidates(candidates, coreCandidates);
+
+        if (hasNameMatch(coreCandidates, keyword) || candidates.size() >= INTERNAL_CANDIDATE_FETCH_LIMIT) {
+            return;
+        }
+
+        if (regionKeyword == null) {
+            addCandidates(candidates, restaurantRepository.searchVisibleRestaurantsByMenuKeyword(keyword, page));
+            addCandidates(candidates, restaurantRepository.searchVisibleRestaurantsByTagKeyword(keyword, page));
+            return;
+        }
+
+        addCandidates(candidates, restaurantRepository.searchVisibleRestaurantsByRegionAndMenuKeyword(
+                regionKeyword,
+                keyword,
+                page
+        ));
+        addCandidates(candidates, restaurantRepository.searchVisibleRestaurantsByRegionAndTagKeyword(
+                regionKeyword,
+                keyword,
+                page
+        ));
+    }
+
+    private void addTokenCandidates(
+            List<Restaurant> candidates,
+            String regionKeyword,
+            String keyword,
+            PageRequest page
+    ) {
+        List<String> tokens = SearchRestaurantMatcher.tokenize(keyword);
+        if (tokens.size() <= 1) {
+            return;
+        }
+
+        for (String token : tokens) {
+            addKeywordCandidates(candidates, regionKeyword, token, page);
+            if (candidates.size() >= INTERNAL_CANDIDATE_FETCH_LIMIT) {
+                return;
+            }
+        }
     }
 
     private void addCandidates(List<Restaurant> target, List<Restaurant> candidates) {
@@ -187,19 +250,71 @@ public class SearchService {
         return SearchResultMapper.toInternalRestaurantItem(restaurant, matchedBy, SOURCE_INTERNAL);
     }
 
-    private boolean shouldUseFallback(SearchInterpretation interpretation, int internalCount, boolean userItemsEmpty) {
-        return internalCount == 0
-                && userItemsEmpty
-                && interpretation.restaurantKeyword() != null
-                && !interpretation.genericBrowseQuery();
+    private String resolveFallbackReason(
+            SearchInterpretation interpretation,
+            List<SearchRestaurantItemResponse> internalItems,
+            boolean userItemsEmpty
+    ) {
+        if (!userItemsEmpty
+                || interpretation.explicitUserQuery()
+                || interpretation.restaurantKeyword() == null
+                || interpretation.genericBrowseQuery()) {
+            return null;
+        }
+
+        if (internalItems.isEmpty()) {
+            return FALLBACK_REASON_NO_INTERNAL_RESULTS;
+        }
+
+        if (internalItems.stream().noneMatch(this::isStrongInternalRestaurantMatch)) {
+            return FALLBACK_REASON_WEAK_INTERNAL_MATCH;
+        }
+
+        if (interpretation.regionKeyword() != null
+                && internalItems.size() < FALLBACK_MIN_INTERNAL_RESULTS
+                && internalItems.stream().anyMatch(this::isMenuOrTagMatch)
+                && internalItems.stream().noneMatch(this::isNameMatch)) {
+            return FALLBACK_REASON_LOW_INTERNAL_RESULT_COUNT;
+        }
+
+        return null;
+    }
+
+    private boolean isStrongInternalRestaurantMatch(SearchRestaurantItemResponse item) {
+        String matchedBy = item.matchedBy();
+        return SearchRestaurantMatcher.MATCH_NAME_PREFIX.equals(matchedBy)
+                || SearchRestaurantMatcher.MATCH_NAME_CONTAINS.equals(matchedBy)
+                || SearchRestaurantMatcher.MATCH_CATEGORY.equals(matchedBy)
+                || SearchRestaurantMatcher.MATCH_MENU.equals(matchedBy)
+                || SearchRestaurantMatcher.MATCH_TAG.equals(matchedBy)
+                || SearchRestaurantMatcher.MATCH_CONVENIENCE.equals(matchedBy)
+                || SearchRestaurantMatcher.MATCH_MULTI_TOKEN.equals(matchedBy);
+    }
+
+    private boolean isNameMatch(SearchRestaurantItemResponse item) {
+        return SearchRestaurantMatcher.MATCH_NAME_PREFIX.equals(item.matchedBy())
+                || SearchRestaurantMatcher.MATCH_NAME_CONTAINS.equals(item.matchedBy());
+    }
+
+    private boolean isMenuOrTagMatch(SearchRestaurantItemResponse item) {
+        return SearchRestaurantMatcher.MATCH_MENU.equals(item.matchedBy())
+                || SearchRestaurantMatcher.MATCH_TAG.equals(item.matchedBy());
+    }
+
+    private boolean hasNameMatch(List<Restaurant> candidates, String keyword) {
+        if (candidates == null || candidates.isEmpty() || keyword == null || keyword.isBlank()) {
+            return false;
+        }
+        return candidates.stream().anyMatch(candidate ->
+                startsWithIgnoreCase(candidate.getName(), keyword)
+                        || SearchRestaurantMatcher.containsIgnoreCase(candidate.getName(), keyword));
     }
 
     private Comparator<SearchRestaurantItemResponse> internalResultComparator(Map<Long, Integer> rankingOrder) {
         if (!rankingOrder.isEmpty()) {
             return Comparator
-                    .comparingInt((SearchRestaurantItemResponse item) ->
-                            rankingOrder.getOrDefault(item.restaurantId(), Integer.MAX_VALUE))
-                    .thenComparingInt(item -> SearchRestaurantMatcher.matchPriority(item.matchedBy()))
+                    .comparingInt((SearchRestaurantItemResponse item) -> SearchRestaurantMatcher.matchPriority(item.matchedBy()))
+                    .thenComparingInt(item -> rankingOrder.getOrDefault(item.restaurantId(), Integer.MAX_VALUE))
                     .thenComparing(SearchRestaurantItemResponse::restaurantName, Comparator.nullsLast(String::compareToIgnoreCase))
                     .thenComparing(SearchRestaurantItemResponse::restaurantId, Comparator.nullsLast(Long::compareTo));
         }
@@ -218,7 +333,10 @@ public class SearchService {
         }
 
         String regionName = interpretation.regionKeyword();
-        String category = resolveRankingCategory(interpretation.restaurantKeyword());
+        String category = resolveRankingCategory(interpretation.restaurantKeyword(), internalCandidates);
+        if (regionName == null && category == null && interpretation.restaurantKeyword() != null) {
+            return Map.of();
+        }
         List<RestaurantRankingRow> rows = safeRankingRows(regionName, category);
         if (rows.isEmpty() && category != null) {
             rows = safeRankingRows(regionName, null);
@@ -244,7 +362,7 @@ public class SearchService {
         return rows == null ? List.of() : rows;
     }
 
-    private String resolveRankingCategory(String restaurantKeyword) {
+    private String resolveRankingCategory(String restaurantKeyword, List<Restaurant> internalCandidates) {
         if (restaurantKeyword == null || restaurantKeyword.isBlank()) {
             return null;
         }
@@ -252,7 +370,15 @@ public class SearchService {
         if (tokens.isEmpty()) {
             return null;
         }
-        return tokens.get(tokens.size() - 1);
+        String categoryCandidate = tokens.get(tokens.size() - 1);
+        if (internalCandidates == null || internalCandidates.isEmpty()) {
+            return null;
+        }
+
+        boolean matchedCategory = internalCandidates.stream().anyMatch(restaurant ->
+                SearchRestaurantMatcher.containsIgnoreCase(restaurant.getCategoryName(), categoryCandidate)
+                        || SearchRestaurantMatcher.containsIgnoreCase(restaurant.getPrimaryCategoryName(), categoryCandidate));
+        return matchedCategory ? categoryCandidate : null;
     }
 
     private List<SearchRestaurantItemResponse> loadExternalFallbackItems(
@@ -284,6 +410,9 @@ public class SearchService {
                     && !matchesExternalRegion(candidate, interpretation.regionKeyword())) {
                 continue;
             }
+            if (!isLikelyFoodPlace(candidate)) {
+                continue;
+            }
 
             String placeKey = candidate.placeId() == null ? null : "place:" + candidate.placeId();
             String nameAddressKey = "name-address:" + normalizeForDedup(candidate.name())
@@ -297,6 +426,22 @@ public class SearchService {
                 dedupKeys.add(placeKey);
             }
             dedupKeys.add(nameAddressKey);
+
+            Optional<Restaurant> internalRestaurant = findVisibleInternalRestaurant(candidate.placeId());
+            if (internalRestaurant.isPresent()) {
+                Restaurant restaurant = internalRestaurant.get();
+                addInternalDedupKey(dedupKeys, restaurant.getName(), restaurant.getAddress());
+                addInternalDedupKey(dedupKeys, restaurant.getName(), restaurant.getRoadAddress());
+                items.add(SearchResultMapper.toInternalRestaurantItem(
+                        restaurant,
+                        SearchRestaurantMatcher.MATCH_EXTERNAL_FALLBACK,
+                        SOURCE_INTERNAL
+                ));
+                if (items.size() >= EXTERNAL_FALLBACK_LIMIT) {
+                    break;
+                }
+                continue;
+            }
 
             items.add(SearchResultMapper.toExternalRestaurantItem(
                     candidate,
@@ -312,6 +457,15 @@ public class SearchService {
         }
 
         return items;
+    }
+
+    private Optional<Restaurant> findVisibleInternalRestaurant(String pcmapPlaceId) {
+        if (pcmapPlaceId == null || pcmapPlaceId.isBlank()) {
+            return Optional.empty();
+        }
+        return restaurantRepository.findByPcmapPlaceId(pcmapPlaceId)
+                .filter(restaurant -> !Boolean.TRUE.equals(restaurant.getIsDeleted()))
+                .filter(restaurant -> !Boolean.TRUE.equals(restaurant.getIsHidden()));
     }
 
     private String buildFallbackKeyword(SearchInterpretation interpretation) {
@@ -338,6 +492,21 @@ public class SearchService {
         return SearchRestaurantMatcher.containsIgnoreCase(candidate.address(), regionKeyword)
                 || SearchRestaurantMatcher.containsIgnoreCase(candidate.roadAddress(), regionKeyword)
                 || SearchRestaurantMatcher.containsIgnoreCase(candidate.fullAddress(), regionKeyword);
+    }
+
+    private boolean isLikelyFoodPlace(PcmapRestaurantCandidate candidate) {
+        String category = candidate.categoryName();
+        if (category == null || category.isBlank()) {
+            return true;
+        }
+
+        List<String> blockedSignals = List.of(
+                "병원", "약국", "숙박", "호텔", "모텔", "펜션", "학교", "대학교", "학원",
+                "마트", "편의점", "쇼핑", "미용", "헤어", "네일", "부동산", "은행",
+                "주차장", "공원", "관광", "스포츠", "운동", "수리", "세탁"
+        );
+        return blockedSignals.stream()
+                .noneMatch(signal -> SearchRestaurantMatcher.containsIgnoreCase(category, signal));
     }
 
     private List<SearchUserItemResponse> searchUserItems(SearchInterpretation interpretation) {
@@ -441,5 +610,21 @@ public class SearchService {
         }
         dedupKeys.add("name-address:" + normalizeForDedup(name)
                 + "|" + normalizeForDedup(address));
+    }
+
+    private boolean startsWithIgnoreCase(String source, String prefix) {
+        if (source == null || prefix == null) {
+            return false;
+        }
+        return source.toLowerCase(Locale.ROOT).startsWith(prefix.toLowerCase(Locale.ROOT));
+    }
+
+    private record RestaurantSearchResult(
+            List<SearchRestaurantItemResponse> items,
+            boolean fallbackUsed,
+            boolean fallbackAttempted,
+            String fallbackReason,
+            int fallbackResultCount
+    ) {
     }
 }
