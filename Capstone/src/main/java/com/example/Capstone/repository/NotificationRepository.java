@@ -2,8 +2,6 @@ package com.example.Capstone.repository;
 
 import com.example.Capstone.domain.Notification;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -17,8 +15,6 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     List<Notification> findAllByUserIdOrderByCreatedAtDesc(Long userId);
 
     long countByUserIdAndIsReadFalse(Long userId);
-    
-    Page<Notification> findAllByUserIdOrderByCreatedAtDesc(Long userId, Pageable pageable);
 
     @Modifying
     @Query("UPDATE Notification n SET n.isRead = true WHERE n.userId = :userId")

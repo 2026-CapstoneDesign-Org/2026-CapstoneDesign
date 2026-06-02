@@ -12,6 +12,7 @@ import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSeriali
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -25,46 +26,55 @@ import java.util.Map;
 public class RedisConfig {
 
     @Bean
-    public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory factory) {
-        RedisTemplate<String, Object> template = new RedisTemplate<>();
-        template.setConnectionFactory(factory);
-        template.setKeySerializer(new StringRedisSerializer());
-        template.setValueSerializer(new GenericJackson2JsonRedisSerializer());
-        template.setHashKeySerializer(new StringRedisSerializer());
-        template.setHashValueSerializer(new GenericJackson2JsonRedisSerializer());
-        return template;
-    }
-
-    @Bean
-    public CacheManager cacheManager(RedisConnectionFactory factory) {
-        
+    public ObjectMapper redisObjectMapper() {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
         objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
         objectMapper.activateDefaultTyping(
                 objectMapper.getPolymorphicTypeValidator(),
-                ObjectMapper.DefaultTyping.NON_FINAL
+                ObjectMapper.DefaultTyping.NON_FINAL,
+                JsonTypeInfo.As.PROPERTY
         );
+        return objectMapper;
+    }
 
-        GenericJackson2JsonRedisSerializer serializer =
-                new GenericJackson2JsonRedisSerializer(objectMapper);
+    @Bean
+    public GenericJackson2JsonRedisSerializer redisSerializer(ObjectMapper redisObjectMapper) {
+        return new GenericJackson2JsonRedisSerializer(redisObjectMapper);
+    }
 
-        // 기본 캐시 설정 (1시간)
+    @Bean
+    public RedisTemplate<String, Object> redisTemplate(
+            RedisConnectionFactory factory,
+            GenericJackson2JsonRedisSerializer redisSerializer) {
+        RedisTemplate<String, Object> template = new RedisTemplate<>();
+        template.setConnectionFactory(factory);
+        template.setKeySerializer(new StringRedisSerializer());
+        template.setValueSerializer(redisSerializer);
+        template.setHashKeySerializer(new StringRedisSerializer());
+        template.setHashValueSerializer(redisSerializer);
+        return template;
+    }
+
+    @Bean
+    public CacheManager cacheManager(
+            RedisConnectionFactory factory,
+            GenericJackson2JsonRedisSerializer redisSerializer) {
+
         RedisCacheConfiguration defaultConfig = RedisCacheConfiguration.defaultCacheConfig()
                 .entryTtl(Duration.ofHours(1))
                 .serializeKeysWith(RedisSerializationContext.SerializationPair
                         .fromSerializer(new StringRedisSerializer()))
                 .serializeValuesWith(RedisSerializationContext.SerializationPair
-                        .fromSerializer(serializer))
+                        .fromSerializer(redisSerializer))
                 .disableCachingNullValues();
 
-        // 캐시별 TTL 설정
         Map<String, RedisCacheConfiguration> cacheConfigs = new HashMap<>();
-        cacheConfigs.put("restaurant",      defaultConfig.entryTtl(Duration.ofHours(6)));    // 식당 정보 6시간
-        cacheConfigs.put("restaurantSearch",defaultConfig.entryTtl(Duration.ofMinutes(30))); // 검색 30분
-        cacheConfigs.put("reviewSummary",   defaultConfig.entryTtl(Duration.ofHours(12)));   // 리뷰 요약 12시간
-        cacheConfigs.put("reliability",     defaultConfig.entryTtl(Duration.ofMinutes(30))); // 신뢰도 30분
-        cacheConfigs.put("listDetail",      defaultConfig.entryTtl(Duration.ofMinutes(10))); // 리스트 상세 10분
+        cacheConfigs.put("restaurant",       defaultConfig.entryTtl(Duration.ofHours(6)));
+        cacheConfigs.put("restaurantSearch", defaultConfig.entryTtl(Duration.ofMinutes(30)));
+        cacheConfigs.put("reviewSummary",    defaultConfig.entryTtl(Duration.ofHours(12)));
+        cacheConfigs.put("reliability",      defaultConfig.entryTtl(Duration.ofMinutes(30)));
+        cacheConfigs.put("listDetail",       defaultConfig.entryTtl(Duration.ofMinutes(10)));
 
         return RedisCacheManager.builder(factory)
                 .cacheDefaults(defaultConfig)

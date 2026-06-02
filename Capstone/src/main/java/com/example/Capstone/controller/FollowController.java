@@ -2,15 +2,11 @@ package com.example.Capstone.controller;
 
 import com.example.Capstone.dto.response.FollowCountResponse;
 import com.example.Capstone.dto.response.FollowUserResponse;
-import com.example.Capstone.dto.response.PageResponse;
 import com.example.Capstone.service.FollowService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -45,22 +41,16 @@ public class FollowController {
 
     @Operation(summary = "팔로워 목록")
     @GetMapping("/{id}/followers")
-    public ResponseEntity<PageResponse<FollowUserResponse>> getFollowers(
-            @PathVariable Long id,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-        return ResponseEntity.ok(followService.getFollowers(id, pageable));
+    public ResponseEntity<List<FollowUserResponse>> getFollowers(
+            @PathVariable Long id) {
+        return ResponseEntity.ok(followService.getFollowers(id));
     }
 
     @Operation(summary = "팔로잉 목록")
     @GetMapping("/{id}/followings")
-    public ResponseEntity<PageResponse<FollowUserResponse>> getFollowings(
-            @PathVariable Long id,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-        return ResponseEntity.ok(followService.getFollowings(id, pageable));
+    public ResponseEntity<List<FollowUserResponse>> getFollowings(
+            @PathVariable Long id) {
+        return ResponseEntity.ok(followService.getFollowings(id));
     }
 
     @Operation(summary = "팔로워 / 팔로잉 수")

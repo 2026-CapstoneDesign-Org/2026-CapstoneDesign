@@ -1,14 +1,13 @@
 package com.example.Capstone.controller;
 
 import com.example.Capstone.dto.response.NotificationResponse;
-import com.example.Capstone.dto.response.PageResponse;
+import com.example.Capstone.dto.response.RestaurantResponse;
 import com.example.Capstone.service.NotificationService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -25,12 +24,9 @@ public class NotificationController {
 
     @Operation(summary = "알림 목록 조회")
     @GetMapping
-    public ResponseEntity<PageResponse<NotificationResponse>> getNotifications(
-            @AuthenticationPrincipal Long userId,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
-        Pageable pageable = PageRequest.of(page, size);
-        return ResponseEntity.ok(notificationService.getNotifications(userId, pageable));
+    public ResponseEntity<List<NotificationResponse>> getNotifications(
+            @AuthenticationPrincipal Long userId) {
+        return ResponseEntity.ok(notificationService.getNotifications(userId));
     }
 
     @Operation(summary = "읽지 않은 알림 수")
