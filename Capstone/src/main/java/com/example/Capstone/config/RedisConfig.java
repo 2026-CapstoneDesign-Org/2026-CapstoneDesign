@@ -13,7 +13,6 @@ import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSeriali
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -69,7 +68,6 @@ public class RedisConfig {
         cacheConfigs.put("restaurant",       defaultConfig.entryTtl(Duration.ofHours(6)));
         cacheConfigs.put("restaurantSearch", defaultConfig.entryTtl(Duration.ofMinutes(30)));
         cacheConfigs.put("reviewSummary",    defaultConfig.entryTtl(Duration.ofHours(12)));
-        cacheConfigs.put("reliability",      defaultConfig.entryTtl(Duration.ofMinutes(30)));
         cacheConfigs.put("listDetail",       defaultConfig.entryTtl(Duration.ofMinutes(10)));
 
         return RedisCacheManager.builder(factory)
