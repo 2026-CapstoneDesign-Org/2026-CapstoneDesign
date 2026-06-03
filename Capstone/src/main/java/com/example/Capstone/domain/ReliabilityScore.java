@@ -23,7 +23,7 @@ public class ReliabilityScore {
     private User user;
 
     @Column(nullable = false)
-    private Double score = 42.0;
+    private Double score = 20.0;
 
     @Column(nullable = false, length = 20)
     private String grade = "tier1";

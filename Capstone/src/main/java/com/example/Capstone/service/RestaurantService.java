@@ -38,7 +38,6 @@ public class RestaurantService {
                 .toList();
     }
 
-    @Cacheable(value = "restaurant", key = "#id")
     public RestaurantDetailResponse getRestaurant(Long id) {
         Restaurant restaurant = findVisibleRestaurant(id);
         var businessHours = restaurantBusinessHoursResolver.parse(restaurant.getBusinessHoursRaw());
