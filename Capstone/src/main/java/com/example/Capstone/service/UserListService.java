@@ -139,7 +139,7 @@ public class UserListService {
 }
 
 	// 리스트 정보 수정
-    @CacheEvict(value = "listDetail", key = "#listId + '_' + #userId")
+    @CacheEvict(value = "listDetail", allEntries = true)
 	@Transactional
     public UserListResponse updateList(Long userId, Long listId, UpdateListRequest request) {
         UserList userList = getOwnedList(userId, listId);
