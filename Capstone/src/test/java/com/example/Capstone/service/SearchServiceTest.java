@@ -285,8 +285,6 @@ class SearchServiceTest {
                 .thenReturn(List.of());
         when(userRepository.searchVisibleUsers(eq("missing-place"), any(Pageable.class)))
                 .thenReturn(List.of());
-        when(restaurantRepository.save(any(Restaurant.class)))
-                .thenAnswer(invocation -> restaurantWithAssignedId(invocation.getArgument(0), 501L));
         when(pcmapSearchClient.searchRestaurants(eq("missing-place"), any(Integer.class)))
                 .thenReturn(List.of(new PcmapRestaurantCandidate(
                         "external-1",
@@ -308,9 +306,7 @@ class SearchServiceTest {
         assertEquals("NO_INTERNAL_RESULTS", response.interpretation().fallbackReason());
         assertEquals(1, response.interpretation().fallbackResultCount());
         assertEquals(1, response.restaurants().size());
-        assertEquals(501L, response.restaurants().get(0).restaurantId());
-        assertEquals("INTERNAL", response.restaurants().get(0).source());
-        assertEquals("EXTERNAL_FALLBACK", response.restaurants().get(0).matchedBy());
+        assertEquals("EXTERNAL_FALLBACK", response.restaurants().get(0).source());
         assertEquals(new BigDecimal("37.0"), response.restaurants().get(0).lat());
         assertEquals(new BigDecimal("127.0"), response.restaurants().get(0).lng());
     }
@@ -391,8 +387,6 @@ class SearchServiceTest {
                 .thenReturn(List.of(internalRestaurant));
         when(restaurantRepository.searchVisibleRestaurantsByRegionAndMenuKeyword(eq("역북"), eq("돈까스"), any(Pageable.class)))
                 .thenReturn(List.of(internalRestaurant));
-        when(restaurantRepository.save(any(Restaurant.class)))
-                .thenAnswer(invocation -> restaurantWithAssignedId(invocation.getArgument(0), 502L));
         when(pcmapSearchClient.searchRestaurants(eq("역북 돈까스"), any(Integer.class)))
                 .thenReturn(List.of(new PcmapRestaurantCandidate(
                         "external-low-count",
@@ -414,26 +408,7 @@ class SearchServiceTest {
         assertEquals(1, response.interpretation().fallbackResultCount());
         assertEquals(2, response.restaurants().size());
         assertEquals("INTERNAL", response.restaurants().get(0).source());
-        assertEquals(502L, response.restaurants().get(1).restaurantId());
-        assertEquals("INTERNAL", response.restaurants().get(1).source());
-        assertEquals("EXTERNAL_FALLBACK", response.restaurants().get(1).matchedBy());
-    }
-
-    @Test
-    @DisplayName("broad category searches do not use external fallback")
-    void searchDoesNotUseFallbackForBroadCategoryOnlyQuery() {
-        when(restaurantRepository.searchVisibleRestaurantsByCoreKeyword(eq("카페"), any(Pageable.class)))
-                .thenReturn(List.of());
-        when(userRepository.searchVisibleUsers(eq("카페"), any(Pageable.class)))
-                .thenReturn(List.of());
-
-        SearchResponse response = searchService.search("카페");
-
-        assertEquals("RESTAURANT", response.primaryType());
-        assertFalse(response.interpretation().fallbackAttempted());
-        assertFalse(response.interpretation().fallbackUsed());
-        assertTrue(response.restaurants().isEmpty());
-        verify(pcmapSearchClient, never()).searchRestaurants(eq("카페"), any(Integer.class));
+        assertEquals("EXTERNAL_FALLBACK", response.restaurants().get(1).source());
     }
 
     @Test
@@ -549,11 +524,6 @@ class SearchServiceTest {
                         .isPrimary(true)
                         .build()
         )));
-        return restaurant;
-    }
-
-    private Restaurant restaurantWithAssignedId(Restaurant restaurant, Long id) {
-        ReflectionTestUtils.setField(restaurant, "id", id);
         return restaurant;
     }
 }

@@ -1,6 +1,5 @@
 package com.example.Capstone.service;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -13,7 +12,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -34,9 +32,6 @@ import com.example.Capstone.service.search.support.SearchInterpretation;
 import com.example.Capstone.service.search.support.SearchQueryInterpreter;
 import com.example.Capstone.service.search.support.SearchResultMapper;
 import com.example.Capstone.service.search.support.SearchRestaurantMatcher;
-import com.example.Capstone.service.support.RestaurantCategoryResolver;
-import com.example.Capstone.service.support.RestaurantRegionResolver;
-import com.example.Capstone.service.support.RestaurantRegionResolver.RegionSchema;
 
 import lombok.RequiredArgsConstructor;
 
@@ -66,16 +61,10 @@ public class SearchService {
     private static final String FALLBACK_REASON_LOW_INTERNAL_RESULT_COUNT = "LOW_INTERNAL_RESULT_COUNT";
     private static final String FALLBACK_REASON_WEAK_INTERNAL_MATCH = "WEAK_INTERNAL_MATCH";
 
-    private static final Set<String> BROAD_EXTERNAL_FALLBACK_KEYWORDS = Set.of(
-            "맛집", "식당", "음식점", "밥집", "추천", "근처", "주변",
-            "한식", "중식", "일식", "양식", "분식", "카페", "고기"
-    );
-
     private final RestaurantRepository restaurantRepository;
     private final UserRepository userRepository;
     private final PcmapSearchClient pcmapSearchClient;
 
-    @Transactional
     public SearchResponse search(String query) {
         String normalizedQuery = SearchQueryInterpreter.normalizeQuery(query);
         if (normalizedQuery.isBlank()) {
@@ -269,7 +258,6 @@ public class SearchService {
         if (!userItemsEmpty
                 || interpretation.explicitUserQuery()
                 || interpretation.restaurantKeyword() == null
-                || !isSpecificExternalFallbackKeyword(interpretation.restaurantKeyword())
                 || interpretation.genericBrowseQuery()) {
             return null;
         }
@@ -455,19 +443,12 @@ public class SearchService {
                 continue;
             }
 
-            Optional<Restaurant> persistedRestaurant = persistExternalSearchCandidate(
+            items.add(SearchResultMapper.toExternalRestaurantItem(
                     candidate,
-                    interpretation.regionKeyword()
-            );
-            if (persistedRestaurant.isEmpty()) {
-                continue;
-            }
-
-            Restaurant restaurant = persistedRestaurant.get();
-            items.add(SearchResultMapper.toInternalRestaurantItem(
-                    restaurant,
+                    interpretation.regionKeyword(),
+                    SOURCE_EXTERNAL_FALLBACK,
                     SearchRestaurantMatcher.MATCH_EXTERNAL_FALLBACK,
-                    SOURCE_INTERNAL
+                    resolveExternalAddress(candidate)
             ));
 
             if (items.size() >= EXTERNAL_FALLBACK_LIMIT) {
@@ -478,148 +459,13 @@ public class SearchService {
         return items;
     }
 
-    private boolean isSpecificExternalFallbackKeyword(String keyword) {
-        List<String> tokens = SearchRestaurantMatcher.tokenize(keyword);
-        if (tokens.isEmpty()) {
-            return false;
-        }
-        if (tokens.stream().allMatch(BROAD_EXTERNAL_FALLBACK_KEYWORDS::contains)) {
-            return false;
-        }
-        String compact = String.join("", tokens);
-        return !BROAD_EXTERNAL_FALLBACK_KEYWORDS.contains(compact);
-    }
-
-    private Optional<Restaurant> persistExternalSearchCandidate(
-            PcmapRestaurantCandidate candidate,
-            String regionKeyword
-    ) {
-        if (candidate.placeId() == null || candidate.placeId().isBlank()) {
-            return Optional.empty();
-        }
-
-        Optional<Restaurant> existingByPlaceId = findVisibleInternalRestaurant(candidate.placeId());
-        if (existingByPlaceId.isPresent()) {
-            return existingByPlaceId;
-        }
-
-        String address = resolveExternalAddress(candidate);
-        if (candidate.name() == null || candidate.name().isBlank() || address == null || address.isBlank()) {
-            return Optional.empty();
-        }
-
-        Optional<Restaurant> existingByNameAndAddress = restaurantRepository.findByNameAndAddress(
-                candidate.name(),
-                address
-        );
-        if (existingByNameAndAddress.isPresent()) {
-            Restaurant restaurant = existingByNameAndAddress.get();
-            return isVisible(restaurant) ? Optional.of(restaurant) : Optional.empty();
-        }
-
-        RegionSchema regionSchema = RestaurantRegionResolver.resolve(
-                regionKeyword,
-                address,
-                candidate.address(),
-                candidate.roadAddress(),
-                candidate.fullAddress()
-        );
-        String resolvedRegionName = firstNonBlank(
-                regionSchema.regionName(),
-                regionKeyword,
-                resolveFallbackRegionName(address)
-        );
-        if (resolvedRegionName == null) {
-            return Optional.empty();
-        }
-        if (regionKeyword != null && !matchesResolvedRegion(regionSchema, candidate, regionKeyword)) {
-            return Optional.empty();
-        }
-
-        Restaurant restaurant = Restaurant.builder()
-                .name(candidate.name())
-                .address(address)
-                .roadAddress(candidate.roadAddress())
-                .categoryName(candidate.categoryName())
-                .primaryCategoryName(RestaurantCategoryResolver.resolvePrimaryCategory(candidate.categoryName()))
-                .regionName(resolvedRegionName)
-                .regionCityName(regionSchema.regionCityName())
-                .regionDistrictName(regionSchema.regionDistrictName())
-                .regionCountyName(regionSchema.regionCountyName())
-                .regionTownName(regionSchema.regionTownName())
-                .regionFilterNames(resolveExternalRegionFilterNames(regionSchema, resolvedRegionName, candidate))
-                .lat(parseCoordinate(candidate.y()))
-                .lng(parseCoordinate(candidate.x()))
-                .imageUrl(candidate.imageUrl())
-                .pcmapPlaceId(candidate.placeId())
-                .build();
-
-        try {
-            return Optional.of(restaurantRepository.save(restaurant));
-        } catch (DataIntegrityViolationException exception) {
-            return findVisibleInternalRestaurant(candidate.placeId());
-        }
-    }
-
-    private boolean matchesResolvedRegion(
-            RegionSchema regionSchema,
-            PcmapRestaurantCandidate candidate,
-            String regionKeyword
-    ) {
-        return SearchRestaurantMatcher.containsIgnoreCase(regionSchema.regionName(), regionKeyword)
-                || SearchRestaurantMatcher.containsIgnoreCase(regionSchema.regionCityName(), regionKeyword)
-                || SearchRestaurantMatcher.containsIgnoreCase(regionSchema.regionDistrictName(), regionKeyword)
-                || SearchRestaurantMatcher.containsIgnoreCase(regionSchema.regionCountyName(), regionKeyword)
-                || SearchRestaurantMatcher.containsIgnoreCase(regionSchema.regionTownName(), regionKeyword)
-                || regionSchema.regionFilterNames().stream()
-                .anyMatch(filterName -> SearchRestaurantMatcher.containsIgnoreCase(filterName, regionKeyword))
-                || matchesExternalRegion(candidate, regionKeyword);
-    }
-
-    private List<String> resolveExternalRegionFilterNames(
-            RegionSchema regionSchema,
-            String resolvedRegionName,
-            PcmapRestaurantCandidate candidate
-    ) {
-        LinkedHashSet<String> values = new LinkedHashSet<>();
-        if (regionSchema.regionFilterNames() != null) {
-            regionSchema.regionFilterNames().stream()
-                    .filter(value -> value != null && !value.isBlank())
-                    .forEach(values::add);
-        }
-        addIfPresent(values, resolvedRegionName);
-        addIfPresent(values, candidate.address());
-        addIfPresent(values, candidate.roadAddress());
-        addIfPresent(values, candidate.fullAddress());
-        return new ArrayList<>(values);
-    }
-
-    private String resolveFallbackRegionName(String address) {
-        if (address == null || address.isBlank()) {
-            return null;
-        }
-        List<String> tokens = SearchRestaurantMatcher.tokenize(address);
-        if (tokens.isEmpty()) {
-            return null;
-        }
-        return tokens.stream()
-                .limit(2)
-                .reduce((left, right) -> left + " " + right)
-                .orElse(null);
-    }
-
     private Optional<Restaurant> findVisibleInternalRestaurant(String pcmapPlaceId) {
         if (pcmapPlaceId == null || pcmapPlaceId.isBlank()) {
             return Optional.empty();
         }
         return restaurantRepository.findByPcmapPlaceId(pcmapPlaceId)
-                .filter(this::isVisible);
-    }
-
-    private boolean isVisible(Restaurant restaurant) {
-        return restaurant != null
-                && !Boolean.TRUE.equals(restaurant.getIsDeleted())
-                && !Boolean.TRUE.equals(restaurant.getIsHidden());
+                .filter(restaurant -> !Boolean.TRUE.equals(restaurant.getIsDeleted()))
+                .filter(restaurant -> !Boolean.TRUE.equals(restaurant.getIsHidden()));
     }
 
     private String buildFallbackKeyword(SearchInterpretation interpretation) {
@@ -771,35 +617,6 @@ public class SearchService {
             return false;
         }
         return source.toLowerCase(Locale.ROOT).startsWith(prefix.toLowerCase(Locale.ROOT));
-    }
-
-    private BigDecimal parseCoordinate(String value) {
-        if (value == null || value.isBlank()) {
-            return null;
-        }
-        try {
-            return new BigDecimal(value.trim());
-        } catch (NumberFormatException exception) {
-            return null;
-        }
-    }
-
-    private String firstNonBlank(String... values) {
-        if (values == null) {
-            return null;
-        }
-        for (String value : values) {
-            if (value != null && !value.isBlank()) {
-                return value.trim();
-            }
-        }
-        return null;
-    }
-
-    private void addIfPresent(Set<String> values, String value) {
-        if (value != null && !value.isBlank()) {
-            values.add(value.trim());
-        }
     }
 
     private record RestaurantSearchResult(

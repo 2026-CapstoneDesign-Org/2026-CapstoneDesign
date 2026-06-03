@@ -77,7 +77,6 @@ fallback 판단 사유는 아래 값으로 분류한다.
 아래 경우에는 fallback을 호출하지 않는다.
 - `@nickname` 명시 사용자 검색
 - 지역 단독 또는 `맛집`, `식당`, `밥집`, `추천`, `근처`, `주변` 중심의 generic browse 검색
-- `한식`, `중식`, `일식`, `양식`, `분식`, `카페`, `고기` 같은 넓은 카테고리 단독 검색
 - 내부 결과가 충분하거나 상호명 매칭이 있는 경우
 
 ### 4-2. Pcmap 조회
@@ -92,17 +91,17 @@ fallback 판단 사유는 아래 값으로 분류한다.
 - `interpretation.fallbackReason`은 fallback 판단 사유를 나타낸다.
 - `interpretation.fallbackResultCount`는 fallback 경로로 추가된 결과 수다.
 - fallback 후보의 `pcmapPlaceId`가 기존 내부 식당과 일치하면 `source=INTERNAL`, 내부 `restaurantId` 포함 형태로 응답한다.
-- 내부 DB에 없는 fallback 후보는 검색 시점에 기본 식당 정보로 `restaurants`에 저장한 뒤 `source=INTERNAL`, 내부 `restaurantId` 포함 형태로 응답한다.
-- 검색 시점 저장은 속도를 위해 Pcmap 검색 결과의 이름, 주소, 카테고리, 좌표, 이미지, `pcmapPlaceId`만 사용한다. detail/menu 페이지는 호출하지 않는다.
+- 내부 DB에 없는 fallback 결과의 `source`는 `EXTERNAL_FALLBACK`이고 `restaurantId=null`일 수 있다.
 - fallback 결과는 최대 5개까지 붙인다.
-- 클라이언트는 저장된 fallback 결과를 일반 내부 식당처럼 `restaurantId` 기준으로 상세 조회하거나 리스트에 추가할 수 있다.
+- 클라이언트가 리스트에 추가하려면 `externalPlaceId`와 원래 `searchQuery`를 사용해 `POST /lists/{id}/restaurants/external-fallback`를 호출한다.
 - 외부 fallback 결과는 내부 식당의 `pcmapPlaceId` 또는 `name + address`와 중복되면 제외한다.
 - 명백한 비식당 카테고리 fallback 후보는 검색 응답에서 제외한다.
 
 ## 5. 리스트 추가 흐름과의 연결
-- 검색 fallback은 외부 후보를 기본 정보로 저장한 뒤 내부 식당 응답으로 노출한다.
-- 기존 `POST /lists/{id}/restaurants/external-fallback` 경로는 검색 응답에서 아직 저장되지 않은 외부 후보를 별도로 추가해야 하는 호환/검증 경로로 유지한다.
-- 일반 검색 응답에 `restaurantId`가 있으면 클라이언트는 기존 `POST /lists/{id}/restaurants`를 사용할 수 있다.
+- 검색 fallback은 외부 후보를 응답에 노출만 한다.
+- 실제 DB 저장은 `UserListService.addExternalFallbackRestaurant()`에서 수행한다.
+- 저장 시점에는 외부 후보를 다시 조회하고, 요청의 `externalPlaceId`와 일치하는 후보만 허용한다.
+- 리스트 지역과 외부 후보 주소의 지역 토큰이 맞지 않으면 리스트에 추가할 수 없다.
 - 자세한 리스트 추가 규칙은 `docs/logic/list-policy.md`를 본다.
 
 ## 6. 추가 확인 필요
