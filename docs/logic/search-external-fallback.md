@@ -2,7 +2,7 @@
 
 ## 목표
 
-식당 검색에서 내부 DB 결과가 부족할 때 외부 pcmap 후보를 보여주되, 검색 조회만으로는 DB에 저장하지 않는다. 사용자가 특정 리스트에 외부 후보를 직접 추가할 때만 재검색과 상세 검증을 거쳐 저장한다.
+식당 검색에서 내부 DB 결과가 부족하고 검색어가 특정 메뉴 또는 식당 상호로 해석될 때 외부 pcmap 후보를 조회한다. 검색 조회 시점에는 속도를 위해 Pcmap 검색 결과의 기본 정보만 사용해 `restaurants`에 저장하고, 저장된 내부 `restaurantId`를 응답한다.
 
 ## 검색 정책
 
@@ -11,8 +11,9 @@
 - fallback 경로를 검토하면 `fallbackAttempted=true`, 실제 보강 결과가 있으면 `fallbackUsed=true`로 응답한다.
 - fallback 응답에는 `fallbackReason`, `fallbackResultCount`를 포함한다.
 - fallback 후보의 `pcmapPlaceId`가 기존 내부 식당과 일치하면 `source=INTERNAL`, 내부 `restaurantId` 포함 형태로 응답한다.
-- 내부 DB에 없는 fallback 응답은 `source=EXTERNAL_FALLBACK`, `restaurantId=null`, `externalPlaceId` 포함 형태다.
-- 검색 단계에서는 `restaurants`, `restaurant_menu_items`, `list_restaurants`에 저장하지 않는다.
+- 내부 DB에 없는 fallback 후보는 `restaurants`에 저장한 뒤 `source=INTERNAL`, 내부 `restaurantId` 포함 형태로 응답한다.
+- 검색 단계 저장은 `restaurants`만 대상으로 하며, `restaurant_menu_items`, `list_restaurants`에는 저장하지 않는다.
+- `맛집`, `식당`, `밥집`, `추천`, `근처`, `주변`, 넓은 카테고리 단독 검색은 외부 fallback을 호출하지 않는다.
 - 명백한 비식당 카테고리 fallback 후보는 검색 응답 단계에서 제외한다.
 
 ## 리스트 등록 정책

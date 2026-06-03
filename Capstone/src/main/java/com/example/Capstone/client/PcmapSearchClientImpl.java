@@ -38,6 +38,8 @@ public class PcmapSearchClientImpl implements PcmapSearchClient {
     private final long minIntervalMillis;
     private final long cooldownMillis;
     private final long cacheTtlMillis;
+    private final long requestTimeoutMillis;
+    private final boolean retryRestaurantSuffixEnabled;
     private final String cookie;
     private final Object rateLimitLock = new Object();
     private final Map<String, CacheEntry> cache = new ConcurrentHashMap<>();
@@ -50,14 +52,17 @@ public class PcmapSearchClientImpl implements PcmapSearchClient {
             @Value("${search.pcmap.center-x:127.1775537}") String centerX,
             @Value("${search.pcmap.center-y:37.2410864}") String centerY,
             @Value("${search.pcmap.display:10}") int display,
-            @Value("${search.pcmap.min-interval-ms:3000}") long minIntervalMillis,
+            @Value("${search.pcmap.search-min-interval-ms:${search.pcmap.min-interval-ms:500}}") long minIntervalMillis,
             @Value("${search.pcmap.cooldown-ms:60000}") long cooldownMillis,
             @Value("${search.pcmap.cache-ttl-ms:600000}") long cacheTtlMillis,
+            @Value("${search.pcmap.connect-timeout-ms:2000}") long connectTimeoutMillis,
+            @Value("${search.pcmap.request-timeout-ms:3500}") long requestTimeoutMillis,
+            @Value("${search.pcmap.retry-restaurant-suffix-enabled:false}") boolean retryRestaurantSuffixEnabled,
             @Value("${NAVER_COOKIE:}") String cookie
     ) {
         this.objectMapper = objectMapper;
         this.httpClient = HttpClient.newBuilder()
-                .connectTimeout(Duration.ofSeconds(5))
+                .connectTimeout(Duration.ofMillis(Math.max(500L, connectTimeoutMillis)))
                 .build();
         this.enabled = enabled;
         this.centerX = centerX;
@@ -66,6 +71,8 @@ public class PcmapSearchClientImpl implements PcmapSearchClient {
         this.minIntervalMillis = Math.max(0L, minIntervalMillis);
         this.cooldownMillis = Math.max(0L, cooldownMillis);
         this.cacheTtlMillis = Math.max(0L, cacheTtlMillis);
+        this.requestTimeoutMillis = Math.max(1000L, requestTimeoutMillis);
+        this.retryRestaurantSuffixEnabled = retryRestaurantSuffixEnabled;
         this.cookie = cookie == null ? "" : cookie.trim();
     }
 
@@ -91,7 +98,7 @@ public class PcmapSearchClientImpl implements PcmapSearchClient {
 
         try {
             List<PcmapRestaurantCandidate> candidates = loadCandidates(normalizedKeyword, requestedDisplay, limit);
-            if (candidates.isEmpty() && shouldRetryAsRestaurantQuery(normalizedKeyword)) {
+            if (candidates.isEmpty() && retryRestaurantSuffixEnabled && shouldRetryAsRestaurantQuery(normalizedKeyword)) {
                 candidates = loadCandidates(normalizedKeyword + " 맛집", requestedDisplay, limit);
             }
             cache.put(cacheKey, new CacheEntry(List.copyOf(candidates), System.currentTimeMillis()));
@@ -154,7 +161,7 @@ public class PcmapSearchClientImpl implements PcmapSearchClient {
 
         HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
                 .uri(URI.create(url))
-                .timeout(Duration.ofSeconds(10))
+                .timeout(Duration.ofMillis(requestTimeoutMillis))
                 .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
                 .header("Accept-Language", "ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7")
                 .header("Origin", "https://pcmap.place.naver.com")
