@@ -33,7 +33,6 @@ public class ReliabilityScoreService {
     private final UserRepository userRepository;
 
     // 점수 증가 (희소성 보정 적용)
-    @CacheEvict(value = "reliability", key = "#userId")
     @Transactional
     public void increase(Long userId, ScoreEvent event) {
         ReliabilityScore rs = getOrCreate(userId);
@@ -54,7 +53,6 @@ public class ReliabilityScoreService {
     }
 
     // 점수 감소 (비대칭 - 희소성 보정 없음)
-    @CacheEvict(value = "reliability", key = "#userId")
     @Transactional
     public void decrease(Long userId, ScoreEvent event) {
         ReliabilityScore rs = getOrCreate(userId);
@@ -65,7 +63,6 @@ public class ReliabilityScoreService {
     }
 
     // 점수 조회
-    @Cacheable(value = "reliability", key = "#userId")
     public ReliabilityScoreResponse getScore(Long userId) {
         return ReliabilityScoreResponse.from(getOrCreate(userId));
     }
