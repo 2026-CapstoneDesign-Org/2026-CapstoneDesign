@@ -329,6 +329,9 @@ AI 상담원 역할:
 - 날짜, 시간, 인원 수를 시스템에서 받은 값 그대로 전달한다.
 - 예약자명과 연락처는 항상 시스템에서 제공되는 값으로 전제한다.
 - 식당이 예약자명이나 연락처를 요구하면 제공할 수 있지만, 예약자명 / 연락처 값이 없어서 실패하는 시나리오는 기본 설계에서 제외한다.
+- 식당이 예약 가능 답변 뒤 예약자명이나 연락처를 요구하면 AI는 시스템 제공 값을 먼저 전달하고 식당 직원의 확인을 기다려야 한다. 이 확인 전에는 `CONFIRMED` 결과 후보를 수락하지 않는다.
+- 식당의 한 발화가 transcript 여러 조각으로 나뉘어 `네 가능합니다` 뒤에 `예약자 이름 말해주세요`가 늦게 들어올 수 있으므로, real-agent runner는 최신 직원 발화 직후의 `CONFIRMED` 후보를 짧게 안정화 대기한 뒤 수락한다.
+- 식당이 요청 시간 불가를 말하면 AI는 가능한 대체 시간대가 있는지 한 번 확인한다. 대체 시간이 제안되면 `NEEDS_CONFIRMATION`, 대체 시간이 없다고 확인되면 `UNAVAILABLE` 후보로 처리한다.
 - 요청 조건을 임의로 바꾸거나 대체 시간을 임의 생성하지 않는다.
 - 식당이 대체 시간, 예약금, 추가 개인정보, 특수 조건을 제시하면 사용자 확인이 필요하므로 `NEEDS_CONFIRMATION` 후보로 분류한다.
 
@@ -364,6 +367,7 @@ Spring internal event mapping 후보:
 - `FAILED` -> 연결 / provider 오류 종류에 따라 `CALL_CONNECTION_FAILED`, `CALL_NO_ANSWER`, `CALL_BUSY`, `PROVIDER_TRANSIENT_ERROR`, `PROVIDER_FATAL_ERROR` 중 하나로 변환한다. retry 가능 여부와 최종 실패 전이는 Spring retry / timeout 정책이 판단한다.
 - 모델 출력이 schema validation에 실패하거나 판단이 모호하면 `AI_PARSE_FAILED` 또는 `RESERVATION_NEEDS_CONFIRMATION` 후보로 처리하고, 바로 `CONFIRMED`로 전이하지 않는다.
 - `reservation_result_mapper.py`는 sidecar 내부 dry-run 순수 mapper로, schema 결과를 Spring `ClawOpsAgentProviderEventRequest` shape의 dict로 바꾼다. Spring HTTP 호출과 DB 접근은 하지 않는다.
+- 사용자에게 노출될 수 있는 `resultMessage`와 `aiSummary`는 전체 transcript나 긴 내부 요약이 아니라 `6월 1일 오후 7시 00분 4명 예약 성공`, `6월 1일 오후 8시 00분 대체 시간 제안받음`, `전화 예약 실패` 같은 짧은 공개용 결과 요약으로 변환한다.
 - `spring_event_dispatch_candidate.py`는 mapper 결과를 Spring internal event path, raw JSON body, timestamp, HMAC header 후보로 감싼다. 이 단계에서도 실제 Spring endpoint로 HTTP 전송하지 않는다.
 - dry-run `/internal/clawops-agent/calls` 응답은 샘플 AI 결과를 사용해 `springEventPreview`를 만들 수 있다. preview에는 payload와 header 이름만 포함하고 실제 signature 값은 노출하지 않는다.
 - `contracts/spring-event-payloads/*.json`은 Python mapper/builder 출력과 Spring `ClawOpsAgentProviderEventRequest` DTO 호환성을 함께 검증하는 공유 fixture다.
@@ -371,6 +375,7 @@ Spring internal event mapping 후보:
 - contract drift guard는 `python3 sidecars/clawops-voice-agent/scripts/verify_contract_drift_guard.py`로 실행한다. 이 guard는 Python contract tests, Spring internal event fixture E2E, fixture/document 민감값 스캔을 실행한다.
 - Spring event fixture를 수정할 때는 Python builder fixture 일치 테스트와 Spring E2E fixture 기대값을 같은 변경에서 갱신해야 한다.
 - `CONFIRMED` 결과라도 `confirmedDateTime` 또는 `partySize`가 기존 예약 요청과 충돌하면 `RESERVATION_CONFIRMED`로 보내지 않고 `RESERVATION_NEEDS_CONFIRMATION` + `AI_RESULT_CONFLICT`로 보낸다.
+- real-agent live transcript fallback과 result tool 수락 기준에서 `CONFIRMED`는 지점 확인 응답만으로 인정하지 않는다. AI가 요청 날짜 / 시간 / 인원으로 예약 가능 여부를 질문한 뒤, 그 이후 직원의 명확한 가능 응답이 transcript에 있어야만 확정 후보로 처리한다.
 - 필수 필드 누락, status 오류, boolean / partySize 타입 오류, 확정 결과의 핵심 필드 누락은 `AI_PARSE_FAILED` 후보로 보낸다.
 - event payload에는 `provider`, `reservationId`, `providerCallId`, `sidecarCallId`, `eventType`, `providerStatus`, `occurredAt`, `retryable`, `failureReason`, `aiSummary`, `resultMessage`, `idempotencyKey`, `rawPayloadHash`를 채운다.
 
@@ -514,7 +519,7 @@ real-agent 전용 가상환경에서 `requirements-real-agent.txt` 설치와 imp
 - 입력은 기존 `RealAgentCallRequest`의 reservation id, sidecar call id, allowlist 통과 target, restaurant name, reservation datetime, party size, request note만 사용한다.
 - ClawOps Agent SDK mode 후보는 `OpenAIRealtime` session, `ClawOpsAgent`, `@agent.tool` result reporter, `agent.call(...)`, result tool 제출 / call end race, `agent.disconnect()` 순서다.
 - 현재 `RealAgentSdkRunner`는 ClawOps builtin tool 중 `send_dtmf`만 허용하고, `submit_reservation_call_result` custom tool을 필수 결과 제출 경로로 둔다. `send_dtmf`는 ARS / 자동 안내가 예약 또는 직원 연결용 숫자를 명확히 요구할 때만 1회성 메뉴 탐색에 사용한다. AI가 결과 tool을 제출하면 sidecar가 call hangup을 수행한다.
-- 단, 초반 연결 확인만 듣고 너무 빨리 확정 / 실패 result를 제출해 통화가 끊기는 문제를 막기 위해 local real-agent runner는 초반 불명확 응답에 대한 `FAILED` result를 수락하지 않는다. 명확한 `CONFIRMED`는 45초까지 억지로 재확인하지 않고, 연결 확인성 요약만 있거나 결과 요약에 원 예약 날짜 / 시간 / 인원 수가 드러나지 않거나 `CONFIRMED`의 `confirmedDateTime` / `partySize`가 원 요청과 일치하지 않으면 tool 제출을 거절한다. 식당이 “가능합니다”라고 답한 뒤에는 같은 가능 여부 질문을 반복하지 않고, accepted tool 응답 후 짧은 closing grace 동안 “확인 감사합니다. 그 시간에 방문하겠습니다.” 수준의 마무리 멘트를 한 뒤 통화를 종료한다. 첫 발화는 식당 / 지점명 확인과 AI 예약 도우미 고지를 포함해야 하며, 날짜 / 시간 / 인원은 `6월 23일, 오후 8시 30분, 두 명`처럼 쉼표가 있는 한국어 발화 구문으로 천천히 말하도록 지시한다. Realtime session은 `greeting=false`로 두어 수신자가 전화를 받기 전에 AI가 먼저 말하지 않게 한다. turn detection은 semantic VAD low eagerness, `interrupt_response=false`, `create_response=false`로 두고, sidecar가 SDK `call_start` event 후 1초 뒤 또는 직원 transcript 완료 시점에 명시적으로 `response.create()`를 요청한다.
+- 단, 초반 연결 확인만 듣고 너무 빨리 확정 / 실패 result를 제출해 통화가 끊기는 문제를 막기 위해 local real-agent runner는 초반 불명확 응답에 대한 `FAILED` result를 수락하지 않는다. 명확한 `CONFIRMED`는 45초까지 억지로 재확인하지 않고, 연결 확인성 요약만 있거나 결과 요약에 원 예약 날짜 / 시간 / 인원 수가 드러나지 않거나 `CONFIRMED`의 `confirmedDateTime` / `partySize`가 원 요청과 일치하지 않으면 tool 제출을 거절한다. 또한 직원 발화가 transcript chunk로 쪼개질 수 있으므로 최신 직원 발화 직후 `CONFIRMED`를 바로 수락하지 않고 짧은 안정화 대기를 둔다. 이 대기 중 예약자명 / 연락처 요구가 들어오면 AI는 해당 정보를 먼저 제공하고 직원 확인을 받은 뒤에만 확정한다. 식당이 “가능합니다”라고 답한 뒤에는 같은 가능 여부 질문을 반복하지 않고, result 수락 뒤에는 sidecar가 closing response를 명시적으로 요청하며 closing grace 동안 “확인 감사합니다. 그 시간에 방문하겠습니다.” 수준의 마무리 멘트를 한 뒤 통화를 종료한다. 첫 발화는 식당 / 지점명 확인과 AI 예약 도우미 고지를 포함해야 하며, 식당 / 지점 확인 뒤에는 filler 없이 바로 예약 가능 여부 질문만 해야 한다. 상대가 “여보세요?” 같은 opening-only 응답만 하면 전체 AI 소개를 반복하지 않고 지점 확인만 다시 묻는다. 날짜 / 시간 / 인원은 `6월 23일, 오후 8시 30분, 두 명`처럼 쉼표가 있는 한국어 발화 구문으로 천천히 말하도록 지시한다. Realtime session은 `greeting=false`로 두어 수신자가 전화를 받기 전에 AI가 먼저 말하지 않게 한다. turn detection은 semantic VAD low eagerness, `interrupt_response=false`, `create_response=false`로 두고, sidecar가 SDK `call_start` event 후 1초 뒤 또는 직원 transcript 완료 시점에 명시적으로 `response.create()`를 요청한다. 2026-06-03 AWS dev allowlist 검증에서는 이 call start 후 1초 응답 요청 경로로 실제 예약 `CONFIRMED` / call attempt `COMPLETED`까지 확인했다.
 - AI 결과는 tool handler가 받은 JSON 문자열을 `reservation_result_schema.json`으로 검증한 뒤 `reservation_result_mapper.py`로 넘긴다.
 - tool 미호출, schema 오류, 원 예약 조건 충돌, 대체 시간 / 예약금 / 추가 개인정보 요청은 확정이 아니라 `NEEDS_CONFIRMATION` 또는 `AI_PARSE_FAILED`로 보낸다.
 

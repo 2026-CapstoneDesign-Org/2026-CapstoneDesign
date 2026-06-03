@@ -66,8 +66,8 @@ class SpringEventDispatchCandidateTest(unittest.TestCase):
         self.assertEqual(candidate.payload["eventType"], "AI_PARSE_FAILED")
         self.assertEqual(candidate.payload["providerStatus"], "AI_PARSE_FAILED")
         self.assertEqual(candidate.payload["failureReason"], "AI_RESULT_SCHEMA_FIELDS_INVALID")
-        self.assertIsNone(candidate.payload["aiSummary"])
-        self.assertEqual(candidate.payload["resultMessage"], "AI result schema validation failed.")
+        self.assertEqual(candidate.payload["aiSummary"], "전화 예약 결과 확인 실패")
+        self.assertEqual(candidate.payload["resultMessage"], "전화 예약 결과 확인 실패")
         self.assertEqual(candidate.payload, load_spring_event_fixture("ai-parse-failed.json"))
 
     def test_confirmed_conflict_builds_needs_confirmation_candidate(self):

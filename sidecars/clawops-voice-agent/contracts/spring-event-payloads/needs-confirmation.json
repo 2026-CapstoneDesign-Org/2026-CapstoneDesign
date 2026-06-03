@@ -1,5 +1,5 @@
 {
-  "aiSummary": "AI 예약 도우미임을 밝히고 요청 조건을 전달했다. 식당은 요청 시간은 어렵지만 같은 날 다른 시간을 제안했다.",
+  "aiSummary": "6월 1일 오후 8시 00분 대체 시간 제안받음",
   "eventType": "RESERVATION_NEEDS_CONFIRMATION",
   "failureReason": null,
   "idempotencyKey": "dry-run-sidecar-100:RESERVATION_NEEDS_CONFIRMATION:dc0d591ef16a8f24",
@@ -9,7 +9,7 @@
   "providerStatus": "AI_NEEDS_CONFIRMATION_ALTERNATIVE_TIME",
   "rawPayloadHash": "dc0d591ef16a8f243380c4f6d59e235c5d18e9ec61216fcd31f6822f865c8e0c",
   "reservationId": 100,
-  "resultMessage": "요청한 시간은 어렵고 식당이 대체 시간을 제안했다. 사용자 확인이 필요하다.",
+  "resultMessage": "6월 1일 오후 8시 00분 대체 시간 제안받음",
   "retryable": false,
   "sidecarCallId": "dry-run-sidecar-100"
 }

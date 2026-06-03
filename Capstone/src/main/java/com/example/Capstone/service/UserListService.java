@@ -128,7 +128,6 @@ public class UserListService {
     }
 
 	// 리스트 상세
-    @Cacheable(value = "listDetail", key = "#listId + '_' + #userId")
 	public UserListDetailResponse getList(Long listId, Long userId) {
         UserList userList = userListRepository
                 .findByIdWithDetails(listId) 
@@ -139,7 +138,6 @@ public class UserListService {
 }
 
 	// 리스트 정보 수정
-    @CacheEvict(value = "listDetail", key = "#listId + '_' + #userId")
 	@Transactional
     public UserListResponse updateList(Long userId, Long listId, UpdateListRequest request) {
         UserList userList = getOwnedList(userId, listId);
@@ -178,7 +176,6 @@ public class UserListService {
     }
 
 	// 리스트 삭제
-    @CacheEvict(value = "listDetail", allEntries = true)
 	@Transactional
 	public void deleteList(Long userId, Long listId) {
         UserList userList = getOwnedList(userId, listId);

@@ -57,7 +57,33 @@ class ReservationResultMapperTest(unittest.TestCase):
                 self.assertEqual(event["eventType"], event_type)
                 self.assertEqual(event["providerStatus"], provider_status)
                 self.assertTrue(event["idempotencyKey"].startswith(f"dry-run-sidecar-100:{event_type}:"))
+                self.assertEqual(event["aiSummary"], event["resultMessage"])
                 assert_no_sensitive_values(self, event)
+
+    def test_result_message_is_public_concise_summary(self):
+        expectations = {
+            "confirmed.json": "6월 1일 오후 7시 00분 4명 예약 성공",
+            "name-phone-requested.json": "6월 1일 오후 7시 00분 4명 예약 성공",
+            "unavailable.json": "6월 1일 오후 7시 00분 4명 예약 불가",
+            "alternative-time.json": "6월 1일 오후 8시 00분 대체 시간 제안받음",
+            "ambiguous.json": "6월 1일 오후 7시 00분 예약 확인 필요",
+            "staff-did-not-understand.json": "6월 1일 오후 7시 00분 예약 확인 필요",
+            "connection-failed.json": "전화 예약 실패",
+        }
+        forbidden_fragments = (
+            "AI 예약 도우미임을 밝히고",
+            "예약자명과 연락처",
+            "요청 조건을 전달했다",
+        )
+        for sample_name, expected_message in expectations.items():
+            with self.subTest(sample=sample_name):
+                event = map_reservation_result_to_spring_event(load_sample(sample_name), context())
+
+                self.assertEqual(event["resultMessage"], expected_message)
+                self.assertEqual(event["aiSummary"], expected_message)
+                for fragment in forbidden_fragments:
+                    self.assertNotIn(fragment, event["resultMessage"])
+                    self.assertNotIn(fragment, event["aiSummary"])
 
     def test_needs_confirmation_never_maps_to_confirmed_event(self):
         for sample_name in ("alternative-time.json", "ambiguous.json", "staff-did-not-understand.json"):
@@ -96,8 +122,8 @@ class ReservationResultMapperTest(unittest.TestCase):
         self.assertEqual(event["eventType"], "AI_PARSE_FAILED")
         self.assertEqual(event["providerStatus"], "AI_PARSE_FAILED")
         self.assertEqual(event["failureReason"], "AI_RESULT_SCHEMA_FIELDS_INVALID")
-        self.assertIsNone(event["aiSummary"])
-        self.assertEqual(event["resultMessage"], "AI result schema validation failed.")
+        self.assertEqual(event["aiSummary"], "전화 예약 결과 확인 실패")
+        self.assertEqual(event["resultMessage"], "전화 예약 결과 확인 실패")
 
     def test_invalid_confirmed_payload_maps_to_ai_parse_failed(self):
         payload = load_sample("confirmed.json")

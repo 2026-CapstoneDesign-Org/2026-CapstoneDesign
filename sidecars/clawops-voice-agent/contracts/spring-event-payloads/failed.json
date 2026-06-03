@@ -1,5 +1,5 @@
 {
-  "aiSummary": "전화 연결이 완료되지 않아 예약 가능 여부를 확인하지 못했다.",
+  "aiSummary": "전화 예약 실패",
   "eventType": "CALL_CONNECTION_FAILED",
   "failureReason": "CALL_CONNECTION_FAILED",
   "idempotencyKey": "dry-run-sidecar-100:CALL_CONNECTION_FAILED:39c6560673dbafa7",
@@ -9,7 +9,7 @@
   "providerStatus": "AI_FAILED",
   "rawPayloadHash": "39c6560673dbafa71b3029ff66a83279ab9cc6a4dee15e213658e88edfd1e495",
   "reservationId": 100,
-  "resultMessage": "전화 연결이 완료되지 않아 예약 가능 여부를 확인하지 못했다.",
+  "resultMessage": "전화 예약 실패",
   "retryable": true,
   "sidecarCallId": "dry-run-sidecar-100"
 }
