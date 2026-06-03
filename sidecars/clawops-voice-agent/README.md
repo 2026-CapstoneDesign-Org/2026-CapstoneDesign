@@ -103,6 +103,8 @@ The dry-run contract does not execute a Python Voice Agent and does not call Ope
 
 `reservation_result_mapper.py` converts a validated Voice Agent result payload into Spring's internal event request shape. It is a pure mapper: it does not send HTTP requests and does not access a database.
 
+For user-facing reservation results, the mapper keeps `resultMessage` and `aiSummary` as short public summaries only, for example `6월 1일 오후 7시 00분 4명 예약 성공`, `6월 1일 오후 8시 00분 대체 시간 제안받음`, or `전화 예약 실패`. It does not put the full transcript or long internal call summary into the Spring event payload.
+
 `spring_event_dispatch_candidate.py` wraps that mapped payload with the Spring internal event path, raw JSON body, timestamp, and HMAC header candidate. It is still dry-run only and does not send the HTTP request.
 
 `spring_event_delivery_policy.py` is not an HTTP client. It only classifies fake outcomes such as success, duplicate ack, network/timeout retry candidates, 4xx non-retry candidates, and 5xx retry candidates.
@@ -127,8 +129,8 @@ Checked surface, without SDK client creation or network calls:
 - Build the system prompt from `prompts/reservation_agent_prompt.md` and inject reservation request values without mutating date, time, party size, name, or contact assumptions.
 - Prefer ClawOps Agent SDK mode: create an `OpenAIRealtime` session, create a `ClawOpsAgent`, register `submit_reservation_call_result`, call the allowlisted target, race result-tool submission against call end, disconnect, and then map the captured result through `reservation_result_mapper.py`.
 - The real-agent path enables only the ClawOps `send_dtmf` builtin tool for clear ARS / staff-routing menus. The AI must submit `submit_reservation_call_result` before ending the conversation; once an accepted result tool is received, the sidecar hangs up the call.
-- To avoid calls ending during the opening exchange, the runner rejects early `FAILED` results for unclear opening responses, but it does not force a second confirmation when the restaurant clearly says the requested reservation is available. A hearing check such as "들리나요?" / "네 들립니다." is not a reservation outcome; the AI must give the restaurant time to answer after asking availability and must not immediately fill silence with another question. The runner rejects terminal result submissions whose summary does not mention the requested date/time and party size; `CONFIRMED` is accepted only when `confirmedDateTime` and `partySize` match the original request. After an accepted result tool call, the sidecar leaves a short closing grace period so the AI can say a final confirmation sentence before hangup.
-- If the call ends before the result tool is submitted, the runner now collects ClawOps/OpenAI transcript events and applies a narrow demo fallback. A transcript with the original requested date/time and party size plus a clear restaurant availability answer can become a `CONFIRMED` candidate; unavailable / alternative / ambiguous transcript patterns map to `UNAVAILABLE`, `NEEDS_CONFIRMATION`, or `AI_PARSE_FAILED` instead of retrying forever.
+- To avoid calls ending during the opening exchange, the runner rejects early `FAILED` results for unclear opening responses, but it does not force a second confirmation when the restaurant clearly says the requested reservation is available. A hearing check such as "들리나요?" / "네 들립니다." is not a reservation outcome; the AI must give the restaurant time to answer after asking availability and must not immediately fill silence with another question. The runner rejects terminal result submissions whose summary does not mention the requested date/time and party size; `CONFIRMED` is accepted only when `confirmedDateTime` and `partySize` match the original request and a clear customer confirmation appears after the assistant's availability question. Branch confirmation alone is not enough. If the restaurant asks for reservation name or contact after confirming availability, the AI must provide the requested system-supplied information and wait for staff acknowledgement before a `CONFIRMED` result can be accepted. Because ClawOps/OpenAI transcript events can split one staff sentence into multiple chunks, the runner waits briefly before accepting a `CONFIRMED` result from a fresh staff transcript; this gives late chunks such as a reservation-name request a chance to arrive before closing. After an accepted result tool call, the sidecar leaves a short closing grace period so the AI can say a final confirmation sentence before hangup.
+- If the call ends before the result tool is submitted, the runner now collects ClawOps/OpenAI transcript events and applies a narrow demo fallback. A transcript with the original requested date/time and party size plus a clear restaurant availability answer after the availability question can become a `CONFIRMED` candidate; branch confirmation, assistant-only closing text, unavailable / alternative / ambiguous transcript patterns map to non-confirmed outcomes instead of retrying forever. When the restaurant says the requested time is unavailable, the sidecar asks once for an alternative time before allowing `UNAVAILABLE`; an offered alternative maps to `NEEDS_CONFIRMATION`.
 - Do not use AI Completion mode unless explicitly re-approved, because it would pass OpenAI config through `calls.create(ai=...)` and would bypass the existing sidecar result tool boundary.
 - If the result conflicts with the original reservation request, map to `NEEDS_CONFIRMATION` or `AI_PARSE_FAILED`, never directly to confirmed.
 - Current local tests cover mocked SDK runner outcomes for confirmed, unavailable, needs-confirmation, failed, missing result tool output, transcript fallback, confirmed-result conflicts, result-tool-vs-call-end wait behavior, and the actual SDK runner boundary with fake ClawOps/OpenAI classes. These tests do not create real SDK clients, call external APIs, or send HTTP.
@@ -190,6 +192,35 @@ python3 sidecars/clawops-voice-agent/scripts/verify_contract_drift_guard.py
 ```
 
 After those pass, run Spring preflight, sidecar readiness, and dry-run call verification using only local/private endpoints and placeholder-safe logs. The next real-call step remains blocked until explicit user approval.
+
+## Dev Demo Call Helper
+On the dev EC2 server, `scripts/run_dev_ai_call_smoke.py` can run the repeatable demo path without manually pasting JWTs into Postman. It reads existing local config files, prints only configured booleans/status names, checks sidecar readiness, checks Spring preflight, and only places a call when `--place-call` is explicitly supplied.
+
+Check readiness and preflight only:
+
+```bash
+cd /home/ubuntu/app/sidecars/clawops-voice-agent
+.venv/bin/python scripts/run_dev_ai_call_smoke.py \
+  --user-id <dev-user-id> \
+  --restaurant-id <dev-restaurant-id> \
+  --date <yyyy-mm-dd> \
+  --time <hh:mm:ss>
+```
+
+Create one AI-call reservation and poll the result:
+
+```bash
+cd /home/ubuntu/app/sidecars/clawops-voice-agent
+.venv/bin/python scripts/run_dev_ai_call_smoke.py \
+  --user-id <dev-user-id> \
+  --restaurant-id <dev-restaurant-id> \
+  --date <yyyy-mm-dd> \
+  --time <hh:mm:ss> \
+  --party-size 2 \
+  --place-call
+```
+
+Do not pass JWTs, API keys, signing keys, or raw phone numbers as command-line values. The helper uses the existing server-local config/env files and the allowlist already configured on the sidecar.
 
 The only approval phrase that may unlock one actual test-number call in a future phase is:
 

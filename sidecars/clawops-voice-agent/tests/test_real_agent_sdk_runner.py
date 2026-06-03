@@ -24,17 +24,21 @@ from real_agent_sdk_runner import (  # noqa: E402
     check_real_agent_sdk_surface,
     coerce_tool_result_payload,
     final_result_rejection_reason,
+    final_result_transcript_rejection_reason,
     infer_ai_result_from_transcripts,
     load_reservation_agent_prompt,
     load_real_agent_sdk_modules,
     mask_sensitive_text,
     provider_fatal_failure_reason,
+    response_create_kwargs,
     safe_exception_failure_reason,
     run_real_agent_sdk_call,
+    should_wait_for_confirmed_result_stability,
     should_reject_early_ai_failed_result,
     should_reject_early_final_result,
     spoken_reservation_datetime,
     spoken_reservation_phrase,
+    user_confirmed_branch,
     wait_for_result_tool_or_call_end,
 )
 from spring_event_dispatch_candidate import build_spring_event_dispatch_candidate, load_sample_result  # noqa: E402
@@ -142,7 +146,7 @@ class RealAgentSdkRunnerTest(unittest.TestCase):
         self.assertEqual(skeleton.result_wait_config["source"], "submit_reservation_call_result_tool")
         self.assertEqual(skeleton.result_wait_config["postCallEndResultGraceSeconds"], 8.0)
         self.assertTrue(skeleton.disconnect_config["finally"])
-        self.assertEqual(skeleton.call_config["postResultClosingGraceSeconds"], 6.0)
+        self.assertEqual(skeleton.call_config["postResultClosingGraceSeconds"], 10.0)
         self.assertNotIn("target_phone_number", repr(skeleton))
 
     def test_execution_skeleton_prompt_requires_closing_after_result_tool(self):
@@ -160,14 +164,17 @@ class RealAgentSdkRunnerTest(unittest.TestCase):
             prompt_loader=lambda: "system prompt",
         )
 
-        self.assertIn("혹시 예약식당 맞나요?", skeleton.system_prompt)
-        self.assertIn("AI 예약 도우미", skeleton.system_prompt)
-        self.assertIn("Mandatory First Utterance", skeleton.system_prompt)
+        self.assertIn("AI reservation assistant", skeleton.system_prompt)
+        self.assertIn("Sidecar-Controlled First Turn", skeleton.system_prompt)
+        self.assertIn("per-response instructions only", skeleton.system_prompt)
+        self.assertIn("The first assistant response must not contain the requested date", skeleton.system_prompt)
         self.assertIn("wait for the staff", skeleton.system_prompt)
         self.assertIn("Do not say the reservation date/time/party size", skeleton.system_prompt)
         self.assertIn("premature yes", skeleton.system_prompt)
         self.assertIn("If the staff asks who is calling", skeleton.system_prompt)
         self.assertIn("Never say the closing sentence unless", skeleton.system_prompt)
+        self.assertIn("Restaurant / branch confirmation target: 예약식당", skeleton.system_prompt)
+        self.assertIn("Do not repeat the restaurant / branch confirmation", skeleton.system_prompt)
         self.assertIn("6월 1일, 오후 7시 정각, 네 명", skeleton.system_prompt)
         self.assertIn("commas as natural pauses", skeleton.system_prompt)
 
@@ -182,18 +189,259 @@ class RealAgentSdkRunnerTest(unittest.TestCase):
 
         self.assertIn("Do not immediately fill silence with another question", prompt)
         self.assertIn("Do not interrupt short pauses inside the staff answer", prompt)
-        self.assertIn("예약 가능 여부 확인을 위해 전화드린 AI 예약 도우미입니다", prompt)
-        self.assertIn("혹시 한신포차 맞나요?", prompt)
+        self.assertIn("The sidecar controls the first spoken turn", prompt)
+        self.assertIn("Do not repeat or extend the sidecar-provided first turn", prompt)
         self.assertIn("누구세요?", prompt)
-        self.assertIn("Regardless of what the staff says first", prompt)
+        self.assertIn("the first meaningful assistant response must still follow the sidecar-provided first-turn instruction", prompt)
         self.assertIn("before you have stated the requested date/time/party size", prompt)
         self.assertIn("After the first assistant turn, stop speaking", prompt)
-        self.assertIn("not ask the availability question until", prompt)
+        self.assertIn("not ask the availability question until the staff clearly confirms", prompt)
+        self.assertIn("A bare \"네\"", prompt)
+        self.assertIn("do not repeat the full AI disclosure", prompt)
+        self.assertIn("do not ask the branch confirmation again", prompt)
+        self.assertIn("do not ask the availability question yet", prompt)
+        self.assertIn("your next assistant sentence must be only the availability question", prompt)
+        self.assertIn("Do not add filler", prompt)
         self.assertIn("Never treat this as a reservation confirmation", prompt)
         self.assertIn("오후 8시 30분", prompt)
         self.assertIn('Do not ask "혹시 들리시나요?"', prompt)
         self.assertIn("Do not ask the same availability question again", prompt)
         self.assertIn("그 시간에 방문하겠습니다", prompt)
+        self.assertIn("For non-confirmed outcomes", prompt)
+        self.assertIn("확인 후 다시 연락드리겠습니다", prompt)
+
+    def test_response_create_opening_hearing_reply_waits_without_response(self):
+        request = call_request()
+        for opening_only in ("안녕", "여보세요?", "네", "말씀하세요"):
+            with self.subTest(opening_only=opening_only):
+                kwargs = response_create_kwargs(
+                    "user_transcript",
+                    request,
+                    [
+                        (
+                            "assistant",
+                            "안녕하세요, 예약 가능 여부 확인을 위해 전화드린 AI 예약 도우미입니다. 혹시 예약식당 맞나요?",
+                        ),
+                        ("user", opening_only),
+                    ],
+                )
+
+                self.assertEqual(kwargs, {})
+
+    def test_response_create_opening_then_bare_yes_progresses_to_availability(self):
+        kwargs = response_create_kwargs(
+            "user_transcript",
+            call_request(),
+            [
+                (
+                    "assistant",
+                    "안녕하세요, 예약 가능 여부 확인을 위해 전화드린 AI 예약 도우미입니다. 혹시 예약식당 맞나요?",
+                ),
+                ("user", "여보세요?"),
+                ("user", "네"),
+            ],
+        )
+
+        instructions = kwargs["response"]["instructions"]
+        self.assertIn("예약 가능할까요?", instructions)
+        self.assertNotIn("AI 예약 도우미", instructions)
+
+    def test_response_create_call_answered_contains_opening_only(self):
+        kwargs = response_create_kwargs("call_answered", call_request(), [])
+
+        instructions = kwargs["response"]["instructions"]
+        self.assertIn("Speak only this Korean sentence once", instructions)
+        self.assertIn("Do not repeat any part of the sentence", instructions)
+        self.assertIn("혹시 예약식당 맞나요?", instructions)
+        self.assertIn("Do not include the requested date, time, party size", instructions)
+        self.assertNotIn("예약 가능할까요", instructions)
+        self.assertNotIn("6월 1일", instructions)
+
+    def test_branch_confirmation_rejects_echoed_question(self):
+        for echoed_question in (
+            "혹시 예약식당 맞나요?",
+            "예약식당 맞나요?",
+            "감동식당 명지대점 맞나요?",
+            "감동식당 맞습니까?",
+        ):
+            with self.subTest(echoed_question=echoed_question):
+                self.assertFalse(user_confirmed_branch(echoed_question))
+
+    def test_response_create_after_branch_question_echo_waits_without_response(self):
+        request = call_request()
+        kwargs = response_create_kwargs(
+            "user_transcript",
+            request,
+            [
+                (
+                    "assistant",
+                    "안녕하세요, 예약 가능 여부 확인을 위해 전화드린 AI 예약 도우미입니다. 혹시 예약식당 맞나요?",
+                ),
+                ("user", "예약식당 맞나요?"),
+            ],
+        )
+
+        self.assertEqual(kwargs, {})
+
+    def test_response_create_after_branch_confirmation_asks_availability_only(self):
+        request = call_request()
+        kwargs = response_create_kwargs(
+            "user_transcript",
+            request,
+            [
+                (
+                    "assistant",
+                    "안녕하세요, 예약 가능 여부 확인을 위해 전화드린 AI 예약 도우미입니다. 혹시 예약식당 맞나요?",
+                ),
+                ("user", "네 맞습니다."),
+            ],
+        )
+
+        instructions = kwargs["response"]["instructions"]
+        self.assertIn("sufficient to continue the demo call", instructions)
+        self.assertIn("Speak exactly this one sentence only", instructions)
+        self.assertIn("6월 1일, 오후 7시 정각, 네 명 예약 가능할까요?", instructions)
+        self.assertNotIn("AI 예약 도우미", instructions)
+
+    def test_response_create_after_availability_answer_requests_result_tool_only(self):
+        kwargs = response_create_kwargs(
+            "user_transcript",
+            call_request(),
+            [
+                (
+                    "assistant",
+                    "안녕하세요, 예약 가능 여부 확인을 위해 전화드린 AI 예약 도우미입니다. 혹시 예약식당 맞나요?",
+                ),
+                ("user", "네 맞습니다."),
+                ("assistant", "6월 1일, 오후 7시 정각, 네 명 예약 가능할까요?"),
+                ("user", "네 가능합니다."),
+            ],
+        )
+
+        instructions = kwargs["response"]["instructions"]
+        self.assertIn("Do not ask the availability question again", instructions)
+        self.assertIn("submit_reservation_call_result", instructions)
+        self.assertNotIn("혹시 예약식당 맞나요", instructions)
+
+    def test_response_create_after_name_request_provides_name_and_waits(self):
+        kwargs = response_create_kwargs(
+            "user_transcript",
+            named_call_request(),
+            [
+                (
+                    "assistant",
+                    "안녕하세요, 예약 가능 여부 확인을 위해 전화드린 AI 예약 도우미입니다. 혹시 예약식당 맞나요?",
+                ),
+                ("user", "네 맞습니다."),
+                ("assistant", "6월 1일, 오후 7시 정각, 네 명 예약 가능할까요?"),
+                ("user", "네 가능합니다. 예약자 이름 말해주세요."),
+            ],
+        )
+
+        instructions = kwargs["response"]["instructions"]
+        self.assertIn("Do not call `submit_reservation_call_result` yet", instructions)
+        self.assertIn("예약자는 홍길동입니다", instructions)
+        self.assertIn("wait for the staff to acknowledge", instructions)
+        self.assertNotIn("그 시간에 방문하겠습니다", instructions)
+
+    def test_response_create_after_split_name_request_provides_name_and_waits(self):
+        kwargs = response_create_kwargs(
+            "user_transcript",
+            named_call_request(),
+            [
+                (
+                    "assistant",
+                    "안녕하세요, 예약 가능 여부 확인을 위해 전화드린 AI 예약 도우미입니다. 혹시 예약식당 맞나요?",
+                ),
+                ("user", "네 맞습니다."),
+                ("assistant", "6월 1일, 오후 7시 정각, 네 명 예약 가능할까요?"),
+                ("user", "네 가능합니다."),
+                ("user", "예약자 이름 말해주세요."),
+            ],
+        )
+
+        instructions = kwargs["response"]["instructions"]
+        self.assertIn("Do not call `submit_reservation_call_result` yet", instructions)
+        self.assertIn("예약자는 홍길동입니다", instructions)
+        self.assertIn("wait for the staff to acknowledge", instructions)
+        self.assertNotIn("그 시간에 방문하겠습니다", instructions)
+
+    def test_response_create_after_name_ack_requests_confirmed_tool(self):
+        kwargs = response_create_kwargs(
+            "user_transcript",
+            named_call_request(),
+            [
+                (
+                    "assistant",
+                    "안녕하세요, 예약 가능 여부 확인을 위해 전화드린 AI 예약 도우미입니다. 혹시 예약식당 맞나요?",
+                ),
+                ("user", "네 맞습니다."),
+                ("assistant", "6월 1일, 오후 7시 정각, 네 명 예약 가능할까요?"),
+                ("user", "네 가능합니다. 예약자 이름 말해주세요."),
+                ("assistant", "예약자는 홍길동입니다. 이 이름으로 예약 부탁드립니다."),
+                ("user", "네 알겠습니다."),
+            ],
+        )
+
+        instructions = kwargs["response"]["instructions"]
+        self.assertIn("staff acknowledged the reservation name/contact", instructions)
+        self.assertIn("CONFIRMED", instructions)
+        self.assertIn("2026-06-01T19:00:00", instructions)
+        self.assertIn("partySize exactly `4`", instructions)
+        self.assertNotIn("Do not call `submit_reservation_call_result` yet", instructions)
+
+    def test_response_create_after_unavailable_answer_asks_alternative_time(self):
+        kwargs = response_create_kwargs(
+            "user_transcript",
+            call_request(),
+            [
+                (
+                    "assistant",
+                    "안녕하세요, 예약 가능 여부 확인을 위해 전화드린 AI 예약 도우미입니다. 혹시 예약식당 맞나요?",
+                ),
+                ("user", "네 맞습니다."),
+                ("assistant", "6월 1일, 오후 7시 정각, 네 명 예약 가능할까요?"),
+                ("user", "그 시간은 예약이 어렵습니다."),
+            ],
+        )
+
+        instructions = kwargs["response"]["instructions"]
+        self.assertIn("Do not call `submit_reservation_call_result` yet", instructions)
+        self.assertIn("가능한 다른 시간대", instructions)
+        self.assertNotIn("그 시간에 방문하겠습니다", instructions)
+
+    def test_response_create_after_alternative_question_requests_result_tool(self):
+        kwargs = response_create_kwargs(
+            "user_transcript",
+            call_request(),
+            [
+                ("assistant", "6월 1일, 오후 7시 정각, 네 명 예약 가능할까요?"),
+                ("user", "그 시간은 예약이 어렵습니다."),
+                ("assistant", "혹시 가능한 다른 시간대가 있을까요?"),
+                ("user", "다른 시간도 없어요."),
+            ],
+        )
+
+        instructions = kwargs["response"]["instructions"]
+        self.assertIn("alternative-time question", instructions)
+        self.assertIn("UNAVAILABLE", instructions)
+        self.assertNotIn("그 시간에 방문하겠습니다", instructions)
+
+    def test_response_create_closing_after_result_requests_short_closing_only(self):
+        kwargs = response_create_kwargs("closing_after_result", call_request(), [])
+
+        instructions = kwargs["response"]["instructions"]
+        self.assertIn("Do not ask another question", instructions)
+        self.assertIn("Speak exactly this one sentence only", instructions)
+        self.assertIn("그 시간에 방문하겠습니다", instructions)
+
+    def test_response_create_non_confirmed_closing_does_not_say_visit(self):
+        kwargs = response_create_kwargs("closing_after_non_confirmed_result", call_request(), [])
+
+        instructions = kwargs["response"]["instructions"]
+        self.assertIn("Do not ask another question", instructions)
+        self.assertIn("확인 후 다시 연락드리겠습니다", instructions)
+        self.assertNotIn("그 시간에 방문하겠습니다", instructions)
 
     def test_wait_helper_prefers_result_tool_before_call_end(self):
         async def scenario():
@@ -288,6 +536,32 @@ class RealAgentSdkRunnerTest(unittest.TestCase):
         self.assertFalse(late_failed_rejected)
         self.assertFalse(late_confirmed_rejected)
         self.assertFalse(confirmed_rejected)
+
+    def test_confirmed_result_waits_for_recent_user_transcript_stability(self):
+        self.assertTrue(
+            should_wait_for_confirmed_result_stability(
+                "CONFIRMED",
+                latest_user_transcript_at=100.0,
+                now=101.0,
+                stability_seconds=2.0,
+            )
+        )
+        self.assertFalse(
+            should_wait_for_confirmed_result_stability(
+                "CONFIRMED",
+                latest_user_transcript_at=100.0,
+                now=103.0,
+                stability_seconds=2.0,
+            )
+        )
+        self.assertFalse(
+            should_wait_for_confirmed_result_stability(
+                "UNAVAILABLE",
+                latest_user_transcript_at=100.0,
+                now=101.0,
+                stability_seconds=2.0,
+            )
+        )
 
     def test_confirmed_result_rejects_conflicting_requested_details(self):
         request = call_request()
@@ -389,6 +663,11 @@ class RealAgentSdkRunnerTest(unittest.TestCase):
         result = infer_ai_result_from_transcripts(
             call_request(),
             [
+                (
+                    "assistant",
+                    "안녕하세요, 예약 가능 여부 확인을 위해 전화드린 AI 예약 도우미입니다. 혹시 예약식당 맞나요?",
+                ),
+                ("user", "네 맞습니다."),
                 ("assistant", "6월 1일 19시 4명 예약 가능할까요?"),
                 ("user", "네, 가능합니다."),
             ],
@@ -398,6 +677,202 @@ class RealAgentSdkRunnerTest(unittest.TestCase):
         self.assertEqual(result["confirmedDateTime"], "2026-06-01T19:00:00")
         self.assertEqual(result["partySize"], 4)
         self.assertIn("6월 1일 19시 0분 4명", result["summary"])
+
+    def test_transcript_fallback_confirms_after_opening_then_bare_yes_branch_reply(self):
+        result = infer_ai_result_from_transcripts(
+            call_request(),
+            [
+                (
+                    "assistant",
+                    "안녕하세요, 예약 가능 여부 확인을 위해 전화드린 AI 예약 도우미입니다. 혹시 예약식당 맞나요?",
+                ),
+                ("user", "여보세요?"),
+                ("user", "네"),
+                ("assistant", "6월 1일 19시 4명 예약 가능할까요?"),
+                ("user", "네, 가능합니다."),
+            ],
+        )
+
+        self.assertEqual(result["resultStatus"], "CONFIRMED")
+        self.assertEqual(result["confirmedDateTime"], "2026-06-01T19:00:00")
+
+    def test_transcript_fallback_does_not_confirm_after_opening_only_branch_reply(self):
+        result = infer_ai_result_from_transcripts(
+            call_request(),
+            [
+                (
+                    "assistant",
+                    "안녕하세요, 예약 가능 여부 확인을 위해 전화드린 AI 예약 도우미입니다. 혹시 예약식당 맞나요?",
+                ),
+                ("user", "안녕"),
+                ("assistant", "6월 1일 19시 4명 예약 가능할까요?"),
+                ("user", "네, 가능합니다."),
+            ],
+        )
+
+        self.assertIsNone(result)
+
+    def test_transcript_fallback_does_not_confirm_after_rejected_branch(self):
+        result = infer_ai_result_from_transcripts(
+            call_request(),
+            [
+                (
+                    "assistant",
+                    "안녕하세요, 예약 가능 여부 확인을 위해 전화드린 AI 예약 도우미입니다. 혹시 예약식당 맞나요?",
+                ),
+                ("user", "아니요 잘못 거셨어요."),
+                ("assistant", "6월 1일 19시 4명 예약 가능할까요?"),
+                ("user", "네, 가능합니다."),
+            ],
+        )
+
+        self.assertIsNone(result)
+
+    def test_transcript_fallback_does_not_confirm_without_availability_answer(self):
+        result = infer_ai_result_from_transcripts(
+            call_request(),
+            [
+                (
+                    "assistant",
+                    "안녕하세요, 예약 가능 여부 확인을 위해 전화드린 AI 예약 도우미입니다. 혹시 예약식당 맞나요?",
+                ),
+                ("user", "네 맞습니다."),
+                ("assistant", "6월 1일 19시 4명 예약 가능할까요?"),
+                ("assistant", "네, 확인 감사합니다. 그 시간에 방문하겠습니다. 좋은 하루 되세요."),
+                ("user", "네."),
+            ],
+        )
+
+        self.assertIsNone(result)
+
+    def test_transcript_fallback_does_not_confirm_unanswered_name_request(self):
+        result = infer_ai_result_from_transcripts(
+            named_call_request(),
+            [
+                (
+                    "assistant",
+                    "안녕하세요, 예약 가능 여부 확인을 위해 전화드린 AI 예약 도우미입니다. 혹시 예약식당 맞나요?",
+                ),
+                ("user", "네 맞습니다."),
+                ("assistant", "6월 1일 19시 4명 예약 가능할까요?"),
+                ("user", "네 가능합니다. 예약자 이름 말해주세요."),
+                ("assistant", "네, 확인 감사합니다. 그 시간에 방문하겠습니다. 좋은 하루 되세요."),
+            ],
+        )
+
+        self.assertIsNone(result)
+
+    def test_transcript_fallback_confirms_after_name_is_provided_and_acknowledged(self):
+        result = infer_ai_result_from_transcripts(
+            named_call_request(),
+            [
+                (
+                    "assistant",
+                    "안녕하세요, 예약 가능 여부 확인을 위해 전화드린 AI 예약 도우미입니다. 혹시 예약식당 맞나요?",
+                ),
+                ("user", "네 맞습니다."),
+                ("assistant", "6월 1일 19시 4명 예약 가능할까요?"),
+                ("user", "네 가능합니다. 예약자 이름 말해주세요."),
+                ("assistant", "예약자는 홍길동입니다. 이 이름으로 예약 부탁드립니다."),
+                ("user", "네 알겠습니다."),
+            ],
+        )
+
+        self.assertEqual(result["resultStatus"], "CONFIRMED")
+        self.assertTrue(result["reservationNameProvided"])
+        self.assertFalse(result["phoneNumberProvided"])
+        self.assertTrue(result["restaurantRequestedNameOrPhone"])
+
+    def test_confirmed_tool_result_requires_customer_confirmation_after_availability_question(self):
+        rejection = final_result_transcript_rejection_reason(
+            call_request(),
+            "CONFIRMED",
+            [
+                (
+                    "assistant",
+                    "안녕하세요, 예약 가능 여부 확인을 위해 전화드린 AI 예약 도우미입니다. 혹시 예약식당 맞나요?",
+                ),
+                ("user", "네 맞습니다."),
+                ("assistant", "6월 1일 19시 4명 예약 가능할까요?"),
+                ("assistant", "네, 확인 감사합니다. 그 시간에 방문하겠습니다. 좋은 하루 되세요."),
+            ],
+        )
+
+        self.assertIsNotNone(rejection)
+        self.assertIn("Branch confirmation alone is not enough", rejection)
+
+    def test_confirmed_tool_result_accepts_customer_confirmation_after_availability_question(self):
+        rejection = final_result_transcript_rejection_reason(
+            call_request(),
+            "CONFIRMED",
+            [
+                (
+                    "assistant",
+                    "안녕하세요, 예약 가능 여부 확인을 위해 전화드린 AI 예약 도우미입니다. 혹시 예약식당 맞나요?",
+                ),
+                ("user", "네 맞습니다."),
+                ("assistant", "6월 1일 19시 4명 예약 가능할까요?"),
+                ("user", "네 가능합니다."),
+            ],
+        )
+
+        self.assertIsNone(rejection)
+
+    def test_confirmed_tool_result_rejects_unanswered_name_request_after_availability(self):
+        rejection = final_result_transcript_rejection_reason(
+            named_call_request(),
+            "CONFIRMED",
+            [
+                (
+                    "assistant",
+                    "안녕하세요, 예약 가능 여부 확인을 위해 전화드린 AI 예약 도우미입니다. 혹시 예약식당 맞나요?",
+                ),
+                ("user", "네 맞습니다."),
+                ("assistant", "6월 1일 19시 4명 예약 가능할까요?"),
+                ("user", "네 가능합니다. 예약자 이름 말해주세요."),
+            ],
+        )
+
+        self.assertIsNotNone(rejection)
+        self.assertIn("Provide the requested information", rejection)
+
+    def test_confirmed_tool_result_rejects_name_request_without_staff_ack_after_info(self):
+        rejection = final_result_transcript_rejection_reason(
+            named_call_request(),
+            "CONFIRMED",
+            [
+                (
+                    "assistant",
+                    "안녕하세요, 예약 가능 여부 확인을 위해 전화드린 AI 예약 도우미입니다. 혹시 예약식당 맞나요?",
+                ),
+                ("user", "네 맞습니다."),
+                ("assistant", "6월 1일 19시 4명 예약 가능할까요?"),
+                ("user", "네 가능합니다. 예약자 이름 말해주세요."),
+                ("assistant", "예약자는 홍길동입니다. 이 이름으로 예약 부탁드립니다."),
+            ],
+        )
+
+        self.assertIsNotNone(rejection)
+        self.assertIn("Wait for the staff to acknowledge", rejection)
+
+    def test_confirmed_tool_result_accepts_name_request_after_staff_ack(self):
+        rejection = final_result_transcript_rejection_reason(
+            named_call_request(),
+            "CONFIRMED",
+            [
+                (
+                    "assistant",
+                    "안녕하세요, 예약 가능 여부 확인을 위해 전화드린 AI 예약 도우미입니다. 혹시 예약식당 맞나요?",
+                ),
+                ("user", "네 맞습니다."),
+                ("assistant", "6월 1일 19시 4명 예약 가능할까요?"),
+                ("user", "네 가능합니다. 예약자 이름 말해주세요."),
+                ("assistant", "예약자는 홍길동입니다. 이 이름으로 예약 부탁드립니다."),
+                ("user", "네 알겠습니다."),
+            ],
+        )
+
+        self.assertIsNone(rejection)
 
     def test_transcript_fallback_keeps_ambiguous_hearing_check_unconfirmed(self):
         result = infer_ai_result_from_transcripts(
@@ -411,12 +886,25 @@ class RealAgentSdkRunnerTest(unittest.TestCase):
         self.assertEqual(result["resultStatus"], "NEEDS_CONFIRMATION")
         self.assertNotEqual(result["resultStatus"], "CONFIRMED")
 
-    def test_transcript_fallback_maps_unavailable_answer(self):
+    def test_transcript_fallback_does_not_end_before_alternative_question(self):
         result = infer_ai_result_from_transcripts(
             call_request(),
             [
                 ("assistant", "6월 1일 19시 4명 예약 가능할까요?"),
                 ("user", "그 시간은 예약이 어렵습니다."),
+            ],
+        )
+
+        self.assertIsNone(result)
+
+    def test_transcript_fallback_maps_unavailable_after_no_alternative_answer(self):
+        result = infer_ai_result_from_transcripts(
+            call_request(),
+            [
+                ("assistant", "6월 1일 19시 4명 예약 가능할까요?"),
+                ("user", "그 시간은 예약이 어렵습니다."),
+                ("assistant", "혹시 가능한 다른 시간대가 있을까요?"),
+                ("user", "다른 시간도 없어요."),
             ],
         )
 
@@ -462,8 +950,26 @@ class RealAgentSdkRunnerTest(unittest.TestCase):
         self.assertIn('"accepted":true', payload)
         self.assertIn("그 시간에 방문하겠습니다", payload)
 
+    def test_accepted_result_tool_response_for_non_confirmed_is_neutral(self):
+        payload = accepted_result_tool_response("UNAVAILABLE")
+
+        self.assertIn('"accepted":true', payload)
+        self.assertIn("확인 후 다시 연락드리겠습니다", payload)
+        self.assertNotIn("그 시간에 방문하겠습니다", payload)
+
     def test_real_sdk_call_boundary_with_fake_sdk_submits_result_and_hangs_up(self):
-        fake_agent_class = build_fake_agent_class(submit_tool_result=True)
+        fake_agent_class = build_fake_agent_class(
+            submit_tool_result=True,
+            transcripts=[
+                (
+                    "assistant",
+                    "안녕하세요, 예약 가능 여부 확인을 위해 전화드린 AI 예약 도우미입니다. 혹시 예약식당 맞나요?",
+                ),
+                ("user", "네 맞습니다."),
+                ("assistant", "6월 1일 19시 4명 예약 가능할까요?"),
+                ("user", "네 가능합니다."),
+            ],
+        )
 
         with patch.dict(sys.modules, fake_clawops_agent_modules(fake_agent_class)), \
                 patch("real_agent_sdk_runner.MIN_SECONDS_BEFORE_FINAL_RESULT", 0.0), \
@@ -498,6 +1004,11 @@ class RealAgentSdkRunnerTest(unittest.TestCase):
         fake_agent_class = build_fake_agent_class(
             submit_tool_result=False,
             transcripts=[
+                (
+                    "assistant",
+                    "안녕하세요, 예약 가능 여부 확인을 위해 전화드린 AI 예약 도우미입니다. 혹시 예약식당 맞나요?",
+                ),
+                ("user", "네 맞습니다."),
                 ("assistant", "6월 1일 19시 4명 예약 가능할까요?"),
                 ("user", "네 가능합니다."),
             ],
@@ -526,12 +1037,35 @@ class RealAgentSdkRunnerTest(unittest.TestCase):
         agent = fake_agent_class.instances[-1]
         session = agent.kwargs["session"]
         self.assertGreaterEqual(session._connection.response.create_count, 1)
+        self.assertIn("Speak only this Korean sentence once", session._connection.response.create_calls[0]["response"]["instructions"])
+        self.assertEqual(result.ai_result["failureReason"], "AI_RESULT_TOOL_MISSING")
+
+    def test_real_sdk_call_boundary_ignores_duplicate_call_start(self):
+        fake_agent_class = build_fake_agent_class(
+            submit_tool_result=False,
+            transcripts=[],
+            end_after_seconds=0.01,
+            call_start_count=2,
+        )
+
+        with patch.dict(sys.modules, fake_clawops_agent_modules(fake_agent_class)), \
+                patch("real_agent_sdk_runner.CALL_ANSWER_GREETING_DELAY_SECONDS", 0.0), \
+                patch("real_agent_sdk_runner.POST_CALL_END_RESULT_GRACE_SECONDS", 0.0):
+            result = asyncio.run(run_real_agent_sdk_call(call_request(), fake_execution_skeleton()))
+
+        session = fake_agent_class.instances[-1].kwargs["session"]
+        self.assertEqual(session._connection.response.create_count, 1)
         self.assertEqual(result.ai_result["failureReason"], "AI_RESULT_TOOL_MISSING")
 
     def test_real_sdk_call_boundary_hangs_up_with_live_transcript_fallback(self):
         fake_agent_class = build_fake_agent_class(
             submit_tool_result=False,
             transcripts=[
+                (
+                    "assistant",
+                    "안녕하세요, 예약 가능 여부 확인을 위해 전화드린 AI 예약 도우미입니다. 혹시 예약식당 맞나요?",
+                ),
+                ("user", "네 맞습니다."),
                 ("assistant", "6월 1일 19시 4명 예약 가능할까요?"),
                 ("user", "네 가능합니다."),
             ],
@@ -545,6 +1079,10 @@ class RealAgentSdkRunnerTest(unittest.TestCase):
         agent = fake_agent_class.instances[-1]
         self.assertTrue(agent.call_session.hungup)
         self.assertTrue(agent.disconnected)
+        create_calls = agent.kwargs["session"]._connection.response.create_calls
+        self.assertTrue(
+            any("그 시간에 방문하겠습니다" in call.get("response", {}).get("instructions", "") for call in create_calls)
+        )
         self.assertEqual(result.ai_result["resultStatus"], "CONFIRMED")
         self.assertEqual(result.ai_result["confirmedDateTime"], "2026-06-01T19:00:00")
 
@@ -712,6 +1250,20 @@ def call_request():
     )
 
 
+def named_call_request():
+    return RealAgentCallRequest(
+        reservation_id=100,
+        sidecar_call_id="fake-sidecar-call-100",
+        target_phone_number="placeholder-target-token",
+        target_phone_mask="****0000",
+        restaurant_name="예약식당",
+        reservation_date_time="2026-06-01T19:00:00",
+        party_size=4,
+        reservation_name="홍길동",
+        reservation_contact_number="placeholder-contact-token",
+    )
+
+
 class FakeCallSession:
     def __init__(self, end_after_seconds=None):
         self.end_after_seconds = end_after_seconds
@@ -724,10 +1276,11 @@ class FakeCallSession:
 
 
 class FakeSdkCallSession:
-    def __init__(self, end_after_seconds=None, transcripts=None):
+    def __init__(self, end_after_seconds=None, transcripts=None, call_start_count=1):
         self.call_id = "fake-provider-call-sdk"
         self.end_after_seconds = end_after_seconds
         self.transcripts = transcripts or []
+        self.call_start_count = call_start_count
         self.hungup = False
         self.handlers = {}
 
@@ -737,7 +1290,8 @@ class FakeSdkCallSession:
     async def wait(self):
         handler = self.handlers.get("call_start")
         if handler:
-            await handler(self)
+            for _ in range(self.call_start_count):
+                await handler(self)
         for speaker, transcript in self.transcripts:
             handler = self.handlers.get("transcript")
             if handler:
@@ -760,9 +1314,11 @@ class FakeOpenAIRealtime:
 class FakeRealtimeResponse:
     def __init__(self):
         self.create_count = 0
+        self.create_calls = []
 
-    async def create(self):
+    async def create(self, **kwargs):
         self.create_count += 1
+        self.create_calls.append(kwargs)
 
 
 class FakeRealtimeConnection:
@@ -775,7 +1331,7 @@ class FakeBuiltinTool:
     SEND_DTMF = "send_dtmf"
 
 
-def build_fake_agent_class(submit_tool_result, transcripts=None, end_after_seconds=0.01):
+def build_fake_agent_class(submit_tool_result, transcripts=None, end_after_seconds=0.01, call_start_count=1):
     class FakeClawOpsAgent:
         instances = []
 
@@ -802,12 +1358,17 @@ def build_fake_agent_class(submit_tool_result, transcripts=None, end_after_secon
         async def call(self, to, *, timeout=60):
             self.call_to = to
             if submit_tool_result:
-                self.call_session = FakeSdkCallSession()
+                self.call_session = FakeSdkCallSession(
+                    end_after_seconds=end_after_seconds,
+                    transcripts=transcripts,
+                    call_start_count=call_start_count,
+                )
                 asyncio.create_task(self.submit_result_after_tool_registration())
             else:
                 self.call_session = FakeSdkCallSession(
                     end_after_seconds=end_after_seconds,
                     transcripts=transcripts,
+                    call_start_count=call_start_count,
                 )
             for event_name, handlers in self.event_handlers.items():
                 for handler in handlers:
@@ -815,7 +1376,7 @@ def build_fake_agent_class(submit_tool_result, transcripts=None, end_after_secon
             return self.call_session
 
         async def submit_result_after_tool_registration(self):
-            await asyncio.sleep(0.01)
+            await asyncio.sleep(0.05)
             await self.tools["submit_reservation_call_result"](
                 resultStatus="CONFIRMED",
                 summary="6월 1일 19시 4명 예약이 가능하다고 확인했다.",

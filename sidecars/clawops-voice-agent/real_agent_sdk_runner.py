@@ -10,6 +10,7 @@ from __future__ import annotations
 import importlib
 import importlib.util
 import asyncio
+import inspect
 import json
 import os
 import pathlib
@@ -29,8 +30,9 @@ WAIT_CALL_ENDED = "CALL_ENDED"
 MIN_SECONDS_BEFORE_FINAL_RESULT = 45.0
 MIN_SECONDS_BEFORE_AI_FAILED_RESULT = 45.0
 POST_CALL_END_RESULT_GRACE_SECONDS = 8.0
-POST_RESULT_CLOSING_GRACE_SECONDS = 6.0
+POST_RESULT_CLOSING_GRACE_SECONDS = 10.0
 CALL_ANSWER_GREETING_DELAY_SECONDS = 1.0
+CONFIRMED_RESULT_STABILITY_SECONDS = 2.0
 REALTIME_RESPONSE_READY_TIMEOUT_SECONDS = 3.0
 TRANSCRIPT_PREVIEW_MAX_CHARS = 140
 
@@ -131,14 +133,12 @@ def load_reservation_agent_prompt(path: pathlib.Path = DEFAULT_PROMPT_PATH) -> s
 
 
 def build_prompt_for_request(base_prompt: str, request: RealAgentCallRequest) -> str:
-    opening_script = (
-        "안녕하세요, 예약 가능 여부 확인을 위해 전화드린 AI 예약 도우미입니다. "
-        f"혹시 {request.restaurant_name} 맞나요?"
-    )
     return "\n\n".join([
-        "## Mandatory First Utterance",
-        f'Your first spoken sentence must start with exactly: "{opening_script}"',
-        "After the opening script, stop speaking and wait for the staff to say whether the restaurant / branch name is correct.",
+        "## Sidecar-Controlled First Turn",
+        "The sidecar will trigger the first assistant response with per-response instructions.",
+        "For the first assistant response, obey the per-response instructions only. Do not repeat or extend them.",
+        "The first assistant response must not contain the requested date, time, party size, or the availability question.",
+        "After the first response, stop speaking and wait for the staff to say whether the restaurant / branch name is correct.",
         "Do not say the reservation date/time/party size until the staff confirms the restaurant / branch name is correct.",
         "Do not accept a premature yes as reservation confirmation until after you have stated the requested date/time/party size.",
         "If the staff asks who is calling, repeat that you are an AI reservation assistant calling to check reservation availability, then ask whether the restaurant / branch name is correct. Do not close the call.",
@@ -152,8 +152,8 @@ def build_prompt_for_request(base_prompt: str, request: RealAgentCallRequest) ->
         f"- Request note: {request.request_note or ''}",
         f"- Reservation name: {request.reservation_name or '테스트 예약자'}",
         f"- Reservation contact: {request.reservation_contact_number or '테스트 연락처'}",
-        f"- Opening script: {opening_script}",
-        "- Start with the opening script, then wait for restaurant / branch name confirmation before asking the reservation question.",
+        f"- Restaurant / branch confirmation target: {request.restaurant_name}",
+        "- Do not repeat the restaurant / branch confirmation within one assistant turn.",
         "- Say the Korean spoken reservation phrase slowly with the commas as natural pauses.",
         "- Never say the closing sentence unless `submit_reservation_call_result` was accepted.",
         "- Do not change the requested date-time or party size.",
@@ -226,6 +226,409 @@ def build_disconnect_config() -> dict[str, Any]:
         "method": "ClawOpsAgent.disconnect",
         "finally": True,
     }
+
+
+def response_create_kwargs(
+    reason: str,
+    request: RealAgentCallRequest,
+    transcript_entries: list[tuple[str, str]],
+) -> dict[str, Any]:
+    instructions = response_create_instructions(reason, request, transcript_entries)
+    if not instructions:
+        return {}
+    return {"response": {"instructions": instructions}}
+
+
+def response_create_instructions(
+    reason: str,
+    request: RealAgentCallRequest,
+    transcript_entries: list[tuple[str, str]],
+) -> str:
+    if reason == "call_answered":
+        return (
+            "Respond in Korean. Speak only this Korean sentence once, with no words before or after it: "
+            f"안녕하세요, 예약 가능 여부 확인을 위해 전화드린 AI 예약 도우미입니다. 혹시 {request.restaurant_name} 맞나요? "
+            "Do not repeat any part of the sentence. After speaking it once, stop. "
+            "Do not include the requested date, time, party size, or any reservation availability question in this response."
+        )
+    if reason == "user_transcript" and last_assistant_asked_branch_confirmation(transcript_entries):
+        if user_rejected_branch(transcript_entries[-1][1]):
+            return (
+                "Respond in Korean. The staff indicated this may not be the requested restaurant / branch. "
+                "Call `submit_reservation_call_result` with NEEDS_CONFIRMATION. "
+                "Then speak exactly this one sentence only: 죄송합니다. 확인 후 다시 연락드리겠습니다. "
+                "After speaking that sentence, stop."
+            )
+        if user_allows_branch_progress_from_context(transcript_entries):
+            return (
+                "Respond in Korean. Treat the staff response as sufficient to continue the demo call. "
+                "Speak exactly this one sentence only: "
+                f"{spoken_reservation_phrase(request)} 예약 가능할까요? "
+                "After speaking that sentence, stop and wait."
+            )
+    if reason in {"closing_after_result", "closing_after_confirmed_result"}:
+        return (
+            "The requested reservation result is already decided. Do not ask another question. "
+            "Respond in Korean. Speak exactly this one sentence only: "
+            "네, 확인 감사합니다. 그 시간에 방문하겠습니다. 좋은 하루 되세요. "
+            "After speaking that sentence, stop."
+        )
+    if reason == "closing_after_non_confirmed_result":
+        return (
+            "The requested reservation result is already decided and it is not confirmed. Do not ask another question. "
+            "Respond in Korean. Speak exactly this one sentence only: "
+            "네, 확인 감사합니다. 확인 후 다시 연락드리겠습니다. 좋은 하루 되세요. "
+            "After speaking that sentence, stop."
+        )
+    if reason == "user_transcript" and last_assistant_asked_alternative_time(transcript_entries):
+        return (
+            "The staff just answered the alternative-time question. "
+            "Do not ask the requested availability question again. "
+            "If the staff suggested an alternative time, call `submit_reservation_call_result` with NEEDS_CONFIRMATION. "
+            "If the staff says there is no usable alternative, call `submit_reservation_call_result` with UNAVAILABLE. "
+            "If the answer is ambiguous, call `submit_reservation_call_result` with NEEDS_CONFIRMATION. "
+            "Do not say you will visit at the requested time."
+        )
+    if reason == "user_transcript" and staff_acknowledged_provided_name_or_phone(request, transcript_entries):
+        return (
+            "The staff acknowledged the reservation name/contact that you provided after the requested availability was confirmed. "
+            "Do not ask another question. "
+            "Call `submit_reservation_call_result` with CONFIRMED. "
+            f"Use confirmedDateTime exactly `{request.reservation_date_time}` and partySize exactly `{request.party_size}`. "
+            f"The summary or transcriptSummary must mention {display_reservation_datetime(request.reservation_date_time)} and {request.party_size} people. "
+            "After the tool is accepted, say only the confirmed closing sentence."
+        )
+    if reason == "user_transcript" and last_assistant_asked_availability(transcript_entries):
+        latest_user_text = transcript_entries[-1][1]
+        if contains_name_or_phone_request(latest_user_text):
+            return name_or_phone_response_instructions(request, latest_user_text)
+        if contains_unavailable_marker(latest_user_text) and not contains_alternative_time_marker(latest_user_text):
+            return alternative_time_question_instructions()
+        return (
+            "The staff just answered the availability question. "
+            "Do not ask the availability question again. "
+            "If the answer clearly confirms the requested date/time/party size, call "
+            "`submit_reservation_call_result` with CONFIRMED. "
+            "If the answer says unavailable, suggests an alternative, or is ambiguous, "
+            "call `submit_reservation_call_result` with the safest matching status. "
+            "Do not speak another question unless the staff asked for missing details."
+        )
+    return ""
+
+
+def alternative_time_question_instructions() -> str:
+    return (
+        "Respond in Korean. The staff said the requested reservation time is unavailable. "
+        "Do not call `submit_reservation_call_result` yet. "
+        "Speak exactly this one sentence only: 혹시 가능한 다른 시간대가 있을까요? "
+        "After speaking that sentence, stop and wait."
+    )
+
+
+def name_or_phone_response_instructions(request: RealAgentCallRequest, staff_text: str) -> str:
+    needs_name = contains_name_request(staff_text)
+    needs_phone = contains_phone_request(staff_text)
+    name = request.reservation_name or "테스트 예약자"
+    contact = request.reservation_contact_number or "테스트 연락처"
+    if needs_name and needs_phone:
+        sentence = f"예약자는 {name}이고, 연락처는 {contact}입니다. 이 정보로 예약 부탁드립니다."
+    elif needs_phone:
+        sentence = f"연락처는 {contact}입니다. 이 연락처로 예약 부탁드립니다."
+    else:
+        sentence = f"예약자는 {name}입니다. 이 이름으로 예약 부탁드립니다."
+    return (
+        "Respond in Korean. The staff confirmed availability but requested reservation name or contact. "
+        "Do not call `submit_reservation_call_result` yet. "
+        f"Speak exactly this one sentence only: {sentence} "
+        "After speaking that sentence, stop and wait for the staff to acknowledge the reservation."
+    )
+
+
+def last_assistant_asked_branch_confirmation(transcript_entries: list[tuple[str, str]]) -> bool:
+    if len(transcript_entries) < 2:
+        return False
+    last_speaker, _ = transcript_entries[-1]
+    if last_speaker != "user":
+        return False
+    for speaker, text in reversed(transcript_entries[:-1]):
+        if speaker != "assistant":
+            continue
+        return assistant_asked_branch_confirmation(text)
+    return False
+
+
+def user_confirmed_branch(text: str) -> bool:
+    normalized = normalize_korean_text(text)
+    if any(token in normalized for token in ("맞나요", "맞습니까", "맞는지", "맞는건가", "맞는거", "맞냐", "맞니")):
+        return False
+    if normalized in {
+        "네맞습니다",
+        "예맞습니다",
+        "맞습니다",
+        "네맞아요",
+        "예맞아요",
+        "맞아요",
+        "네맞아",
+        "맞아",
+        "네맞는데요",
+        "예맞는데요",
+    }:
+        return True
+    if normalized in {
+        "여보세요",
+        "안녕",
+        "안녕하세요",
+        "네",
+        "예",
+        "말씀하세요",
+        "네말씀하세요",
+        "예말씀하세요",
+        "들립니다",
+        "네들립니다",
+        "예들립니다",
+    }:
+        return False
+    if "아니" in normalized or "아닙" in normalized or "아닌" in normalized:
+        return False
+    return any(token in normalized for token in ("맞습니다", "맞아요", "맞는데요"))
+
+
+def branch_confirmed_before_availability(transcript_entries: list[tuple[str, str]]) -> bool:
+    awaiting_branch_confirmation = False
+    branch_confirmed = False
+    opening_phrase_seen_after_branch = False
+    for speaker, text in transcript_entries:
+        normalized = normalize_korean_text(text)
+        if speaker == "assistant" and "맞나요" in normalized:
+            awaiting_branch_confirmation = True
+            branch_confirmed = False
+            opening_phrase_seen_after_branch = False
+            continue
+        if awaiting_branch_confirmation and speaker == "user":
+            if user_allows_branch_progress(text):
+                branch_confirmed = True
+                awaiting_branch_confirmation = False
+                opening_phrase_seen_after_branch = False
+            elif is_bare_yes(text) and opening_phrase_seen_after_branch:
+                branch_confirmed = True
+                awaiting_branch_confirmation = False
+                opening_phrase_seen_after_branch = False
+            elif user_rejected_branch(text):
+                return False
+            elif is_hearing_or_opening_phrase(text):
+                opening_phrase_seen_after_branch = True
+    return branch_confirmed
+
+
+def user_allows_branch_progress(text: str) -> bool:
+    return user_confirmed_branch(text)
+
+
+def user_allows_branch_progress_from_context(transcript_entries: list[tuple[str, str]]) -> bool:
+    if not transcript_entries:
+        return False
+    latest_text = transcript_entries[-1][1]
+    if user_allows_branch_progress(latest_text):
+        return True
+    if not is_bare_yes(latest_text):
+        return False
+    for speaker, text in reversed(transcript_entries[:-1]):
+        if speaker == "assistant" and assistant_asked_branch_confirmation(text):
+            return False
+        if speaker == "user" and is_hearing_or_opening_phrase(text):
+            return True
+    return False
+
+
+def user_rejected_branch(text: str) -> bool:
+    normalized = normalize_korean_text(text)
+    return any(token in normalized for token in ("아니", "아닙", "아닌", "틀렸", "잘못"))
+
+
+def assistant_asked_branch_confirmation(text: str) -> bool:
+    normalized = normalize_korean_text(text)
+    return "맞나요" in normalized and "가능할까요" not in normalized
+
+
+def is_bare_yes(text: str) -> bool:
+    return normalize_korean_text(text) in {"네", "예"}
+
+
+def last_assistant_asked_availability(transcript_entries: list[tuple[str, str]]) -> bool:
+    if len(transcript_entries) < 2:
+        return False
+    last_speaker, _ = transcript_entries[-1]
+    if last_speaker != "user":
+        return False
+    for speaker, text in reversed(transcript_entries[:-1]):
+        if speaker != "assistant":
+            continue
+        return assistant_asked_availability_question(text)
+    return False
+
+
+def last_assistant_asked_alternative_time(transcript_entries: list[tuple[str, str]]) -> bool:
+    if len(transcript_entries) < 2:
+        return False
+    last_speaker, _ = transcript_entries[-1]
+    if last_speaker != "user":
+        return False
+    for speaker, text in reversed(transcript_entries[:-1]):
+        if speaker != "assistant":
+            continue
+        return assistant_asked_alternative_time_question(text)
+    return False
+
+
+def assistant_asked_alternative_time_question(text: str) -> bool:
+    normalized = normalize_korean_text(text)
+    return "다른시간" in normalized or "대체시간" in normalized or "가능한다른시간" in normalized
+
+
+def assistant_asked_availability_question(text: str) -> bool:
+    normalized = normalize_korean_text(text)
+    return (
+        "예약가능할까요" in normalized
+        or ("가능할까요" in normalized and "예약" in normalized)
+    )
+
+
+def user_answer_text_after_latest_availability_question(transcript_entries: list[tuple[str, str]]) -> str:
+    for index in range(len(transcript_entries) - 1, -1, -1):
+        speaker, text = transcript_entries[index]
+        if speaker == "assistant" and assistant_asked_availability_question(text):
+            return normalize_result_text(
+                *(entry_text for entry_speaker, entry_text in transcript_entries[index + 1:] if entry_speaker == "user")
+            )
+    return ""
+
+
+def confirmed_availability_answer_after_question(transcript_entries: list[tuple[str, str]]) -> bool:
+    return contains_confirmation_marker(user_answer_text_after_latest_availability_question(transcript_entries))
+
+
+def latest_name_or_phone_request_after_availability(
+    transcript_entries: list[tuple[str, str]],
+) -> tuple[int, str] | None:
+    latest_availability_index = None
+    for index in range(len(transcript_entries) - 1, -1, -1):
+        speaker, text = transcript_entries[index]
+        if speaker == "assistant" and assistant_asked_availability_question(text):
+            latest_availability_index = index
+            break
+    if latest_availability_index is None:
+        return None
+    for index in range(len(transcript_entries) - 1, latest_availability_index, -1):
+        speaker, text = transcript_entries[index]
+        if speaker == "user" and contains_name_or_phone_request(text):
+            return index, text
+    return None
+
+
+def assistant_provided_requested_name_or_phone_after(
+    request: RealAgentCallRequest,
+    transcript_entries: list[tuple[str, str]],
+    user_request_index: int,
+    user_request_text: str,
+) -> bool:
+    assistant_text = normalize_result_text(
+        *(text for speaker, text in transcript_entries[user_request_index + 1:] if speaker == "assistant")
+    )
+    if not assistant_text:
+        return False
+    normalized_assistant = normalize_korean_text(assistant_text)
+    if contains_name_request(user_request_text):
+        expected_name = normalize_korean_text(request.reservation_name or "테스트예약자")
+        if expected_name and expected_name not in normalized_assistant:
+            return False
+    if contains_phone_request(user_request_text):
+        expected_digits = digits_only(request.reservation_contact_number)
+        assistant_digits = digits_only(assistant_text)
+        if expected_digits and expected_digits not in assistant_digits:
+            return False
+        if not expected_digits and "테스트연락처" not in normalized_assistant:
+            return False
+    return True
+
+
+def customer_acknowledged_after_assistant_info(
+    transcript_entries: list[tuple[str, str]],
+    user_request_index: int,
+) -> bool:
+    assistant_info_index = None
+    for index in range(user_request_index + 1, len(transcript_entries)):
+        if transcript_entries[index][0] == "assistant":
+            assistant_info_index = index
+            break
+    if assistant_info_index is None:
+        return False
+    user_text_after_info = normalize_result_text(
+        *(text for speaker, text in transcript_entries[assistant_info_index + 1:] if speaker == "user")
+    )
+    return contains_confirmation_marker(user_text_after_info) or contains_acknowledgement_marker(user_text_after_info)
+
+
+def provided_name_or_phone_flags(
+    request: RealAgentCallRequest,
+    transcript_entries: list[tuple[str, str]],
+) -> tuple[bool, bool]:
+    name_or_phone_request = latest_name_or_phone_request_after_availability(transcript_entries)
+    if name_or_phone_request is None:
+        return False, False
+    request_index, request_text = name_or_phone_request
+    if not assistant_provided_requested_name_or_phone_after(
+        request,
+        transcript_entries,
+        request_index,
+        request_text,
+    ):
+        return False, False
+    return contains_name_request(request_text), contains_phone_request(request_text)
+
+
+def staff_acknowledged_provided_name_or_phone(
+    request: RealAgentCallRequest,
+    transcript_entries: list[tuple[str, str]],
+) -> bool:
+    if not transcript_entries or transcript_entries[-1][0] != "user":
+        return False
+    name_or_phone_request = latest_name_or_phone_request_after_availability(transcript_entries)
+    if name_or_phone_request is None:
+        return False
+    request_index, request_text = name_or_phone_request
+    if not assistant_provided_requested_name_or_phone_after(
+        request,
+        transcript_entries,
+        request_index,
+        request_text,
+    ):
+        return False
+    return customer_acknowledged_after_assistant_info(transcript_entries, request_index)
+
+
+def is_hearing_or_opening_phrase(text: str) -> bool:
+    normalized = normalize_korean_text(text)
+    return normalized in {
+        "여보세요",
+        "안녕",
+        "안녕하세요",
+        "네",
+        "예",
+        "말씀하세요",
+        "네말씀하세요",
+        "예말씀하세요",
+        "들립니다",
+        "네들립니다",
+        "예들립니다",
+    }
+
+
+def normalize_korean_text(text: Any) -> str:
+    return "".join(ch for ch in str(text or "").lower() if ch.isalnum())
+
+
+def digits_only(text: Any) -> str:
+    return "".join(ch for ch in str(text or "") if ch.isdigit())
 
 
 def coerce_tool_result_payload(tool_result: Any) -> dict[str, Any]:
@@ -344,7 +747,11 @@ async def run_real_agent_sdk_call(
     result_event = asyncio.Event()
     response_request_lock = asyncio.Lock()
     awaiting_assistant_response = False
+    live_transcript_result_submitted = False
+    initial_response_requested = False
     call_started_at = asyncio.get_running_loop().time()
+    latest_user_transcript_at: float | None = None
+    transcript_version = 0
 
     safe_log(
         "real_agent_call_start",
@@ -416,6 +823,27 @@ async def run_real_agent_sdk_call(
                 },
                 separators=(",", ":"),
             )
+        if should_wait_for_confirmed_result_stability(resultStatus, latest_user_transcript_at):
+            return json.dumps(
+                {
+                    "accepted": False,
+                    "reason": "The latest staff transcript may still be incomplete. Wait briefly, then if the staff asks for reservation name or contact, provide it before submitting CONFIRMED.",
+                },
+                separators=(",", ":"),
+            )
+        transcript_rejection_reason = final_result_transcript_rejection_reason(
+            request,
+            resultStatus,
+            transcript_entries,
+        )
+        if transcript_rejection_reason:
+            return json.dumps(
+                {
+                    "accepted": False,
+                    "reason": transcript_rejection_reason,
+                },
+                separators=(",", ":"),
+            )
         result_rejection_reason = final_result_rejection_reason(
             request=request,
             result_status=resultStatus,
@@ -450,7 +878,7 @@ async def run_real_agent_sdk_call(
             "transcriptSummary": none_if_blank(transcriptSummary),
         })
         result_event.set()
-        return accepted_result_tool_response()
+        return accepted_result_tool_response(resultStatus)
 
     async def on_failed(call_session: Any, reason: str) -> None:
         failure_box["reason"] = reason or "CALL_CONNECTION_FAILED"
@@ -460,10 +888,12 @@ async def run_real_agent_sdk_call(
             reason=canonical_call_failure_reason(reason) or "CALL_CONNECTION_FAILED",
         )
 
-    async def request_realtime_response(reason: str) -> bool:
+    async def request_realtime_response(reason: str, *, allow_after_result: bool = False) -> bool:
         nonlocal awaiting_assistant_response
         async with response_request_lock:
-            if result_box or awaiting_assistant_response:
+            if result_box and not allow_after_result:
+                return False
+            if awaiting_assistant_response and not allow_after_result:
                 return False
             connection = getattr(session, "_connection", None)
             if connection is None:
@@ -474,7 +904,19 @@ async def run_real_agent_sdk_call(
                 return False
             awaiting_assistant_response = True
         try:
-            await create()
+            create_kwargs = response_create_kwargs(reason, request, transcript_entries)
+            if not create_kwargs:
+                async with response_request_lock:
+                    awaiting_assistant_response = False
+                safe_log(
+                    "real_agent_response_not_requested",
+                    reservationId=request.reservation_id,
+                    reason=reason,
+                )
+                return False
+            created = create(**create_kwargs)
+            if inspect.isawaitable(created):
+                await created
             safe_log(
                 "real_agent_response_requested",
                 reservationId=request.reservation_id,
@@ -504,20 +946,54 @@ async def run_real_agent_sdk_call(
         await request_realtime_response(reason)
 
     async def on_call_start(call_session: Any) -> None:
+        nonlocal initial_response_requested
+        if initial_response_requested:
+            safe_log(
+                "real_agent_call_answered_duplicate_ignored",
+                reservationId=request.reservation_id,
+            )
+            return
+        initial_response_requested = True
         safe_log(
             "real_agent_call_answered",
             reservationId=request.reservation_id,
             greetingDelaySeconds=CALL_ANSWER_GREETING_DELAY_SECONDS,
         )
-        asyncio.create_task(
-            request_realtime_response_when_ready(
-                "call_answered",
-                CALL_ANSWER_GREETING_DELAY_SECONDS,
+        if CALL_ANSWER_GREETING_DELAY_SECONDS <= 0:
+            await request_realtime_response_when_ready("call_answered", 0)
+        else:
+            asyncio.create_task(
+                request_realtime_response_when_ready(
+                    "call_answered",
+                    CALL_ANSWER_GREETING_DELAY_SECONDS,
+                )
             )
+
+    async def submit_live_transcript_result_when_stable(
+        candidate_result: dict[str, Any],
+        candidate_version: int,
+    ) -> None:
+        nonlocal live_transcript_result_submitted
+        await asyncio.sleep(CONFIRMED_RESULT_STABILITY_SECONDS)
+        if result_box or transcript_version != candidate_version:
+            return
+        refreshed_result = infer_ai_result_from_transcripts(request, transcript_entries)
+        if not refreshed_result:
+            return
+        if str(refreshed_result.get("resultStatus") or "").strip().upper() != "CONFIRMED":
+            result_box.update(refreshed_result)
+        else:
+            result_box.update(candidate_result)
+        live_transcript_result_submitted = True
+        result_event.set()
+        safe_log(
+            "real_agent_transcript_live_result",
+            reservationId=request.reservation_id,
+            resultStatus=result_box.get("resultStatus"),
         )
 
     async def on_transcript(call_session: Any, speaker: str, transcript: str) -> None:
-        nonlocal awaiting_assistant_response
+        nonlocal awaiting_assistant_response, live_transcript_result_submitted, latest_user_transcript_at, transcript_version
         normalized_speaker = "user" if speaker == "user" else "assistant"
         text = str(transcript or "").strip()
         if not text:
@@ -533,17 +1009,25 @@ async def run_real_agent_sdk_call(
             async with response_request_lock:
                 awaiting_assistant_response = False
         elif normalized_speaker == "user":
+            latest_user_transcript_at = asyncio.get_running_loop().time()
+            transcript_version += 1
             asyncio.create_task(request_realtime_response("user_transcript"))
         if not result_box:
             live_result = infer_ai_result_from_transcripts(request, transcript_entries)
             if live_result:
-                result_box.update(live_result)
-                result_event.set()
-                safe_log(
-                    "real_agent_transcript_live_result",
-                    reservationId=request.reservation_id,
-                    resultStatus=live_result.get("resultStatus"),
-                )
+                if str(live_result.get("resultStatus") or "").strip().upper() == "CONFIRMED":
+                    asyncio.create_task(
+                        submit_live_transcript_result_when_stable(live_result, transcript_version)
+                    )
+                else:
+                    result_box.update(live_result)
+                    live_transcript_result_submitted = True
+                    result_event.set()
+                    safe_log(
+                        "real_agent_transcript_live_result",
+                        reservationId=request.reservation_id,
+                        resultStatus=live_result.get("resultStatus"),
+                    )
 
     agent.on("call_failed")(on_failed)
 
@@ -570,6 +1054,8 @@ async def run_real_agent_sdk_call(
                 reservationId=request.reservation_id,
                 resultStatus=ai_result.get("resultStatus"),
             )
+            if ai_result:
+                await request_realtime_response(closing_response_reason(ai_result), allow_after_result=True)
             await asyncio.sleep(
                 skeleton.call_config.get(
                     "postResultClosingGraceSeconds",
@@ -709,8 +1195,24 @@ def infer_ai_result_from_transcripts(
         all_text,
         request.reservation_date_time,
     ) and result_text_mentions_party_size(all_text, request.party_size)
+    branch_confirmed = branch_confirmed_before_availability(transcript_entries)
+    name_provided, phone_provided = provided_name_or_phone_flags(request, transcript_entries)
 
     alternative_date_time = extract_alternative_datetime(request, user_text)
+    if alternative_time_question_answered_without_alternative(transcript_entries):
+        return {
+            "resultStatus": "UNAVAILABLE",
+            "summary": f"{requested_summary} 예약이 불가능하다고 확인했습니다.",
+            "confirmedDateTime": None,
+            "partySize": request.party_size,
+            "reservationNameProvided": False,
+            "phoneNumberProvided": False,
+            "restaurantRequestedNameOrPhone": contains_name_or_phone_request(user_text),
+            "alternativeTimeSuggested": False,
+            "alternativeDateTime": None,
+            "failureReason": None,
+            "transcriptSummary": transcript_summary,
+        }
     if contains_alternative_time_marker(user_text) or contains_assistant_needs_confirmation_marker(assistant_text):
         return {
             "resultStatus": "NEEDS_CONFIRMATION",
@@ -726,30 +1228,20 @@ def infer_ai_result_from_transcripts(
             "transcriptSummary": transcript_summary,
         }
     if contains_unavailable_marker(user_text) or contains_assistant_unavailable_marker(assistant_text):
-        return {
-            "resultStatus": "UNAVAILABLE",
-            "summary": f"{requested_summary} 예약이 불가능하다고 확인했습니다.",
-            "confirmedDateTime": None,
-            "partySize": request.party_size,
-            "reservationNameProvided": False,
-            "phoneNumberProvided": False,
-            "restaurantRequestedNameOrPhone": contains_name_or_phone_request(user_text),
-            "alternativeTimeSuggested": False,
-            "alternativeDateTime": None,
-            "failureReason": None,
-            "transcriptSummary": transcript_summary,
-        }
-    if requested_context_present and (
-        contains_confirmation_marker(user_text)
-        or contains_assistant_confirmation_marker(assistant_text)
+        return None
+    if (
+        branch_confirmed
+        and requested_context_present
+        and confirmed_availability_answer_after_question(transcript_entries)
+        and final_result_transcript_rejection_reason(request, "CONFIRMED", transcript_entries) is None
     ):
         return {
             "resultStatus": "CONFIRMED",
             "summary": f"{requested_summary} 예약이 가능하다고 확인했습니다.",
             "confirmedDateTime": request.reservation_date_time,
             "partySize": request.party_size,
-            "reservationNameProvided": False,
-            "phoneNumberProvided": False,
+            "reservationNameProvided": name_provided,
+            "phoneNumberProvided": phone_provided,
             "restaurantRequestedNameOrPhone": contains_name_or_phone_request(user_text),
             "alternativeTimeSuggested": False,
             "alternativeDateTime": None,
@@ -857,6 +1349,21 @@ def contains_confirmation_marker(text: str) -> bool:
     return any(re.search(pattern, text, re.IGNORECASE) for pattern in patterns)
 
 
+def contains_acknowledgement_marker(text: str) -> bool:
+    if not text or contains_unavailable_marker(text):
+        return False
+    patterns = (
+        r"알겠습니다",
+        r"확인했습니다",
+        r"접수",
+        r"예약.*됐",
+        r"예약.*완료",
+        r"네$",
+        r"예$",
+    )
+    return any(re.search(pattern, text, re.IGNORECASE) for pattern in patterns)
+
+
 def contains_unavailable_marker(text: str) -> bool:
     if not text:
         return False
@@ -873,6 +1380,38 @@ def contains_unavailable_marker(text: str) -> bool:
         r"unavailable",
     )
     return any(re.search(pattern, text, re.IGNORECASE) for pattern in patterns)
+
+
+def alternative_time_question_answered_without_alternative(
+    transcript_entries: list[tuple[str, str]],
+) -> bool:
+    user_text = user_answer_text_after_latest_alternative_time_question(transcript_entries)
+    if not user_text:
+        return False
+    if contains_unavailable_marker(user_text) or contains_no_alternative_marker(user_text):
+        return True
+    if contains_alternative_time_marker(user_text):
+        return False
+    return False
+
+
+def user_answer_text_after_latest_alternative_time_question(
+    transcript_entries: list[tuple[str, str]],
+) -> str:
+    for index in range(len(transcript_entries) - 1, -1, -1):
+        speaker, text = transcript_entries[index]
+        if speaker == "assistant" and assistant_asked_alternative_time_question(text):
+            return normalize_result_text(
+                *(entry_text for entry_speaker, entry_text in transcript_entries[index + 1:] if entry_speaker == "user")
+            )
+    return ""
+
+
+def contains_no_alternative_marker(text: str) -> bool:
+    if not text:
+        return False
+    normalized = normalize_korean_text(text)
+    return any(token in normalized for token in ("없어요", "없습니다", "없는데요", "안돼요", "안됩니다", "어렵습니다"))
 
 
 def contains_alternative_time_marker(text: str) -> bool:
@@ -985,7 +1524,19 @@ def normalize_spoken_hour(hour: int, requested_hour: int) -> int:
 def contains_name_or_phone_request(text: str) -> bool:
     if not text:
         return False
-    return any(token in text for token in ("성함", "이름", "전화번호", "연락처", "번호"))
+    return contains_name_request(text) or contains_phone_request(text)
+
+
+def contains_name_request(text: str) -> bool:
+    if not text:
+        return False
+    return any(token in text for token in ("성함", "이름", "예약자"))
+
+
+def contains_phone_request(text: str) -> bool:
+    if not text:
+        return False
+    return any(token in text for token in ("전화번호", "연락처", "번호"))
 
 
 def contains_ambiguous_marker(text: str) -> bool:
@@ -994,11 +1545,23 @@ def contains_ambiguous_marker(text: str) -> bool:
     return any(token in text for token in ("다시", "뭐라고", "무슨", "들리", "들립", "잠시", "확인"))
 
 
-def accepted_result_tool_response() -> str:
+def closing_response_reason(ai_result: dict[str, Any]) -> str:
+    if str(ai_result.get("resultStatus") or "").strip().upper() == "CONFIRMED":
+        return "closing_after_confirmed_result"
+    return "closing_after_non_confirmed_result"
+
+
+def accepted_result_tool_response(result_status: Any = "CONFIRMED") -> str:
+    normalized_status = str(result_status or "").strip().upper()
+    next_action = (
+        "Tell the restaurant: 네, 확인 감사합니다. 그 시간에 방문하겠습니다. 좋은 하루 되세요."
+        if normalized_status == "CONFIRMED"
+        else "Tell the restaurant: 네, 확인 감사합니다. 확인 후 다시 연락드리겠습니다. 좋은 하루 되세요."
+    )
     return json.dumps(
         {
             "accepted": True,
-            "nextAction": "Tell the restaurant: 네, 확인 감사합니다. 그 시간에 방문하겠습니다. 좋은 하루 되세요.",
+            "nextAction": next_action,
         },
         ensure_ascii=False,
         separators=(",", ":"),
@@ -1148,6 +1711,62 @@ def should_reject_early_final_result(
         return False
     elapsed = asyncio.get_running_loop().time() - call_started_at
     return elapsed < minimum_seconds
+
+
+def should_wait_for_confirmed_result_stability(
+    result_status: Any,
+    latest_user_transcript_at: float | None,
+    now: float | None = None,
+    stability_seconds: float | None = None,
+) -> bool:
+    if str(result_status).strip().upper() != "CONFIRMED":
+        return False
+    if latest_user_transcript_at is None:
+        return False
+    stability_seconds = (
+        CONFIRMED_RESULT_STABILITY_SECONDS
+        if stability_seconds is None
+        else stability_seconds
+    )
+    if stability_seconds <= 0:
+        return False
+    current_time = asyncio.get_running_loop().time() if now is None else now
+    return current_time - latest_user_transcript_at < stability_seconds
+
+
+def final_result_transcript_rejection_reason(
+    request: RealAgentCallRequest,
+    result_status: Any,
+    transcript_entries: list[tuple[str, str]],
+) -> str | None:
+    normalized_status = str(result_status).strip().upper()
+    if normalized_status != "CONFIRMED":
+        return None
+    if not confirmed_availability_answer_after_question(transcript_entries):
+        return (
+            "CONFIRMED requires a clear customer confirmation after the assistant asks "
+            "the requested reservation date/time and party size. Branch confirmation alone is not enough."
+        )
+    name_or_phone_request = latest_name_or_phone_request_after_availability(transcript_entries)
+    if name_or_phone_request is None:
+        return None
+    request_index, request_text = name_or_phone_request
+    if not assistant_provided_requested_name_or_phone_after(
+        request,
+        transcript_entries,
+        request_index,
+        request_text,
+    ):
+        return (
+            "The restaurant requested reservation name or contact after confirming availability. "
+            "Provide the requested information before submitting CONFIRMED."
+        )
+    if not customer_acknowledged_after_assistant_info(transcript_entries, request_index):
+        return (
+            "The restaurant requested reservation name or contact. Wait for the staff to acknowledge "
+            "the provided reservation information before submitting CONFIRMED."
+        )
+    return None
 
 
 def final_result_rejection_reason(

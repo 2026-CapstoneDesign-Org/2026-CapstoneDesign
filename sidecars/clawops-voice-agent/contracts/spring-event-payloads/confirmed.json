@@ -1,5 +1,5 @@
 {
-  "aiSummary": "AI 예약 도우미임을 밝히고 요청 조건을 전달했다. 식당은 해당 조건으로 예약 가능하다고 답했고 예약자명과 연락처를 받아 예약을 확정했다.",
+  "aiSummary": "6월 1일 오후 7시 00분 4명 예약 성공",
   "eventType": "RESERVATION_CONFIRMED",
   "failureReason": null,
   "idempotencyKey": "dry-run-sidecar-100:RESERVATION_CONFIRMED:74f44d0a2b4c5571",
@@ -9,7 +9,7 @@
   "providerStatus": "AI_CONFIRMED",
   "rawPayloadHash": "74f44d0a2b4c557146e5484f11f4bc5054014981fa630e8b5182e44a89df2cc8",
   "reservationId": 100,
-  "resultMessage": "요청한 날짜와 시간, 인원 수로 예약 가능하다고 확인했다.",
+  "resultMessage": "6월 1일 오후 7시 00분 4명 예약 성공",
   "retryable": false,
   "sidecarCallId": "dry-run-sidecar-100"
 }

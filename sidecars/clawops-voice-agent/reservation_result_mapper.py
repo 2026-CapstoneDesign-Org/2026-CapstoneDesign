@@ -135,6 +135,7 @@ def parse_failed_event(
     failure_reason: str,
     payload: dict[str, Any],
 ) -> dict[str, Any]:
+    result_message = public_result_message(context, payload, failure_reason=failure_reason)
     return base_event(
         context=context,
         payload=payload,
@@ -142,8 +143,8 @@ def parse_failed_event(
         provider_status="AI_PARSE_FAILED",
         retryable=False,
         failure_reason=failure_reason,
-        ai_summary=None,
-        result_message="AI result schema validation failed.",
+        ai_summary=result_message,
+        result_message=result_message,
     )
 
 
@@ -159,6 +160,7 @@ def needs_confirmation_event(
     failure_reason: str,
     provider_status: str,
 ) -> dict[str, Any]:
+    result_message = public_result_message(context, payload, failure_reason=failure_reason)
     return base_event(
         context=context,
         payload=payload,
@@ -166,8 +168,8 @@ def needs_confirmation_event(
         provider_status=provider_status,
         retryable=False,
         failure_reason=failure_reason,
-        ai_summary=payload.get("transcriptSummary") or payload.get("summary"),
-        result_message=payload.get("summary"),
+        ai_summary=result_message,
+        result_message=result_message,
     )
 
 
@@ -178,6 +180,7 @@ def standard_event(
     provider_status: str,
     failure_reason: str | None = None,
 ) -> dict[str, Any]:
+    result_message = public_result_message(context, payload, failure_reason=failure_reason)
     return base_event(
         context=context,
         payload=payload,
@@ -185,9 +188,52 @@ def standard_event(
         provider_status=provider_status,
         retryable=event_type in {"CALL_CONNECTION_FAILED", "CALL_NO_ANSWER", "CALL_BUSY", "PROVIDER_TRANSIENT_ERROR"},
         failure_reason=failure_reason,
-        ai_summary=payload.get("transcriptSummary") or payload.get("summary"),
-        result_message=payload.get("summary"),
+        ai_summary=result_message,
+        result_message=result_message,
     )
+
+
+def public_result_message(
+    context: ReservationResultMappingContext,
+    payload: dict[str, Any],
+    failure_reason: str | None = None,
+) -> str:
+    requested_time = display_public_datetime(context.requested_date_time)
+    requested_party_size = context.requested_party_size
+    result_status = payload.get("resultStatus")
+
+    if failure_reason:
+        if failure_reason.startswith("AI_RESULT_CONFIRMED_"):
+            return f"{requested_time} 예약 결과 확인 필요"
+        if failure_reason.startswith("AI_RESULT_"):
+            return "전화 예약 결과 확인 실패"
+
+    if result_status == "CONFIRMED":
+        confirmed_time = display_public_datetime(payload.get("confirmedDateTime") or context.requested_date_time)
+        party_size = payload.get("partySize") or requested_party_size
+        return f"{confirmed_time} {party_size}명 예약 성공"
+    if result_status == "UNAVAILABLE":
+        party_size = payload.get("partySize") or requested_party_size
+        return f"{requested_time} {party_size}명 예약 불가"
+    if result_status == "NEEDS_CONFIRMATION":
+        if payload.get("alternativeTimeSuggested") and payload.get("alternativeDateTime"):
+            return f"{display_public_datetime(payload.get('alternativeDateTime'))} 대체 시간 제안받음"
+        return f"{requested_time} 예약 확인 필요"
+    if result_status == "FAILED":
+        return "전화 예약 실패"
+    return "전화 예약 결과 확인 실패"
+
+
+def display_public_datetime(value: Any) -> str:
+    if not isinstance(value, str) or not value:
+        return "요청 시간"
+    try:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return value
+    meridiem = "오전" if parsed.hour < 12 else "오후"
+    hour = parsed.hour % 12 or 12
+    return f"{parsed.month}월 {parsed.day}일 {meridiem} {hour}시 {parsed.minute:02d}분"
 
 
 def base_event(
