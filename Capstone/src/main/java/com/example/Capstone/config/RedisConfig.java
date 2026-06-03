@@ -65,10 +65,7 @@ public class RedisConfig {
                 .disableCachingNullValues();
 
         Map<String, RedisCacheConfiguration> cacheConfigs = new HashMap<>();
-        cacheConfigs.put("restaurant",       defaultConfig.entryTtl(Duration.ofHours(6)));
-        cacheConfigs.put("restaurantSearch", defaultConfig.entryTtl(Duration.ofMinutes(30)));
         cacheConfigs.put("reviewSummary",    defaultConfig.entryTtl(Duration.ofHours(12)));
-        cacheConfigs.put("listDetail",       defaultConfig.entryTtl(Duration.ofMinutes(10)));
 
         return RedisCacheManager.builder(factory)
                 .cacheDefaults(defaultConfig)
