@@ -3,6 +3,8 @@ package com.example.Capstone.repository;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -12,10 +14,11 @@ import com.example.Capstone.domain.Review;
 
 @Repository
 public interface ReviewRepository extends JpaRepository<Review, Long> {
-
     List<Review> findAllByRestaurantIdAndIsDeletedFalseAndIsHiddenFalse(Long restaurantId);
     List<Review> findAllByUserIdAndIsDeletedFalseAndIsHiddenFalse(Long userId);
     Optional<Review> findByIdAndIsDeletedFalse(Long id);
+    Page<Review> findAllByRestaurantIdAndIsDeletedFalseAndIsHiddenFalse(Long restaurantId, Pageable pageable);
+    Page<Review> findAllByUserIdAndIsDeletedFalseAndIsHiddenFalse(Long userId, Pageable pageable);
     long countByUserIdAndIsDeletedFalse(Long userId);
 
     @Query("SELECT r FROM Review r " +
@@ -25,7 +28,8 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
            "WHERE r.restaurant.id = :restaurantId " +
            "AND r.isDeleted = false " +
            "AND r.isHidden = false")
-    List<Review> findAllByRestaurantIdWithDetails(@Param("restaurantId") Long restaurantId);
+    Page<Review> findAllByRestaurantIdWithDetails(
+            @Param("restaurantId") Long restaurantId, Pageable pageable);
 
     @Query("SELECT r FROM Review r " +
            "JOIN FETCH r.user " +
@@ -34,5 +38,20 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
            "WHERE r.user.id = :userId " +
            "AND r.isDeleted = false " +
            "AND r.isHidden = false")
-    List<Review> findAllByUserIdWithDetails(@Param("userId") Long userId);
+    Page<Review> findAllByUserIdWithDetails(
+            @Param("userId") Long userId, Pageable pageable);
+
+    @Query(value = "SELECT r FROM Review r " +
+                   "JOIN FETCH r.user " +
+                   "JOIN FETCH r.restaurant " +
+                   "LEFT JOIN FETCH r.images " +
+                   "WHERE r.restaurant.id = :restaurantId " +
+                   "AND r.isDeleted = false " +
+                   "AND r.isHidden = false",
+           countQuery = "SELECT COUNT(r) FROM Review r " +
+                        "WHERE r.restaurant.id = :restaurantId " +
+                        "AND r.isDeleted = false " +
+                        "AND r.isHidden = false")
+    Page<Review> findAllByRestaurantIdWithDetailsOptimized(
+            @Param("restaurantId") Long restaurantId, Pageable pageable);
 }

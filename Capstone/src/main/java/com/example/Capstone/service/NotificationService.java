@@ -2,6 +2,7 @@ package com.example.Capstone.service;
 
 import com.example.Capstone.domain.Notification;
 import com.example.Capstone.dto.response.NotificationResponse;
+import com.example.Capstone.dto.response.PageResponse;
 import com.example.Capstone.exception.BusinessException;
 import com.example.Capstone.repository.NotificationRepository;
 import com.example.Capstone.repository.UserFollowRepository;
@@ -11,6 +12,8 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -56,11 +59,11 @@ public class NotificationService {
     }
 
     // 알림 목록 조회
-    public List<NotificationResponse> getNotifications(Long userId) {
-        return notificationRepository.findAllByUserIdOrderByCreatedAtDesc(userId)
-                .stream()
-                .map(NotificationResponse::from)
-                .toList();
+    public PageResponse<NotificationResponse> getNotifications(Long userId, Pageable pageable) {
+        Page<NotificationResponse> page = notificationRepository
+                .findAllByUserIdOrderByCreatedAtDesc(userId, pageable)
+                .map(NotificationResponse::from);
+        return PageResponse.from(page);
     }
 
     // 읽지 않은 알림 수

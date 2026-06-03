@@ -2,6 +2,9 @@ package com.example.Capstone.controller;
 
 import java.util.List;
 
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -20,6 +23,7 @@ import com.example.Capstone.dto.request.AddRestaurantRequest;
 import com.example.Capstone.dto.request.CreateListRequest;
 import com.example.Capstone.dto.request.UpdateListRequest;
 import com.example.Capstone.dto.request.UpdateScoreRequest;
+import com.example.Capstone.dto.response.PageResponse;
 import com.example.Capstone.dto.response.UserListDetailResponse;
 import com.example.Capstone.dto.response.UserListResponse;
 import com.example.Capstone.service.UserListService;
@@ -48,9 +52,12 @@ public class UserListController {
 
     @Operation(summary = "내 리스트 목록")
     @GetMapping
-    public ResponseEntity<List<UserListResponse>> getMyLists(
-            @AuthenticationPrincipal Long userId) {
-        return ResponseEntity.ok(userListService.getMyLists(userId));
+    public ResponseEntity<PageResponse<UserListResponse>> getMyLists(
+            @AuthenticationPrincipal Long userId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        return ResponseEntity.ok(userListService.getMyLists(userId, pageable));
     }
 
     @Operation(summary = "리스트 상세")

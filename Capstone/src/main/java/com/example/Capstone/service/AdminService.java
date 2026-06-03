@@ -26,6 +26,7 @@ public class AdminService {
         return adminRestaurantCommandService.createRestaurant(request);
     }
 
+    @CacheEvict(value = "restaurant", key = "#restaurantId")
     @Transactional
     public RestaurantResponse updateRestaurant(Long restaurantId, UpdateRestaurantRequest request) {
         return adminRestaurantCommandService.updateRestaurant(restaurantId, request);

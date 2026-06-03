@@ -3,6 +3,8 @@ package com.example.Capstone.controller;
 import java.util.List;
 
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -18,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.Capstone.dto.request.CreateReviewRequest;
 import com.example.Capstone.dto.request.ReviewVoteRequest;
 import com.example.Capstone.dto.request.UpdateReviewRequest;
+import com.example.Capstone.dto.response.PageResponse;
 import com.example.Capstone.dto.response.ReviewResponse;
 import com.example.Capstone.dto.response.ReviewSummaryResponse;
 import com.example.Capstone.dto.response.UserReviewResponse;
@@ -50,10 +53,13 @@ public class ReviewController {
 
     @Operation(summary = "리뷰 목록")
     @GetMapping("/restaurants/{id}/reviews")
-    public ResponseEntity<List<ReviewResponse>> getReviews(
+    public ResponseEntity<PageResponse<ReviewResponse>> getReviews(
+            @PathVariable Long id,
             @AuthenticationPrincipal Long userId,
-            @PathVariable Long id) {
-        return ResponseEntity.ok(reviewService.getReviews(userId, id));
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        return ResponseEntity.ok(reviewService.getReviews(id, userId, pageable));
     }
 
     @Operation(summary = "리뷰 수정")
@@ -103,10 +109,13 @@ public class ReviewController {
     }
 
     @Operation(summary = "유저 리뷰 목록")
-    @GetMapping("/users/{id}/reviews")
-    public ResponseEntity<List<UserReviewResponse>> getUserReviews(
-            @AuthenticationPrincipal Long viewerUserId,
-            @PathVariable Long id) {
-        return ResponseEntity.ok(reviewService.getUserReviews(id, viewerUserId));
+    @GetMapping("/users/{userId}/reviews")
+    public ResponseEntity<PageResponse<UserReviewResponse>> getUserReviews(
+            @PathVariable Long userId,
+            @AuthenticationPrincipal Long currentUserId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        return ResponseEntity.ok(reviewService.getUserReviews(userId, currentUserId, pageable));
     }
 }

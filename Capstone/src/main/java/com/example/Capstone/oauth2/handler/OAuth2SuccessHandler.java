@@ -86,10 +86,10 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
             if (needsProfile) {
                 getRedirectStrategy().sendRedirect(request, response,
-                    "exp+wagu://auth/callback?accessToken=" + accessToken + "&refreshToken=" + refreshToken + "&needsProfile=true");
+                    "exp+wagu://auth/callback?accessToken=" + accessToken + "&refreshToken" + refreshToken + "&needsProfile=true");
             } else {
                 getRedirectStrategy().sendRedirect(request, response,
-                    "exp+wagu://auth/callback?accessToken=" + accessToken + "&refreshToken=" + refreshToken + "&needsProfile=false");
+                    "exp+wagu://auth/callback?accessToken=" + accessToken + "&refreshToken" + refreshToken + "&needsProfile=false");
             }
     }
 }

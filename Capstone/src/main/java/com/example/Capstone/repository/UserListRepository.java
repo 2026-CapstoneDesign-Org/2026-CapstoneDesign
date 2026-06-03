@@ -3,6 +3,8 @@ package com.example.Capstone.repository;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -16,13 +18,16 @@ public interface UserListRepository extends JpaRepository<UserList, Long> {
     Optional<UserList> findByIdAndIsDeletedFalse(Long id);
     Optional<UserList> findByUserIdAndIsRepresentativeTrueAndIsDeletedFalse(Long id);
     boolean existsByUserIdAndIsRepresentativeTrueAndIsDeletedFalse(Long userId);
+    Page<UserList> findAllByUserIdAndIsDeletedFalse(Long userId, Pageable pageable);
+    Page<UserList> findAllByIsPublicTrueAndIsDeletedFalseAndIsHiddenFalse(Pageable pageable);
     long countByUserIdAndIsPublicTrueAndIsDeletedFalse(Long userId);
 
     @Query("SELECT ul FROM UserList ul " +
            "JOIN FETCH ul.user " +
            "WHERE ul.user.id = :userId " +
            "AND ul.isDeleted = false")
-    List<UserList> findAllByUserIdWithDetails(@Param("userId") Long userId);
+    Page<UserList> findAllByUserIdWithDetails(
+            @Param("userId") Long userId, Pageable pageable);
 
     @Query("SELECT ul FROM UserList ul " +
            "JOIN FETCH ul.user " +

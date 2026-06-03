@@ -2,7 +2,6 @@ package com.example.Capstone.config;
 
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
@@ -23,49 +22,49 @@ import java.util.Map;
 
 @Configuration
 @EnableCaching
-@ConditionalOnProperty(name = "spring.cache.type", havingValue = "redis", matchIfMissing = true)
 public class RedisConfig {
 
-    private ObjectMapper createRedisObjectMapper() {
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.registerModule(new JavaTimeModule());
-        objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-        return objectMapper;
-    }
-
     @Bean
-    public GenericJackson2JsonRedisSerializer redisSerializer() {
-        return new GenericJackson2JsonRedisSerializer(createRedisObjectMapper());
-    }
-
-    @Bean
-    public RedisTemplate<String, Object> redisTemplate(
-            RedisConnectionFactory factory,
-            GenericJackson2JsonRedisSerializer redisSerializer) {
+    public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory factory) {
         RedisTemplate<String, Object> template = new RedisTemplate<>();
         template.setConnectionFactory(factory);
         template.setKeySerializer(new StringRedisSerializer());
-        template.setValueSerializer(redisSerializer);
+        template.setValueSerializer(new GenericJackson2JsonRedisSerializer());
         template.setHashKeySerializer(new StringRedisSerializer());
-        template.setHashValueSerializer(redisSerializer);
+        template.setHashValueSerializer(new GenericJackson2JsonRedisSerializer());
         return template;
     }
 
     @Bean
-    public CacheManager cacheManager(
-            RedisConnectionFactory factory,
-            GenericJackson2JsonRedisSerializer redisSerializer) {
+    public CacheManager cacheManager(RedisConnectionFactory factory) {
 
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JavaTimeModule());
+        objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        objectMapper.activateDefaultTyping(
+                objectMapper.getPolymorphicTypeValidator(),
+                ObjectMapper.DefaultTyping.NON_FINAL
+        );
+
+        GenericJackson2JsonRedisSerializer serializer =
+                new GenericJackson2JsonRedisSerializer(objectMapper);
+
+        // 기본 캐시 설정 (1시간)
         RedisCacheConfiguration defaultConfig = RedisCacheConfiguration.defaultCacheConfig()
                 .entryTtl(Duration.ofHours(1))
                 .serializeKeysWith(RedisSerializationContext.SerializationPair
                         .fromSerializer(new StringRedisSerializer()))
                 .serializeValuesWith(RedisSerializationContext.SerializationPair
-                        .fromSerializer(redisSerializer))
+                        .fromSerializer(serializer))
                 .disableCachingNullValues();
 
+        // 캐시별 TTL 설정
         Map<String, RedisCacheConfiguration> cacheConfigs = new HashMap<>();
-        cacheConfigs.put("reviewSummary",    defaultConfig.entryTtl(Duration.ofHours(12)));
+        cacheConfigs.put("restaurant",      defaultConfig.entryTtl(Duration.ofHours(6)));    // 식당 정보 6시간
+        cacheConfigs.put("restaurantSearch",defaultConfig.entryTtl(Duration.ofMinutes(30))); // 검색 30분
+        cacheConfigs.put("reviewSummary",   defaultConfig.entryTtl(Duration.ofHours(12)));   // 리뷰 요약 12시간
+        cacheConfigs.put("reliability",     defaultConfig.entryTtl(Duration.ofMinutes(30))); // 신뢰도 30분
+        cacheConfigs.put("listDetail",      defaultConfig.entryTtl(Duration.ofMinutes(10))); // 리스트 상세 10분
 
         return RedisCacheManager.builder(factory)
                 .cacheDefaults(defaultConfig)
