@@ -1,13 +1,22 @@
 package com.example.Capstone.config;
 
+import java.util.Arrays;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.converter.FormHttpMessageConverter;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.oauth2.client.endpoint.DefaultAuthorizationCodeTokenResponseClient;
+import org.springframework.security.oauth2.client.endpoint.OAuth2AccessTokenResponseClient;
+import org.springframework.security.oauth2.client.endpoint.OAuth2AuthorizationCodeGrantRequest;
+import org.springframework.security.oauth2.client.http.OAuth2ErrorResponseErrorHandler;
+import org.springframework.security.oauth2.core.http.converter.OAuth2AccessTokenResponseHttpMessageConverter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.client.RestTemplate;
 
 import com.example.Capstone.common.jwt.JwtFilter;
 import com.example.Capstone.common.jwt.JwtProvider;
@@ -48,6 +57,9 @@ public class SecurityConfig {
             .anyRequest().authenticated()
         )
         .oauth2Login(oauth2 -> oauth2
+            .tokenEndpoint(token -> token
+                .accessTokenResponseClient(accessTokenResponseClient())
+            )
             .userInfoEndpoint(userInfo -> userInfo
                 .userService(oAuth2UserService)
             )
@@ -62,5 +74,23 @@ public class SecurityConfig {
         .httpBasic(basic -> basic.disable());
 
         return http.build();
+    }
+
+    @Bean
+    public OAuth2AccessTokenResponseClient<OAuth2AuthorizationCodeGrantRequest> accessTokenResponseClient() {
+        DefaultAuthorizationCodeTokenResponseClient client =
+                new DefaultAuthorizationCodeTokenResponseClient();
+
+        OAuth2AccessTokenResponseHttpMessageConverter converter =
+                new OAuth2AccessTokenResponseHttpMessageConverter();
+        converter.setAccessTokenResponseConverter(new NaverOAuth2TokenResponseConverter());
+
+        RestTemplate restTemplate = new RestTemplate(Arrays.asList(
+                new FormHttpMessageConverter(),
+                converter
+        ));
+        restTemplate.setErrorHandler(new OAuth2ErrorResponseErrorHandler());
+        client.setRestOperations(restTemplate);
+        return client;
     }
 }

@@ -1,6 +1,5 @@
 package com.example.Capstone.service;
 
-import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,7 +25,6 @@ public class AdminService {
         return adminRestaurantCommandService.createRestaurant(request);
     }
 
-    @CacheEvict(value = "restaurant", key = "#restaurantId")
     @Transactional
     public RestaurantResponse updateRestaurant(Long restaurantId, UpdateRestaurantRequest request) {
         return adminRestaurantCommandService.updateRestaurant(restaurantId, request);
